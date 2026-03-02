@@ -413,7 +413,7 @@ class Resolver {
         coroutineScope {
             distinctBfsSequence { child, _ -> child !is MavenDependencyConstraintNode }
                 .distinctBy { (it as? MavenDependencyNode)?.dependency ?: it }
-                .mapNotNull { (it as? DependencyNodeWithContext)?.context }.distinct()
+                .mapNotNull { (it as? DependencyNodeWithContext)?.context?.resolutionCache }.distinct()
                 .forEach {
                     launch {
                         it.close()

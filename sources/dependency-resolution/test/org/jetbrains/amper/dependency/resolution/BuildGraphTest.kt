@@ -268,7 +268,7 @@ class BuildGraphTest : BaseDRTest() {
      */
     @Test
     fun `non transitive resolution basic BOM support`() = runDrTest {
-        val root = context().use { context ->
+        val root = context().let { context ->
             val root = listOf(
                 "bom:org.jetbrains.kotlinx:kotlinx-coroutines-bom:1.6.4",
                 "org.jetbrains.kotlinx:kotlinx-coroutines-core",
@@ -1734,7 +1734,7 @@ class BuildGraphTest : BaseDRTest() {
      */
     @Test
     fun `kotlin test with junit`() = runDrTest {
-        context().use { context ->
+        context().also { context ->
             val root = listOf(
                 "org.jetbrains.kotlin:kotlin-stdlib:1.9.20",
                 "org.jetbrains.kotlin:kotlin-test-junit:1.9.20",
@@ -1956,7 +1956,7 @@ class BuildGraphTest : BaseDRTest() {
 
     @Test
     fun `kotlin test with junit5`() = runDrTest {
-        context().use { context ->
+        context().also { context ->
             val root = listOf(
                 "org.jetbrains.kotlin:kotlin-test-junit5:1.9.20",
                 "org.jetbrains.kotlin:kotlin-stdlib:1.9.20",
@@ -1989,7 +1989,7 @@ class BuildGraphTest : BaseDRTest() {
 
     @Test
     fun `datetime and kotlin test with junit`() = runDrTest {
-        context().use { context ->
+        context().also { context ->
             val root = listOf(
                 "org.jetbrains.kotlin:kotlin-stdlib:1.9.20",
                 "org.jetbrains.kotlinx:kotlinx-datetime:0.4.0",
@@ -2025,7 +2025,7 @@ class BuildGraphTest : BaseDRTest() {
 
     @Test
     fun `jackson and guava`() = runDrTest {
-        context().use { context ->
+        context().also { context ->
             val root = listOf(
                 "org.antlr:antlr4-runtime:4.7.1",
                 "org.abego.treelayout:org.abego.treelayout.core:1.0.3",

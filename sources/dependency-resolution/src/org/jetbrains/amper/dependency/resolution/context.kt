@@ -51,7 +51,7 @@ class Context internal constructor(
      */
     private val nodesByMavenDependency: MutableMap<MavenDependencyImpl, MavenDependencyNodeWithContext> = ConcurrentHashMap(),
     private val constraintsByMavenDependency: MutableMap<MavenDependencyConstraintImpl, MavenDependencyConstraintNodeWithContext> = ConcurrentHashMap(),
-) : Closeable {
+) {
 
     constructor(block: SettingsBuilder.() -> Unit = {}) : this(SettingsBuilder(block).settings)
 
@@ -103,10 +103,6 @@ class Context internal constructor(
         constraintsByMavenDependency
             .computeIfAbsent(dependencyConstraint) { MavenDependencyConstraintNodeWithContext(templateContext = this, dependencyConstraint) }
             .apply { parentNode?.let { context.nodeParents.add(parentNode) } }
-
-    override fun close() {
-        resolutionCache.close()
-    }
 }
 
 /**

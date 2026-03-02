@@ -54,7 +54,7 @@ class DependencyFileTest: BaseDRTest() {
                 localRepository = gradleLocalRepository()
                 readOnlyExternalRepositories = emptyList()
             }
-        }.use { context ->
+        }.also { context ->
             val dependency = MavenDependencyImpl(context.settings, "org.jetbrains.kotlin", "kotlin-test", "1.9.20")
             val extension = "module"
             val name = "${getNameWithoutExtension(dependency)}.$extension"
@@ -81,7 +81,7 @@ class DependencyFileTest: BaseDRTest() {
                 localRepository = mavenLocalRepository()
                 readOnlyExternalRepositories = emptyList()
             }
-        }.use { context ->
+        }.also { context ->
             val dependency = MavenDependencyImpl(
                 context.settings,
                 "com.fasterxml.jackson.module", "jackson-module-kotlin", "2.15.2"
@@ -102,7 +102,7 @@ class DependencyFileTest: BaseDRTest() {
                 localRepository = mavenLocalRepository()
                 readOnlyExternalRepositories = emptyList()
             }
-        }.use { context ->
+        }.also { context ->
             val dependency = MavenDependencyImpl(
                 context.settings,
                 "org.junit.jupiter", "junit-jupiter-api", "9999"
@@ -138,14 +138,14 @@ class DependencyFileTest: BaseDRTest() {
                 localRepository = mavenLocalRepository()
                 readOnlyExternalRepositories = emptyList()
             }
-        }.use { context ->
+        }.also { context ->
             val dependency = MavenDependencyImpl(
                 context.settings,
                 "org.junit.jupiter", "junit-jupiter-api", "9999"
             )
             dependency.resolveChildren(context, ResolutionLevel.LOCAL)
             dependency.downloadDependencies(context)
-            val messages = dependency.messages.defaultFilterMessages().map{ it.message }.toSet()
+            val messages = dependency.messages.defaultFilterMessages().map { it.message }.toSet()
             assertEquals(
                 setOf("Unable to resolve dependency org.junit.jupiter:junit-jupiter-api:9999"),
                 messages,
@@ -168,22 +168,24 @@ class DependencyFileTest: BaseDRTest() {
             }
             repositories = listOf(REDIRECTOR_COMPOSE_DEV)
             platforms = setOf(ResolutionPlatform.MACOS_ARM64)
-        }.use { context ->
+        }.also { context ->
             val dependency = MavenDependencyImpl(
                 context.settings,
                 "org.jetbrains.skiko", "skiko-awt-runtime-macos-arm64", "0.8.22"
             )
             val root = MavenDependencyNodeWithContext(context, dependency)
-             val resolver = Resolver()
+            val resolver = Resolver()
             resolver.buildGraph(root)
             resolver.downloadDependencies(root)
 
             root.distinctBfsSequence().forEach {
                 if (it is MavenDependencyNode && it.module.startsWith("skiko-awt")) {
                     val messages = it.messages.defaultFilterMessages()
-                    assertEquals(1, messages.size,
-                        "Expected exactly one error message instead of ${messages.size}: $messages")
-                    val message = assertIs<PlatformsAreNotSupported>(messages.single(),"Unexpected error message")
+                    assertEquals(
+                        1, messages.size,
+                        "Expected exactly one error message instead of ${messages.size}: $messages"
+                    )
+                    val message = assertIs<PlatformsAreNotSupported>(messages.single(), "Unexpected error message")
                     assertEquals(setOf(ResolutionPlatform.MACOS_ARM64), message.unsupportedPlatforms)
                     assertEquals(setOf(ResolutionPlatform.JVM, ResolutionPlatform.ANDROID), message.supportedPlatforms)
                 } else {
@@ -207,7 +209,7 @@ class DependencyFileTest: BaseDRTest() {
                 REDIRECTOR_COMPOSE_DEV
             )
             platforms = setOf(ResolutionPlatform.IOS_SIMULATOR_ARM64, ResolutionPlatform.IOS_ARM64)
-        }.use { context ->
+        }.also { context ->
             val dependency = MavenDependencyImpl(
                 context.settings,
                 "org.jetbrains.skiko", "skiko", "0.8.4"
@@ -234,7 +236,7 @@ class DependencyFileTest: BaseDRTest() {
                 REDIRECTOR_COMPOSE_DEV
             )
             platforms = setOf(ResolutionPlatform.IOS_SIMULATOR_ARM64)
-        }.use { context ->
+        }.also { context ->
             val root = RootDependencyNodeWithContext(
                 children = listOf(
                     MavenCoordinates(
@@ -268,7 +270,7 @@ class DependencyFileTest: BaseDRTest() {
             repositories = listOf(REDIRECTOR_MAVEN_CENTRAL, REDIRECTOR_MAVEN_GOOGLE, REDIRECTOR_COMPOSE_DEV)
             platforms = setOf(ResolutionPlatform.IOS_SIMULATOR_ARM64)
             scope = ResolutionScope.RUNTIME
-        }.use { context ->
+        }.also { context ->
             val dependency = MavenDependencyImpl(
                 context.settings,
                 "org.jetbrains.skiko", "skiko", "0.8.4"
@@ -291,7 +293,7 @@ class DependencyFileTest: BaseDRTest() {
                 localRepository = mavenLocalRepository()
                 readOnlyExternalRepositories = emptyList()
             }
-        }.use { context ->
+        }.also { context ->
             val dependency = MavenDependencyImpl(
                 context.settings,
                 "org.jetbrains.kotlinx", "kotlinx-datetime", "0.5.0"
@@ -313,7 +315,7 @@ class DependencyFileTest: BaseDRTest() {
                 localRepository = mavenLocalRepository()
                 readOnlyExternalRepositories = emptyList()
             }
-        }.use { context ->
+        }.also { context ->
             val dependency = MavenDependencyImpl(
                 context.settings,
                 "org.jetbrains.kotlinx", "kotlinx-coroutines-core", "1.9.0"
@@ -324,10 +326,10 @@ class DependencyFileTest: BaseDRTest() {
             assertTrue(errors.isEmpty(), "There must be no errors: $errors")
 
             val dependencyFile = getDependencyFile(dependency, getNameWithoutExtension(dependency), "jar")
-            assertTrue(dependencyFile.getPath()!!.startsWith(mavenLocalPath) )
+            assertTrue(dependencyFile.getPath()!!.startsWith(mavenLocalPath))
 
             val downloaded = dependencyFile.getPath()?.exists() == true
-            val hasMatchingChecksum =  dependencyFile.isDownloadedWithVerification(settings = context.settings)
+            val hasMatchingChecksum = dependencyFile.isDownloadedWithVerification(settings = context.settings)
             assertTrue(downloaded, "File must be downloaded as it was created above")
             assertTrue(hasMatchingChecksum, "File must have matching checksum as it was created above")
         }
@@ -343,7 +345,7 @@ class DependencyFileTest: BaseDRTest() {
                 localRepository = mavenLocalRepository()
                 readOnlyExternalRepositories = emptyList()
             }
-        }.use { context ->
+        }.also { context ->
             val dependencyNode = MavenCoordinates(
                 "org.jetbrains.kotlinx", "kotlinx-coroutines-core-jvm", "1.8.0"
             ).toMavenNode(context)
@@ -387,8 +389,9 @@ class DependencyFileTest: BaseDRTest() {
                 localRepository = mavenLocalRepository()
                 readOnlyExternalRepositories = emptyList()
             }
-        }.use { context ->
-            val dependencyNode = MavenDependencyNodeWithContext(context,
+        }.also { context ->
+            val dependencyNode = MavenDependencyNodeWithContext(
+                context,
                 MavenDependencyImpl(context.settings, "org.jetbrains.kotlinx", "kotlinx-coroutines-core-jvm", "1.7.3")
             )
 
@@ -440,7 +443,7 @@ class DependencyFileTest: BaseDRTest() {
                 localRepository = mavenLocalRepository()
                 readOnlyExternalRepositories = emptyList()
             }
-        }.use { context ->
+        }.also { context ->
             val dependency = MavenDependencyImpl(
                 context.settings,
                 "org.jetbrains.kotlinx", "kotlinx-datetime", "0.4.0"
@@ -449,9 +452,8 @@ class DependencyFileTest: BaseDRTest() {
             val errors = dependency.messages.filter { it.severity == Severity.ERROR }
             assertTrue(errors.isEmpty(), "There must be no errors: $errors")
 
-
             val dependencyFile = getDependencyFile(dependency, "${getNameWithoutExtension(dependency)}-all", "jar")
-            assertTrue(dependencyFile.getPath()!!.startsWith(mavenLocalPath) )
+            assertTrue(dependencyFile.getPath()!!.startsWith(mavenLocalPath))
 
             val downloaded = dependencyFile.getPath()?.exists() == true
             val hasMatchingChecksum = dependencyFile.isDownloadedWithVerification(settings = context.settings)
@@ -477,7 +479,7 @@ class DependencyFileTest: BaseDRTest() {
                 localRepository = mavenLocalRepository()
                 readOnlyExternalRepositories = emptyList()
             }
-        }.use { context ->
+        }.also { context ->
             val dependency = MavenDependencyImpl(
                 context.settings,
                 "org.jetbrains.kotlinx", "kotlinx-coroutines-core", "1.7.3"
@@ -503,7 +505,7 @@ class DependencyFileTest: BaseDRTest() {
                         it?.let {
                             val size = expectedSourceSetContent[it.name]
                             assertNotNull(size, "Unexpected entry ${it.name}")
-                            assertEquals(size, it.size,"Unexpected entry size")
+                            assertEquals(size, it.size, "Unexpected entry size")
                         }
                     }
                 }
@@ -619,7 +621,7 @@ class DependencyFileTest: BaseDRTest() {
                 ResolutionPlatform.IOS_ARM64,
                 ResolutionPlatform.IOS_SIMULATOR_ARM64,
                 ResolutionPlatform.IOS_X64,
-                )
+            )
             scope = ResolutionScope.RUNTIME
             repositories = listOf(REDIRECTOR_MAVEN_CENTRAL)
             cache = {
@@ -627,7 +629,7 @@ class DependencyFileTest: BaseDRTest() {
                 localRepository = mavenLocalRepository()
                 readOnlyExternalRepositories = emptyList()
             }
-        }.use { context ->
+        }.also { context ->
             val dependency = MavenDependencyImpl(
                 context.settings,
                 "org.jetbrains.compose.ui", "ui", "1.5.10"

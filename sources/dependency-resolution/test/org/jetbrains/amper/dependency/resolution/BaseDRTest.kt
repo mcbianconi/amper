@@ -94,7 +94,7 @@ abstract class BaseDRTest {
         filterMessages: List<Message>.() -> List<Message> = { defaultFilterMessages() }
     ): DependencyNodeHolderWithContext =
         context(scope, platform, repositories, cacheBuilder, openTelemetry, jdkVersion)
-            .use { context ->
+            .let { context ->
                 val root = dependency.toRootNode(context)
                 doTest(root, verifyMessages, expected, filterMessages, transitive)
             }
