@@ -67,7 +67,7 @@ import kotlin.io.path.absolutePathString
 
 private val logger = LoggerFactory.getLogger(IdeSync::class.java)
 
-@Deprecated("in favour of Idea ModuleDependencies")
+@Deprecated("in favour of ModuleDependencies")
 internal class IdeSync(
     dependenciesFlowType: DependenciesFlowType.IdeSyncType
 ): AbstractDependenciesFlow<DependenciesFlowType.IdeSyncType>(dependenciesFlowType) {
@@ -143,7 +143,7 @@ internal class IdeSync(
                         isTest = isTest,
                         includeNonExportedNative = false
                     )
-                ).directDependenciesGraph(this, fileCacheBuilder, openTelemetry, incrementalCache)
+                ).directDependenciesGraph(this, fileCacheBuilder, openTelemetry, incrementalCache, sharedResolutionCache)
             }
 
             if (hasSinglePlatformDependenciesOnly(moduleDependencies)) {

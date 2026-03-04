@@ -5,30 +5,22 @@ package org.jetbrains.amper.frontend.dr.resolver
 
 import io.opentelemetry.api.OpenTelemetry
 import kotlinx.serialization.modules.SerializersModuleBuilder
-import org.jetbrains.amper.core.AmperUserCacheRoot
 import org.jetbrains.amper.dependency.resolution.Cache
 import org.jetbrains.amper.dependency.resolution.DependencyGraph.Companion.toSerializableReference
 import org.jetbrains.amper.dependency.resolution.DependencyGraphContext
 import org.jetbrains.amper.dependency.resolution.DependencyNode
-import org.jetbrains.amper.dependency.resolution.DependencyNodeHolderWithContext
 import org.jetbrains.amper.dependency.resolution.DependencyNodeReference
 import org.jetbrains.amper.dependency.resolution.FileCacheBuilder
 import org.jetbrains.amper.dependency.resolution.GraphSerializableTypesProvider
-import org.jetbrains.amper.dependency.resolution.IncrementalCacheUsage
 import org.jetbrains.amper.dependency.resolution.MavenDependencyNode
 import org.jetbrains.amper.dependency.resolution.MavenDependencyNodeWithContext
 import org.jetbrains.amper.dependency.resolution.MavenDependencyUnspecifiedVersionResolverBase
 import org.jetbrains.amper.dependency.resolution.ResolutionConfigPlain
-import org.jetbrains.amper.dependency.resolution.ResolutionLevel
-import org.jetbrains.amper.dependency.resolution.ResolvedGraph
-import org.jetbrains.amper.dependency.resolution.RootDependencyNodeWithContext
 import org.jetbrains.amper.dependency.resolution.SerializableDependencyNode
 import org.jetbrains.amper.dependency.resolution.SerializableDependencyNodeConverter
 import org.jetbrains.amper.frontend.AmperModule
 import org.jetbrains.amper.frontend.dr.resolver.flow.Classpath
-import org.jetbrains.amper.frontend.dr.resolver.flow.IdeSync
 import org.jetbrains.amper.incrementalcache.IncrementalCache
-import org.jetbrains.amper.telemetry.use
 import org.slf4j.LoggerFactory
 import kotlin.reflect.KClass
 
@@ -48,67 +40,6 @@ internal class ModuleDependenciesResolverImpl: ModuleDependenciesResolver {
         return resolutionFlow.directDependenciesGraph(
             this, fileCacheBuilder, openTelemetry, incrementalCache, sharedResolutionCache)
     }
-
-    @Deprecated("To be redesigned")
-    override suspend fun DependencyNodeHolderWithContext.resolveDependencies(
-        resolutionDepth: ResolutionDepth,
-        resolutionLevel: ResolutionLevel,
-        downloadSources: Boolean,
-        incrementalCacheUsage: IncrementalCacheUsage
-    ): ResolvedGraph {
-        return with(ModuleDependencies) {
-            resolveDependencies(resolutionDepth, resolutionLevel, downloadSources, incrementalCacheUsage)
-        }
-    }
-
-    @Deprecated("Use resolveModuleDependencies instead. To be removed")
-    override suspend fun AmperModule.resolveDependencies(resolutionInput: ResolutionInput): ModuleDependencyNode {
-        with(resolutionInput) {
-            val moduleDependenciesGraph = resolveDependenciesGraph(
-                dependenciesFlowType as DependenciesFlowType.ClassPathType, fileCacheBuilder, openTelemetry, incrementalCache, Cache())
-            val resolvedGraph = moduleDependenciesGraph.resolveDependencies(resolutionDepth, resolutionLevel, downloadSources)
-            return resolvedGraph.root as ModuleDependencyNode
-        }
-    }
-
-    @Deprecated("To be removed")
-    override fun List<AmperModule>.resolveDependenciesGraph(
-        dependenciesFlowType: DependenciesFlowType,
-        fileCacheBuilder: FileCacheBuilder.() -> Unit,
-        openTelemetry: OpenTelemetry?,
-        incrementalCache: IncrementalCache?
-    ): RootDependencyNodeWithContext {
-        val resolutionFlow = when (dependenciesFlowType) {
-            is DependenciesFlowType.ClassPathType -> Classpath(dependenciesFlowType)
-            is DependenciesFlowType.IdeSyncType -> IdeSync(dependenciesFlowType)
-        }
-
-        return resolutionFlow.directDependenciesGraph(this, fileCacheBuilder, openTelemetry, incrementalCache, Cache())
-    }
-
-    @Deprecated("Use resolveModuleDependencies instead. To be removed")
-    override suspend fun List<AmperModule>.resolveDependencies(resolutionInput: ResolutionInput): DependencyNode {
-        return with(resolutionInput) {
-            resolutionInput.openTelemetry.spanBuilder("DR: Resolving dependencies for the list of modules").use {
-                val moduleDependenciesGraph = resolveDependenciesGraph(
-                    dependenciesFlowType, fileCacheBuilder, openTelemetry, incrementalCache)
-                val resolvedGraph = moduleDependenciesGraph.resolveDependencies(resolutionDepth, resolutionLevel, downloadSources, incrementalCacheUsage)
-                resolvedGraph.root
-            }
-        }
-    }
-
-    @Deprecated("To be removed")
-    override suspend fun List<AmperModule>.resolveModuleDependencies(
-        resolutionInput: ResolutionInput,
-        userCacheRoot: AmperUserCacheRoot, // todo (AB) : Looks like a part of [ResolutionInput]
-        leafPlatformsOnly: Boolean,
-        filter: ModuleResolutionFilter?,
-        resolutionType: ResolutionType,
-    ): ResolvedGraph =
-        ModuleDependencies.resolveModuleDependencies(
-            this@resolveModuleDependencies, resolutionInput, userCacheRoot, leafPlatformsOnly, filter, resolutionType
-        )
 }
 
 // todo (AB) : Extract to separate serialization-specific file

@@ -87,11 +87,12 @@ internal class Classpath(
         fragment: Fragment,
         fileCacheBuilder: FileCacheBuilder.() -> Unit,
         openTelemetry: OpenTelemetry?,
-        incrementalCache: IncrementalCache?
+        incrementalCache: IncrementalCache?,
+        sharedResolutionCache: Cache
     ): ModuleDependencyNodeWithModuleAndContext {
         return fragment.module.fragmentsModuleDependencies(flowType, initialFragment = fragment,
             fileCacheBuilder = fileCacheBuilder, openTelemetry = openTelemetry, incrementalCache = incrementalCache,
-            sharedResolutionCache = Cache())
+            sharedResolutionCache = sharedResolutionCache)
     }
 
     override fun resolutionCacheEntryKey(modules: List<AmperModule>): CacheEntryKey {

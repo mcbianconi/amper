@@ -88,50 +88,6 @@ interface ModuleDependenciesResolver {
         incrementalCache: IncrementalCache?,
         sharedResolutionCache: Cache,
     ): ModuleDependencyNodeWithModuleAndContext
-
-    @Deprecated("[AMPER-4905] To be removed")
-    fun List<AmperModule>.resolveDependenciesGraph(
-        dependenciesFlowType: DependenciesFlowType,
-        fileCacheBuilder: FileCacheBuilder.() -> Unit,
-        openTelemetry: OpenTelemetry?,
-        incrementalCache: IncrementalCache?
-    ): RootDependencyNodeWithContext
-
-    /**
-     * @return dependency node representing the root of the resolved graph
-     *
-     * todo (AB) : This functional expose low-level API
-     * todo (AB) : making calling side to prepare DependencyNodeHolderWithContext with properly initialized context.
-     * todo (AB) : Though this method makes sense in general, it is not a part of module resolver.
-     *  It should be split on two parts:
-     *   1. Resolution of maven coordinates (a method that takes the list of maven coordinates and resolution parameters
-     *      and create context and nodes inside, hiding those details from caller)
-     *   2. Resolution of [Classpath] used in plugins
-     *      (a method that takes list of modules and external dependencies and resolve it module-wide aligning version between compile/runtime)
-     *
-     */
-    @Deprecated("[AMPER-4905] To be redesigned")
-    suspend fun DependencyNodeHolderWithContext.resolveDependencies(
-        resolutionDepth: ResolutionDepth,
-        resolutionLevel: ResolutionLevel = ResolutionLevel.NETWORK,
-        downloadSources: Boolean = false,
-        incrementalCacheUsage: IncrementalCacheUsage = IncrementalCacheUsage.USE,
-    ): ResolvedGraph
-
-    @Deprecated("[AMPER-4905] Use resolveModuleDependencies instead. To be removed")
-    suspend fun AmperModule.resolveDependencies(resolutionInput: ResolutionInput): ModuleDependencyNode
-
-    @Deprecated("[AMPER-4905] in favour of [resolveModuleDependencies]")
-    suspend fun List<AmperModule>.resolveDependencies(resolutionInput: ResolutionInput): DependencyNode
-
-    @Deprecated("[AMPER-4905] To be removed")
-    suspend fun List<AmperModule>.resolveModuleDependencies(
-        resolutionInput: ResolutionInput,
-        userCacheRoot: AmperUserCacheRoot, // todo (AB) : Looks like a part of [ResolutionInput]
-        leafPlatformsOnly: Boolean = false,
-        filter: ModuleResolutionFilter? = null,
-        resolutionType: ResolutionType,
-    ): ResolvedGraph
 }
 
 /**
