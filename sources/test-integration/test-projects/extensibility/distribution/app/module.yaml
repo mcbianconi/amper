@@ -13,6 +13,12 @@ plugins:
       "compile":
         dependencies: [ . ]
         scope: compile
+      "combined" :
+        dependencies:
+         - $kotlin.reflect
+         - "com.squareup:kotlinpoet:2.2.0"
+         - ../lib
+        scope: runtime
 
 settings:
   kotlin:

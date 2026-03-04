@@ -4,35 +4,60 @@
 
 package org.jetbrains.amper.tasks.custom
 
+import com.intellij.openapi.vfs.VirtualFile
+import io.opentelemetry.api.GlobalOpenTelemetry
 import org.jetbrains.amper.cli.telemetry.setAmperModule
 import org.jetbrains.amper.core.AmperUserCacheRoot
-import org.jetbrains.amper.dependency.resolution.Context
-import org.jetbrains.amper.dependency.resolution.JavaVersion
-import org.jetbrains.amper.dependency.resolution.MavenDependencyNodeWithContext
+import org.jetbrains.amper.dependency.resolution.ResolutionLevel
 import org.jetbrains.amper.dependency.resolution.ResolutionPlatform
 import org.jetbrains.amper.dependency.resolution.ResolutionScope
-import org.jetbrains.amper.dependency.resolution.RootDependencyNodeWithContext
 import org.jetbrains.amper.engine.Task
 import org.jetbrains.amper.engine.TaskGraphExecutionContext
 import org.jetbrains.amper.frontend.AmperModule
+import org.jetbrains.amper.frontend.AmperModuleFileSource
+import org.jetbrains.amper.frontend.Artifact
+import org.jetbrains.amper.frontend.ClassBasedSet
+import org.jetbrains.amper.frontend.Fragment
+import org.jetbrains.amper.frontend.FragmentLink
+import org.jetbrains.amper.frontend.Layout
+import org.jetbrains.amper.frontend.LeafFragment
 import org.jetbrains.amper.frontend.MavenCoordinates
+import org.jetbrains.amper.frontend.MavenDependency
+import org.jetbrains.amper.frontend.ModulePart
+import org.jetbrains.amper.frontend.Notation
 import org.jetbrains.amper.frontend.Platform
 import org.jetbrains.amper.frontend.TaskName
+import org.jetbrains.amper.frontend.VersionCatalog
+import org.jetbrains.amper.frontend.aomBuilder.DefaultLocalModuleDependency
+import org.jetbrains.amper.frontend.api.DefaultTrace
 import org.jetbrains.amper.frontend.dr.resolver.CliReportingMavenResolver
+import org.jetbrains.amper.frontend.dr.resolver.DependenciesFlowType
+import org.jetbrains.amper.frontend.dr.resolver.ModuleDependencies
+import org.jetbrains.amper.frontend.dr.resolver.ModuleResolutionFilter
+import org.jetbrains.amper.frontend.dr.resolver.ResolutionDepth
+import org.jetbrains.amper.frontend.dr.resolver.ResolutionInput
+import org.jetbrains.amper.frontend.dr.resolver.ResolutionType
+import org.jetbrains.amper.frontend.dr.resolver.flow.toPlatform
 import org.jetbrains.amper.frontend.dr.resolver.flow.toRepository
 import org.jetbrains.amper.frontend.dr.resolver.getAmperFileCacheBuilder
 import org.jetbrains.amper.frontend.dr.resolver.getExternalDependencies
 import org.jetbrains.amper.frontend.dr.resolver.toDrMavenCoordinates
-import org.jetbrains.amper.frontend.jdkSettings
 import org.jetbrains.amper.frontend.mavenRepositories
+import org.jetbrains.amper.frontend.plugins.AmperMavenPluginDescription
+import org.jetbrains.amper.frontend.plugins.TaskFromPluginDescription
+import org.jetbrains.amper.frontend.schema.PluginSettings
+import org.jetbrains.amper.frontend.schema.ProductType
+import org.jetbrains.amper.frontend.schema.Settings
 import org.jetbrains.amper.incrementalcache.IncrementalCache
+import org.jetbrains.amper.tasks.CommonTaskType
+import org.jetbrains.amper.tasks.ResolveExternalDependenciesTask
 import org.jetbrains.amper.tasks.TaskResult
-import org.jetbrains.amper.frontend.dr.resolver.buildDependenciesGraph
 import org.jetbrains.amper.tasks.toIncrementalCacheResult
 import org.jetbrains.amper.telemetry.setListAttribute
 import org.jetbrains.amper.telemetry.spanBuilder
 import org.jetbrains.amper.telemetry.use
 import java.nio.file.Path
+import kotlin.io.path.Path
 import kotlin.io.path.pathString
 
 internal class ResolveCustomExternalDependenciesTask(
@@ -44,35 +69,84 @@ internal class ResolveCustomExternalDependenciesTask(
     private val externalDependencies: List<MavenCoordinates>,
     private val localDependencies: List<AmperModule>,
 ) : Task {
+    /**
+     * The task supports JVM only resolution.
+     * This limitation comes from the plugins subsystem,
+     * technically there is no problem to support multi-platform resolution from the DR perspective here.
+     */
+    private val platform = ResolutionPlatform.JVM
+    private val isTest = false
+
     private val mavenResolver = CliReportingMavenResolver(userCacheRoot, incrementalCache)
 
     override suspend fun run(
         dependenciesResult: List<TaskResult>,
         executionContext: TaskGraphExecutionContext,
     ): Result {
-        val repositories = module.mavenRepositories.filter { it.resolve }.map { it.toRepository() }
-        val drContext = Context {
-            this.repositories = repositories
-            this.cache = getAmperFileCacheBuilder(userCacheRoot)
-            this.scope = resolutionScope
-            this.platforms = setOf(ResolutionPlatform.JVM)
-            this.jdkVersion = JavaVersion(module.jdkSettings.version)
-        }
-        val externalDependencyNodes = externalDependencies.map {
-            // It's safe to split here, because, validation was already done in the frontend
-            MavenDependencyNodeWithContext(drContext, it.toDrMavenCoordinates(), isBom = false)
-        }
-        // todo (AB) : [AMPER-4905] Runtime scope should be added here resolved as well, and later filtered out in [toIncrementalCacheResult]
-        val localDependencyNodes = localDependencies.map {
-            it.buildDependenciesGraph(isTest = false, Platform.JVM, resolutionScope, true, userCacheRoot, incrementalCache)
-        }
+        val dependencyPaths: List<Path> =
+            when {
+                externalDependencies.isEmpty() && localDependencies.isEmpty() -> emptyList()
+                // todo (AB) : Inside this task
+                //  the case for COMPILE scope (resolution of module compilation classpath) is undistinguishable
+                //  from the case where user would like to declare compile classpath that depends on
+                //  module code and on its exported dependencies only
+                //  (like a COMPILE classpath of the module that depends on the declared one).
+                //  The latter case is imagined one so we don't support it for now assuming that a single dependency on
+                //  the local module means requesting classpath of that module.
+                //  See https://youtrack.jetbrains.com/issue/AMPER-5243 for details
+                externalDependencies.isEmpty() && localDependencies.size == 1 -> {
+                    // Resolve local module dependencies
+                    localDependencies.single().resolveModuleDependencies(executionContext)
+                }
+                localDependencies.isEmpty() -> {
+                    // Resolve module-agnostic list of Maven dependencies
+                    resolveExternalMavenDependencies(externalDependencies)
+                }
+                else -> {
+                    // Mixed external and module dependencies
+                    if (resolutionScope == ResolutionScope.COMPILE) {
+                        throw UnsupportedOperationException(
+                            "Mixed external and module dependencies are not supported for COMPILE resolution scope yet."
+                        )
+                    }
+                    resolveMixedExternalAndModuleDependencies()
+                }
+            }
 
-        val root = RootDependencyNodeWithContext(
-            children = localDependencyNodes + externalDependencyNodes,
-            templateContext = drContext,
+        return Result(
+            resolvedFiles = dependencyPaths,
         )
+    }
 
-        val externalDependencies = root.getExternalDependencies()
+    private suspend fun AmperModule.resolveModuleDependencies(executionContext: TaskGraphExecutionContext): List<Path> {
+        val module = this
+
+        val moduleDependencies = with(ModuleDependencies) {
+            moduleDependencies(userCacheRoot, incrementalCache,GlobalOpenTelemetry.get())
+        }
+
+        val result = ResolveExternalDependenciesTask(
+            module = module,
+            userCacheRoot = userCacheRoot,
+            incrementalCache = incrementalCache,
+            platform = platform.toPlatform(),
+            isTest = isTest,
+            moduleDependencies = moduleDependencies,
+            taskName = CommonTaskType.Dependencies.getTaskName(module, platform.toPlatform(), isTest),
+        ).run(
+            dependenciesResult = emptyList(),
+            executionContext = executionContext,
+        ) as ResolveExternalDependenciesTask.Result
+
+        return when (resolutionScope) {
+            ResolutionScope.COMPILE -> result.compileClasspath
+            ResolutionScope.RUNTIME -> result.runtimeClasspath
+        }
+    }
+
+    private suspend fun resolveExternalMavenDependencies(externalDependencies: List<MavenCoordinates>): List<Path> {
+        val repositories = module.mavenRepositories.filter { it.resolve }.map { it.toRepository() }
+
         val dependencyPaths = incrementalCache.execute(
             key = taskName.name,
             inputValues = mapOf(
@@ -87,14 +161,142 @@ internal class ResolveCustomExternalDependenciesTask(
                 .setAmperModule(module)
                 .setListAttribute("dependencies-coordinates", externalDependencies.map { it.toString() })
                 .use {
-                    val resolvedGraph = mavenResolver.resolve(root, "custom external dependencies")
+                    val resolvedGraph = mavenResolver.resolve(
+                        coordinates = externalDependencies.map { it.toDrMavenCoordinates() },
+                        repositories = repositories,
+                        scope = resolutionScope,
+                        platform = platform,
+                        resolveSourceMoniker = "custom external dependencies"
+                    )
                     resolvedGraph.toIncrementalCacheResult()
                 }
         }.outputFiles
 
-        return Result(
-            resolvedFiles = dependencyPaths,
-        )
+        return dependencyPaths
+    }
+
+    /**
+     * Resolves mixes external and module dependencies.
+     * Semantically, it is equivalent to declaring a module with given mixed dependencies and then resolving
+     * dependencies of that module according to Amper module resolution rules.
+     * Note:
+     * - non-exported compile dependencies of given local modules are not included in the resolution result for COMPILE
+     *   resolution scope.
+     * - still versions of libraries from COMPILE and RUNTIME classpath of given mixed dependencies are aligned.
+     */
+    private suspend fun resolveMixedExternalAndModuleDependencies(): List<Path> {
+        val module = getModuleForMixedDeps()
+        val moduleDependencies = with(ModuleDependencies) {
+            module.moduleDependencies(userCacheRoot, incrementalCache, GlobalOpenTelemetry.get())
+        }
+
+        val moduleDependenciesRoot = moduleDependencies.allLeafPlatformsGraph(isForTests = false)
+        val externalDependencies = moduleDependenciesRoot.children.flatMap { it.getExternalDependencies() }
+
+        val repositories = module.mavenRepositories.filter { it.resolve }.map { it.toRepository() }
+
+        val dependencyPaths = incrementalCache.execute(
+            key = taskName.name,
+            inputValues = mapOf(
+                "userCacheRoot" to userCacheRoot.path.pathString,
+                "repositories" to repositories.joinToString("|"),
+                "resolutionScope" to resolutionScope.name,
+                "dependencies" to externalDependencies.joinToString("|"),
+            ),
+            inputFiles = emptyList()
+        ) {
+            spanBuilder(taskName.name)
+                .setAmperModule(module)
+                .setListAttribute("dependencies-coordinates", externalDependencies.map { it.toString() })
+                .use {
+                    val resolvedGraph = with(ModuleDependencies) {
+                        resolveModuleDependencies(
+                            moduleDependenciesList = listOf(moduleDependencies),
+                            resolutionInput = ResolutionInput(
+                                dependenciesFlowType = DependenciesFlowType.ClassPathType(resolutionScope, setOf(platform), isTest = isTest, false),
+                                resolutionDepth = ResolutionDepth.GRAPH_FULL,
+                                resolutionLevel = ResolutionLevel.NETWORK,
+                                downloadSources = false,
+                                openTelemetry = GlobalOpenTelemetry.get(),
+                                incrementalCache = incrementalCache,
+                                fileCacheBuilder = { getAmperFileCacheBuilder(userCacheRoot) }
+                            ),
+                            leafPlatformsOnly = true,
+                            filter = ModuleResolutionFilter(resolutionScope, platforms = setOf(ResolutionPlatform.JVM)),
+                            resolutionType = ResolutionType.MAIN
+                        )
+                    }
+
+                    resolvedGraph.toIncrementalCacheResult()
+                }
+        }.outputFiles
+
+        return dependencyPaths
+    }
+
+    /**
+     * Creates a synthetic module that combines given dependencies for custom resolution.
+     */
+    private fun getModuleForMixedDeps(): AmperModule {
+        val requestedLocalModuleDependencies = localDependencies
+        val requestedExternalDependencies = externalDependencies
+
+        val moduleName = "${module.userReadableName}:$taskName:classpath"
+        val hostModule = module
+
+        val syntheticModule = object : AmperModule by module {
+            override val userReadableName: String = moduleName
+            override val type: ProductType = hostModule.type
+            override val source: AmperModuleFileSource =
+                // Unique module source
+                AmperModuleFileSource(
+                    hostModule.source.moduleDir.resolve(taskName.name.replace(Regex("[^a-zA-Z0-9.\\-_]"), ""))
+                )
+            override val aliases: Map<String, Set<Platform>> = emptyMap()
+            override val fragments: MutableList<Fragment> = mutableListOf()
+            override val artifacts: List<Artifact> = emptyList()
+            override val parts: ClassBasedSet<ModulePart<*>> = hostModule.parts
+            override val usedCatalog: VersionCatalog = hostModule.usedCatalog
+            override val usedTemplates: List<VirtualFile> = emptyList()
+            override val tasksFromPlugins: List<TaskFromPluginDescription> = emptyList()
+            override val layout: Layout = hostModule.layout
+            override val amperMavenPluginsDescriptions: List<AmperMavenPluginDescription> = emptyList()
+            override val pluginSettings: PluginSettings = PluginSettings()
+        }
+
+        val fragment = object : LeafFragment {
+            override val platform: Platform = Platform.JVM
+            override val platforms: Set<Platform> = setOf(Platform.JVM)
+            override val isTest: Boolean = false
+            override val name: String = "$moduleName:fragment"
+            override val modifier: String = ""
+            override val module: AmperModule = syntheticModule
+            override val externalDependencies: List<Notation> = buildList {
+                requestedLocalModuleDependencies.forEach {
+                    add(DefaultLocalModuleDependency(it, Path("."), DefaultTrace))
+                }
+                requestedExternalDependencies.forEach {
+                    add(MavenDependency(it, it.trace))
+                }
+            }
+            override val fragmentDependencies: List<FragmentLink> = emptyList()
+            override val fragmentDependants: List<FragmentLink> = emptyList()
+            override val sourceRoots: List<Path> = emptyList()
+            override val resourcesPath: Path = Path(".")
+            override val composeResourcesPath: Path = Path(".")
+            override val hasAnyComposeResources: Boolean = false
+
+            override val settings: Settings =
+                hostModule.fragments.firstOrNull { it.platforms.singleOrNull() == Platform.JVM }?.settings ?: Settings()
+
+            override fun generatedSourceDirs(buildOutputRoot: Path): List<Path> = emptyList()
+            override fun generatedResourceDirs(buildOutputRoot: Path): List<Path> = emptyList()
+            override fun generatedClassDirs(buildOutputRoot: Path): List<Path> = emptyList()
+        }
+
+        syntheticModule.fragments.add(fragment)
+
+        return syntheticModule
     }
 
     class Result(

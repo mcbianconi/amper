@@ -62,12 +62,15 @@ class PluginsTest : AmperCliTestBase() {
         val buildDir = tempRoot / "build"
         val projectDir = r1.projectDir
 
-        // We expect Kotlin 2.2.10 specifically in the 'from-catalog' and 'compile' classpaths because the 'app' module
-        // overrides settings.kotlin.version.
         // In the 'core' and 'lib' modules, the Kotlin version is not overridden, so we expect the default in the
-        // corresponding classpaths.
-        // In 'base', the runtime classpath gets the default Kotlin version transitively from core/lib because it's
-        // higher, so we expect the default Kotlin version even though it sets Kotlin to 2.2.10 explicitly.
+        //   corresponding classpaths.
+        // We expect Kotlin 2.2.10 specifically in the 'from-catalog' because the 'app' module
+        //   overrides settings.kotlin.version.
+        // We expect Kotlin 2.3.10 specifically in the 'compile' classpaths
+        //   inspite of the 'app' module overrides settings.kotlin.version.
+        //   In 'compile', the version is aligned with the runtime classpath of the module.
+        //   The runtime classpath of the module gets the default Kotlin version transitively from core/lib because it's
+        //   higher, so we expect the default Kotlin version even though it sets Kotlin to 2.2.10 explicitly.
         r1.assertCustomTaskStdoutContains(
             taskName = taskName,
             output = """
@@ -97,7 +100,15 @@ class PluginsTest : AmperCliTestBase() {
             classpath compile.dependencies = [{modulePath: $projectDir/app}]
             classpath compile.dependencies[0] = {modulePath: $projectDir/app}
             classpath compile.dependencies[0].modulePath = $projectDir/app
-            classpath compile.resolvedFiles = [${Dirs.userCacheRoot}/.m2.cache/org/jetbrains/kotlin/kotlin-stdlib/2.2.10/kotlin-stdlib-2.2.10.jar, ${Dirs.userCacheRoot}/.m2.cache/org/jetbrains/annotations/13.0/annotations-13.0.jar]
+            classpath compile.resolvedFiles = [${Dirs.userCacheRoot}/.m2.cache/org/jetbrains/kotlin/kotlin-stdlib/${DefaultVersions.kotlin}/kotlin-stdlib-${DefaultVersions.kotlin}.jar, ${Dirs.userCacheRoot}/.m2.cache/org/jetbrains/annotations/13.0/annotations-13.0.jar]
+            classpath combined.dependencies = [{coordinates: org.jetbrains.kotlin:kotlin-reflect:2.2.10}, {coordinates: com.squareup:kotlinpoet:2.2.0}, {modulePath: $projectDir/lib}]
+            classpath combined.dependencies[0] = {coordinates: org.jetbrains.kotlin:kotlin-reflect:2.2.10}
+            classpath combined.dependencies[0].coordinates = org.jetbrains.kotlin:kotlin-reflect:2.2.10
+            classpath combined.dependencies[1] = {coordinates: com.squareup:kotlinpoet:2.2.0}
+            classpath combined.dependencies[1].coordinates = com.squareup:kotlinpoet:2.2.0
+            classpath combined.dependencies[2] = {modulePath: $projectDir/lib}
+            classpath combined.dependencies[2].modulePath = $projectDir/lib
+            classpath combined.resolvedFiles = [$buildDir/tasks/_lib_jarJvm/lib-jvm.jar, $buildDir/tasks/_core_jarJvm/core-jvm.jar, ${Dirs.userCacheRoot}/.m2.cache/org/jetbrains/kotlin/kotlin-reflect/2.2.10/kotlin-reflect-2.2.10.jar, ${Dirs.userCacheRoot}/.m2.cache/org/jetbrains/kotlin/kotlin-stdlib/${DefaultVersions.kotlin}/kotlin-stdlib-${DefaultVersions.kotlin}.jar, ${Dirs.userCacheRoot}/.m2.cache/com/squareup/kotlinpoet-jvm/2.2.0/kotlinpoet-jvm-2.2.0.jar, ${Dirs.userCacheRoot}/.m2.cache/org/jetbrains/annotations/13.0/annotations-13.0.jar]
             compilation result: {from: {modulePath: $projectDir/app}}
             compilation result path: $buildDir/tasks/_app_jarJvm/app-jvm.jar
         """.trimIndent().replace('/', File.separatorChar))
