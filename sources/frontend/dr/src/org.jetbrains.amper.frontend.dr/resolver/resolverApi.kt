@@ -72,13 +72,17 @@ interface ModuleDependenciesResolver {
 /**
  * Filter resolution results.
  * Resolution is executed module wide, aligning versions for all platforms' dependencies and across RUNTIME/COMPILE scopes.
+ * main and test resolution are still isolation to avoid tests classpath affecting the main classpath.
  *
  * This filter is intended to be used If the caller needs resolution results for specific platforms/scope only.
  */
 data class ModuleResolutionFilter(
     val scope: ResolutionScope? = null,
     val platforms: Set<ResolutionPlatform>? = null,
+    val resolutionType: ResolutionType = ResolutionType.MAIN,
 )
+
+internal val defaultModuleResolutionFilter = ModuleResolutionFilter()
 
 abstract class DependencyNodeHolderWithNotationAndContext(
     graphEntryName: String,

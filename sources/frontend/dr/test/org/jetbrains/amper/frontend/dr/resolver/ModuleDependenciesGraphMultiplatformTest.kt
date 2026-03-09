@@ -48,6 +48,7 @@ class ModuleDependenciesGraphMultiplatformTest : BaseModuleDrTest() {
             aom,
             resolutionInput = ideSyncTestResolutionInput,
             module = "jvm-empty",
+            filter = ideSyncModuleResolutionFilter
         )
 
         assertFiles(
@@ -66,7 +67,7 @@ class ModuleDependenciesGraphMultiplatformTest : BaseModuleDrTest() {
             ideSyncTestResolutionInput,
             module = "shared",
             fragment = "ios",
-            filter = ModuleResolutionFilter(scope = ResolutionScope.COMPILE)
+            filter = ideSyncModuleResolutionFilter.copy(scope = ResolutionScope.COMPILE)
         )
         assertFiles(testInfo, sharedIosFragmentDeps)
     }
@@ -80,7 +81,7 @@ class ModuleDependenciesGraphMultiplatformTest : BaseModuleDrTest() {
             ideSyncTestResolutionInput,
             module = "shared",
             fragment = "iosX64",
-            filter = ModuleResolutionFilter(scope = ResolutionScope.COMPILE)
+            filter = ideSyncModuleResolutionFilter.copy(scope = ResolutionScope.COMPILE)
         )
 
         assertFiles(testInfo, iosAppIosX64FragmentDeps)
@@ -95,7 +96,7 @@ class ModuleDependenciesGraphMultiplatformTest : BaseModuleDrTest() {
             ideSyncTestResolutionInput,
             module = "shared",
             fragment = "iosX64Test",
-            filter = ModuleResolutionFilter(scope = ResolutionScope.COMPILE)
+            filter = ideSyncModuleResolutionFilter.copy(scope = ResolutionScope.COMPILE)
         )
 
         assertFiles(testInfo, iosAppIosX64FragmentDeps)
@@ -114,7 +115,7 @@ class ModuleDependenciesGraphMultiplatformTest : BaseModuleDrTest() {
             ideSyncTestResolutionInput,
             module = "ios-app",
             fragment = "iosX64Test",
-            filter = ModuleResolutionFilter(scope = ResolutionScope.COMPILE)
+            filter = ideSyncModuleResolutionFilter.copy(scope = ResolutionScope.COMPILE)
         )
 
         assertFiles(testInfo, iosAppIosX64FragmentDeps)
@@ -130,7 +131,7 @@ class ModuleDependenciesGraphMultiplatformTest : BaseModuleDrTest() {
             ideSyncTestResolutionInput,
             module = "ios-app",
             fragment = "ios",
-            filter = ModuleResolutionFilter(scope = ResolutionScope.COMPILE)
+            filter = ideSyncModuleResolutionFilter.copy(scope = ResolutionScope.COMPILE)
         )
         assertFiles(testInfo, iosAppIosFragmentDeps)
     }
@@ -144,7 +145,7 @@ class ModuleDependenciesGraphMultiplatformTest : BaseModuleDrTest() {
             ideSyncTestResolutionInput,
             module = "ios-app",
             fragment = "iosX64",
-            filter = ModuleResolutionFilter(scope = ResolutionScope.COMPILE)
+            filter = ideSyncModuleResolutionFilter.copy(scope = ResolutionScope.COMPILE)
         )
         assertFiles(testInfo, iosAppIosX64FragmentDeps)
     }
@@ -163,7 +164,7 @@ class ModuleDependenciesGraphMultiplatformTest : BaseModuleDrTest() {
             ideSyncTestResolutionInput,
             module = "android-app",
             fragment = "main",
-            filter = ModuleResolutionFilter(scope = ResolutionScope.COMPILE)
+            filter = ideSyncModuleResolutionFilter.copy(scope = ResolutionScope.COMPILE)
         )
         // todo (AB) : Some versions are incorrect (?) - check difference with Gradle
         assertFiles(testInfo, androidAppAndroidFragmentDeps)
@@ -179,7 +180,7 @@ class ModuleDependenciesGraphMultiplatformTest : BaseModuleDrTest() {
             ideSyncTestResolutionInput,
             module = "shared",
             fragment = "android",
-            filter = ModuleResolutionFilter(scope = ResolutionScope.COMPILE)
+            filter = ideSyncModuleResolutionFilter.copy(scope = ResolutionScope.COMPILE)
         )
         // todo (AB) : Some versions are incorrect (?) - check difference with Gradle
         assertFiles(testInfo, sharedAndroidFragmentDeps)
@@ -235,7 +236,7 @@ class ModuleDependenciesGraphMultiplatformTest : BaseModuleDrTest() {
             aom,
             ideSyncTestResolutionInput,
             module = "kmp-library",
-            filter = ModuleResolutionFilter(scope = ResolutionScope.COMPILE)
+            filter = ideSyncModuleResolutionFilter.copy(scope = ResolutionScope.COMPILE)
         )
 
         moduleDeps.assertParentKmpLibraries(

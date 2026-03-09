@@ -31,9 +31,10 @@ import org.jetbrains.amper.dependency.resolution.mavenCoordinatesTrimmed
 import org.jetbrains.amper.frontend.AmperModule
 import org.jetbrains.amper.frontend.Model
 import org.jetbrains.amper.frontend.Platform
+import org.jetbrains.amper.frontend.dr.resolver.AmperResolutionSettings
 import org.jetbrains.amper.frontend.dr.resolver.ModuleDependencies
 import org.jetbrains.amper.frontend.dr.resolver.ModuleDependencyNode
-import org.jetbrains.amper.frontend.dr.resolver.AmperResolutionSettings
+import org.jetbrains.amper.frontend.dr.resolver.ModuleResolutionFilter
 import org.jetbrains.amper.frontend.dr.resolver.ResolutionType
 import org.jetbrains.amper.frontend.dr.resolver.flow.toResolutionPlatform
 import org.jetbrains.amper.frontend.dr.resolver.moduleDependenciesResolver
@@ -141,8 +142,7 @@ internal class ShowDependenciesCommand: AmperModelAwareCommand(name = "dependenc
                         incrementalCache = cliContext.incrementalCache,
                         openTelemetry = GlobalOpenTelemetry.get(),
                     ),
-                    resolutionType = if (includeTests) ResolutionType.ALL else ResolutionType.MAIN,
-                    filter = null,
+                    filter = ModuleResolutionFilter(resolutionType = if (includeTests) ResolutionType.ALL else ResolutionType.MAIN),
                 )
         }
 

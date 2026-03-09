@@ -42,7 +42,7 @@ class DependencyInsightsTest : BaseModuleDrTest() {
             aom,
             resolutionInput = ideSyncTestResolutionInput,
             module = "jvm-empty",
-            filter = ModuleResolutionFilter(scope = ResolutionScope.COMPILE),
+            filter = ideSyncModuleResolutionFilter.copy(scope = ResolutionScope.COMPILE),
         )
 
         assertInsightByFile(

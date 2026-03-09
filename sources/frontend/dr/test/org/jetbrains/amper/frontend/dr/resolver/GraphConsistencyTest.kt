@@ -41,7 +41,6 @@ class GraphConsistencyTest: BaseModuleDrTest() {
                         incrementalCacheUsage = getIncrementalCacheUsage()
                     ),
                     filter = ModuleResolutionFilter(ResolutionScope.RUNTIME, platforms = setOf(ResolutionPlatform.JVM)),
-                    resolutionType =  ResolutionType.MAIN
                 )
             }
         }

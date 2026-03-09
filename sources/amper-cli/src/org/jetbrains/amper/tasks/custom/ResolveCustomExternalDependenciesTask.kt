@@ -212,8 +212,7 @@ internal class ResolveCustomExternalDependenciesTask(
                         resolveModuleDependencies(
                             moduleDependenciesList = listOf(moduleDependencies),
                             leafPlatformsOnly = true,
-                            filter = ModuleResolutionFilter(resolutionScope, platforms = setOf(platform)),
-                            resolutionType = resolutionType
+                            filter = ModuleResolutionFilter(resolutionScope, platforms = setOf(platform), resolutionType = resolutionType),
                         )
                     }
 

@@ -361,6 +361,7 @@ class ModuleDependencies private constructor(
             val openTelemetry = resolutionSettings.openTelemetry
             val incrementalCache = resolutionSettings.incrementalCache
             val fileCacheBuilder = resolutionSettings.fileCacheBuilder
+            val filter = ModuleResolutionFilter(resolutionType = ResolutionType.ALL)
             // Wrapping into per-project cache entry
             // Goal: if nothing has changed, check inputs once, instead of checking inputs for every module where
             //       one library from shared module is checked as an input as many times as many modules depend on it transitively
@@ -384,11 +385,11 @@ class ModuleDependencies private constructor(
                     if (incrementalCacheUsage == IncrementalCacheUsage.SKIP
                         || incrementalCache == null
                     ) {
-                        resolveDependenciesBatch(moduleGraphs, null)
+                        resolveDependenciesBatch(moduleGraphs, filter)
                     } else {
                         val graphEntryKeys = moduleGraphs.flatMap{ it.getDependenciesGraphInput() }
                         if (graphEntryKeys.contains(CacheEntryKey.NotCached)) {
-                            resolveDependenciesBatch(moduleGraphs, null)
+                            resolveDependenciesBatch(moduleGraphs, filter)
                         } else {
                             val cacheInputValues = mapOf(
                                 "userCacheRoot" to moduleGraphs.first().context.settings.fileCache.amperCache.pathString,
@@ -409,7 +410,7 @@ class ModuleDependencies private constructor(
                                         //  2. All resolutions should share MavenDependency cache to avoid multiple parsing of library metadata
                                         //  key should include scope, platforms and most probably repositories (think about reducing hash/equal execution time for such keys).
 
-                                        val compositeGraph = resolveDependenciesBatch(moduleGraphs, null)
+                                        val compositeGraph = resolveDependenciesBatch(moduleGraphs, filter)
                                         val serializableGraph = compositeGraph.root.toGraph()
 
                                         ResultWithSerializable(
@@ -430,7 +431,7 @@ class ModuleDependencies private constructor(
                                 } catch (e: Exception) {
                                     logger.error("Unable to post-process the serializable dependency graph. " +
                                             "Falling back to uncached resolution", e)
-                                    resolveDependenciesBatch(moduleGraphs, null)
+                                    resolveDependenciesBatch(moduleGraphs, filter)
                                 }
                             }
                         }
@@ -444,8 +445,7 @@ class ModuleDependencies private constructor(
             resolutionSettings: AmperResolutionSettings,
             resolutionRunSettings: ResolutionRunSettings = defaultResolutionRunSettings,
             leafPlatformsOnly: Boolean = false,
-            filter: ModuleResolutionFilter?,
-            resolutionType: ResolutionType, // should it be part of a filter?
+            filter: ModuleResolutionFilter = defaultModuleResolutionFilter,
         ): ResolvedGraph {
             val sharedResolutionCache = Cache()
             val moduleDependenciesList = modules.map { ModuleDependencies(it, resolutionSettings, sharedResolutionCache) }
@@ -455,7 +455,6 @@ class ModuleDependencies private constructor(
                 resolutionRunSettings,
                 leafPlatformsOnly,
                 filter,
-                resolutionType,
             )
         }
 
@@ -463,8 +462,7 @@ class ModuleDependencies private constructor(
             moduleDependenciesList: List<ModuleDependencies>,
             resolutionRunSettings: ResolutionRunSettings = defaultResolutionRunSettings,
             leafPlatformsOnly: Boolean,
-            filter: ModuleResolutionFilter?,
-            resolutionType: ResolutionType,
+            filter: ModuleResolutionFilter,
         ): ResolvedGraph {
             val openTelemetry = moduleDependenciesList.first().resolutionSettings.openTelemetry
             return openTelemetry.spanBuilder("DR: Resolving dependencies for the list of modules").use {
@@ -472,18 +470,18 @@ class ModuleDependencies private constructor(
                     moduleDependenciesList.forEach {
                         if (leafPlatformsOnly) {
                             //  1. Tests and main should be resolved separately in IdeSync-mode
-                            if (resolutionType.includeMain) {
+                            if (filter.resolutionType.includeMain) {
                                 add(it.allLeafPlatformsGraph(isForTests = false))
                             }
-                            if (resolutionType.includeTest) {
+                            if (filter.resolutionType.includeTest) {
                                 add(it.allLeafPlatformsGraph(isForTests = true))
                             }
                         } else {
                             //  1. Tests and main should be resolved separately in IdeSync-mode
-                            if (resolutionType.includeMain) {
+                            if (filter.resolutionType.includeMain) {
                                 add(it.allFragmentsGraph(isForTests = false, flattenGraph = false))
                             }
-                            if (resolutionType.includeTest) {
+                            if (filter.resolutionType.includeTest) {
                                 add(it.allFragmentsGraph(isForTests = true, flattenGraph = false))
                             }
                         }
@@ -496,7 +494,7 @@ class ModuleDependencies private constructor(
 
         private suspend fun ResolutionRunSettings.resolveDependenciesBatch(
             moduleGraphs: List<DependencyNodeHolderWithContext>,
-            filter: ModuleResolutionFilter?,
+            filter: ModuleResolutionFilter,
         ): ResolvedGraph {
             val resolvedGraphs = coroutineScope {
                 moduleGraphs.map {
@@ -510,7 +508,7 @@ class ModuleDependencies private constructor(
                 resolvedGraphs
                     .flatMap { if (it.root is RootDependencyNode) it.root.children else listOf(it.root) }
                     .filter {
-                        filter == null || with(filter) {
+                        with(filter) {
                             // todo (AB) : This filtering works for non-flattened list only.
                             it is ModuleDependencyNode
                                     && (platforms == null || platforms == it.resolutionConfig.platforms)

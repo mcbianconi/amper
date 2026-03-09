@@ -28,6 +28,7 @@ class GraphOptimizationsTest : BaseModuleDrTest() {
                 aom,
                 resolutionInput = ideSyncTestResolutionInput,
                 module = "jvm-empty",
+                filter = ideSyncModuleResolutionFilter,
             )
 
             checkNode(testFragmentDeps, ModuleDependencyNode::class)

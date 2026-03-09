@@ -57,6 +57,7 @@ class DiagnosticsTest : BaseModuleDrTest() {
             aom,
             ideSyncTestResolutionInput,
             module = "shared",
+            filter = ideSyncModuleResolutionFilter,
             messagesCheck = { node ->
                 if (!assertDependencyError(node, "org.jetbrains.compose.foundation", "foundation")
                     && !assertDependencyError(node, "org.jetbrains.compose.ui", "ui")
@@ -139,7 +140,7 @@ class DiagnosticsTest : BaseModuleDrTest() {
                 messagesCheck = { node ->
                     node.messages.all { it.severity <= Severity.WARNING }
                 },
-                filter = ModuleResolutionFilter(scope = ResolutionScope.COMPILE)
+                filter = ideSyncModuleResolutionFilter.copy(scope = ResolutionScope.COMPILE)
             )
 
             assertFiles(testInfo,projectDeps)
@@ -199,7 +200,8 @@ class DiagnosticsTest : BaseModuleDrTest() {
                     ideSyncTestResolutionInput,
                     messagesCheck = { node ->
                         node.messages.all { it.severity <= Severity.WARNING }
-                    }
+                    },
+                    filter = ideSyncModuleResolutionFilter.copy(scope = ResolutionScope.COMPILE)
                 )
             }
 
@@ -270,7 +272,7 @@ class DiagnosticsTest : BaseModuleDrTest() {
                      ╰─── org.jetbrains.kotlin:kotlin-stdlib:${DefaultVersions.kotlin}
                           ╰─── org.jetbrains:annotations:13.0
             """.trimIndent(),
-            filter = ModuleResolutionFilter(scope = ResolutionScope.COMPILE),
+            filter = ideSyncModuleResolutionFilter.copy(scope = ResolutionScope.COMPILE),
             verifyMessages = false,
         )
 
@@ -306,9 +308,7 @@ class DiagnosticsTest : BaseModuleDrTest() {
             ideSyncTestResolutionInput,
             module = "app",
             fragment = "main",
-            filter = ModuleResolutionFilter(
-                scope = ResolutionScope.COMPILE,
-            ),
+            filter = ideSyncModuleResolutionFilter.copy(scope = ResolutionScope.COMPILE),
             verifyMessages = false,
         )
 
@@ -357,9 +357,7 @@ class DiagnosticsTest : BaseModuleDrTest() {
             ideSyncTestResolutionInput,
             module = "app",
             fragment = "main",
-            filter = ModuleResolutionFilter(
-                scope = ResolutionScope.RUNTIME,
-            ),
+            filter = ideSyncModuleResolutionFilter.copy(scope = ResolutionScope.RUNTIME),
             verifyMessages = false,
         )
 

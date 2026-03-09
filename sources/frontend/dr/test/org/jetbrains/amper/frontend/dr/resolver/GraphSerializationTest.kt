@@ -48,7 +48,7 @@ class GraphSerializationTest: BaseModuleDrTest() {
             aom,
             resolutionInput = ideSyncTestResolutionInput,
             module = "D2",
-            filter = ModuleResolutionFilter(scope = ResolutionScope.COMPILE)
+            filter = ideSyncModuleResolutionFilter.copy(scope = ResolutionScope.COMPILE)
         )
 
         assertRepetitiveGraphSerialization(appModuleGraph, testInfo)
@@ -67,7 +67,8 @@ class GraphSerializationTest: BaseModuleDrTest() {
                 )
             ),
             module = "ios-app",
-            filter = ModuleResolutionFilter(scope = ResolutionScope.COMPILE)
+            filter = ideSyncModuleResolutionFilter.copy(scope = ResolutionScope.COMPILE),
+            verifyMessages = false
         )
 
         assertRepetitiveGraphSerialization(iosAppModuleDeps, testInfo)
@@ -81,10 +82,8 @@ class GraphSerializationTest: BaseModuleDrTest() {
         val root = doTestByFile(
             testInfo,
             aom,
-            resolutionInput = ideSyncTestResolutionInput.copy(
-                resolutionType = ResolutionType.ALL,
-            ),
-            filter = ModuleResolutionFilter(scope = ResolutionScope.COMPILE),
+            ideSyncTestResolutionInput,
+            filter = ideSyncModuleResolutionFilter.copy(scope = ResolutionScope.COMPILE),
             verifyMessages = false
         )
 

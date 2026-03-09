@@ -130,8 +130,7 @@ open class MavenResolver(
             moduleDependenciesList = listOf(moduleDependencies),
             resolutionRunSettings = ResolutionRunSettings(resolutionDepth = resolutionDepth),
             leafPlatformsOnly = true,
-            filter = null,
-            resolutionType = if(isTest) ResolutionType.TEST else ResolutionType.MAIN,
+            filter = ModuleResolutionFilter(resolutionType = if(isTest) ResolutionType.TEST else ResolutionType.MAIN),
         )
             .also { resolvedGraph ->
                 // Collecting diagnostics from the resolved graph

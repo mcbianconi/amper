@@ -66,7 +66,7 @@ abstract class BaseModuleDrTest {
         module: String? = null,
         fragment: String? = null,
         goldenFileName: String = testInfo.testMethod.get().name,
-        filter: ModuleResolutionFilter? = null,
+        filter: ModuleResolutionFilter = ModuleResolutionFilter(),
         messagesCheck: (DependencyNode) -> Unit = defaultMessagesCheck
     ): DependencyNode {
         val goldenFile = goldenFileOsAware(
@@ -84,7 +84,7 @@ abstract class BaseModuleDrTest {
         @Language("text") expected: String? = null,
         module: String? = null,
         fragment: String? = null,
-        filter: ModuleResolutionFilter? = null,
+        filter: ModuleResolutionFilter = ModuleResolutionFilter(),
         messagesCheck: (DependencyNode) -> Unit = defaultMessagesCheck
     ): DependencyNode {
         val resolutionSettings = resolutionInput.resolutionSettings
@@ -94,7 +94,7 @@ abstract class BaseModuleDrTest {
         val graph =
             if (module == null
                 && ideSyncTestResolutionInput.resolutionSettings.includeNonExportedNative == resolutionSettings.includeNonExportedNative
-                && ideSyncTestResolutionInput.resolutionType == resolutionInput.resolutionType)
+                && filter.resolutionType == ResolutionType.ALL)
             {
                 with (ModuleDependencies) {
                     aom.resolveProjectDependencies(
@@ -110,12 +110,11 @@ abstract class BaseModuleDrTest {
                     resolutionSettings,
                     resolutionRunSettings,
                     filter = filter,
-                    resolutionType = resolutionInput.resolutionType,
                 )
                     .also { checkMessages(verifyMessages, it, messagesCheck) }
                     .let {
                         if (module != null && fragment != null) {
-                            if (filter?.platforms != null) error("platforms could not be used as a filter together with fragment")
+                            if (filter.platforms != null) error("platforms could not be used as a filter together with fragment")
                             val fragmentDeps = it.root.children
                                 .filterIsInstance<ModuleDependencyNode>()
                                 .fragmentDependencies(module, fragment, aom)
@@ -438,8 +437,6 @@ internal class IncrementalCacheUsageContextElement(
 }
 
 data class TestResolutionInput(
-    // todo (AB) : Shouldn't it be a part of filter?
-    val resolutionType: ResolutionType = ResolutionType.MAIN,
     val resolutionSettings: AmperResolutionSettings = defaultTestResolutionSettings,
     val resolutionRunSettings: ResolutionRunSettings = defaultResolutionRunSettings,
 )
@@ -448,6 +445,6 @@ internal val defaultTestResolutionSettings = AmperResolutionSettings(amperUserCa
 internal val defaultTestResolutionInput = TestResolutionInput()
 internal val ideSyncTestResolutionInput = defaultTestResolutionInput
     .copy(
-        resolutionType = ResolutionType.ALL,
         resolutionSettings = defaultTestResolutionInput.resolutionSettings.copy(includeNonExportedNative = false)
     )
+internal val ideSyncModuleResolutionFilter = ModuleResolutionFilter(resolutionType = ResolutionType.ALL)
