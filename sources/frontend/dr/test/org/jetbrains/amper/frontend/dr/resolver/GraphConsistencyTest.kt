@@ -14,40 +14,36 @@ class GraphConsistencyTest: BaseModuleDrTest() {
 
     @Test
     fun `check parents in a dependencies graph - ide`() = runSlowModuleDependenciesTest {
-        val aom = getTestProjectModel("jvm-transitive-dependencies", testDataRoot)
-        checkParentsInDependenciesGraph(
-            ResolutionInput(
-                DependenciesFlowType.IdeSyncType(aom), ResolutionDepth.GRAPH_FULL,
-                fileCacheBuilder = getAmperFileCacheBuilder(amperUserCacheRoot)
-            ),
-            aom
-        )
+        checkParentsInDependenciesGraph(true)
     }
 
     @Test
     fun `check parents in a dependencies graph - classpath`() = runSlowModuleDependenciesTest {
-        checkParentsInDependenciesGraph(
-            ResolutionInput(
-                DependenciesFlowType.ClassPathType(
-                    ResolutionScope.RUNTIME,
-                    setOf(ResolutionPlatform.JVM),
-                    isTest = false
-                ),
-                ResolutionDepth.GRAPH_FULL,
-                fileCacheBuilder = getAmperFileCacheBuilder(amperUserCacheRoot)
-            )
-        )
+        checkParentsInDependenciesGraph(false)
     }
 
-    private suspend fun checkParentsInDependenciesGraph(
-        resolutionInput: ResolutionInput,
-        aom: Model = getTestProjectModel("jvm-transitive-dependencies", testDataRoot)
-    ) {
+    private suspend fun checkParentsInDependenciesGraph(ideSyncMode: Boolean) {
+        val aom: Model = getTestProjectModel("jvm-transitive-dependencies", testDataRoot)
+
         val graph = with(ModuleDependencies) {
-            aom.resolveProjectDependencies(
-                resolutionInput.copy(incrementalCacheUsage = getIncrementalCacheUsage()),
-                amperUserCacheRoot
-            )
+            if (ideSyncMode) {
+                aom.resolveProjectDependencies(
+                    defaultTestResolutionSettings,
+                    ResolutionRunSettings(
+                        incrementalCacheUsage = getIncrementalCacheUsage()
+                    )
+                )
+            } else {
+                resolveModuleDependencies(
+                    aom.modules,
+                    defaultTestResolutionSettings,
+                    ResolutionRunSettings(
+                        incrementalCacheUsage = getIncrementalCacheUsage()
+                    ),
+                    filter = ModuleResolutionFilter(ResolutionScope.RUNTIME, platforms = setOf(ResolutionPlatform.JVM)),
+                    resolutionType =  ResolutionType.MAIN
+                )
+            }
         }
 
         graph.root.distinctBfsSequence().forEach {

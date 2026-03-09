@@ -46,11 +46,7 @@ class GraphSerializationTest: BaseModuleDrTest() {
         val appModuleGraph = doTestByFile(
             testInfo,
             aom,
-            resolutionInput = ResolutionInput(
-                DependenciesFlowType.IdeSyncType(aom), ResolutionDepth.GRAPH_FULL,
-                incrementalCacheUsage = IncrementalCacheUsage.SKIP,
-                fileCacheBuilder = getAmperFileCacheBuilder(AmperUserCacheRoot(Dirs.userCacheRoot)),
-            ),
+            resolutionInput = ideSyncTestResolutionInput,
             module = "D2",
             filter = ModuleResolutionFilter(scope = ResolutionScope.COMPILE)
         )
@@ -65,10 +61,10 @@ class GraphSerializationTest: BaseModuleDrTest() {
         val iosAppModuleDeps = doTestByFile(
             testInfo,
             aom,
-            ResolutionInput(
-                DependenciesFlowType.IdeSyncType(aom), ResolutionDepth.GRAPH_FULL,
-                incrementalCacheUsage = IncrementalCacheUsage.SKIP,
-                fileCacheBuilder = getAmperFileCacheBuilder(AmperUserCacheRoot(Dirs.userCacheRoot)),
+            ideSyncTestResolutionInput.copy(
+                resolutionSettings = ideSyncTestResolutionInput.resolutionSettings.copy(
+                    includeNonExportedNative = false
+                )
             ),
             module = "ios-app",
             filter = ModuleResolutionFilter(scope = ResolutionScope.COMPILE)
@@ -85,11 +81,10 @@ class GraphSerializationTest: BaseModuleDrTest() {
         val root = doTestByFile(
             testInfo,
             aom,
-            resolutionInput = ResolutionInput(
-                DependenciesFlowType.IdeSyncType(aom), ResolutionDepth.GRAPH_FULL,
-                incrementalCacheUsage = IncrementalCacheUsage.SKIP,
-                fileCacheBuilder = getAmperFileCacheBuilder(AmperUserCacheRoot(Dirs.userCacheRoot)),
+            resolutionInput = ideSyncTestResolutionInput.copy(
+                resolutionType = ResolutionType.ALL,
             ),
+            filter = ModuleResolutionFilter(scope = ResolutionScope.COMPILE),
             verifyMessages = false
         )
 

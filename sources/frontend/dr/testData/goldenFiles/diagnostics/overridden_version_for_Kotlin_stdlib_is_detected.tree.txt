@@ -1,4 +1,19 @@
-module:kotlin-stdlib-override
+Module kotlin-stdlib-override
+│ - main
+│ - scope = COMPILE
+│ - platforms = [jvm]
+├─── kotlin-stdlib-override:main:org.jetbrains.kotlin:kotlin-stdlib:2.1.10, implicit
+│    ╰─── org.jetbrains.kotlin:kotlin-stdlib:2.1.10 -> 2.3.0
+│         ╰─── org.jetbrains:annotations:13.0
+╰─── kotlin-stdlib-override:main:org.jetbrains.kotlinx:kotlinx-serialization-core:1.10.0, implicit (because Kotlinx Serialization is enabled)
+     ╰─── org.jetbrains.kotlinx:kotlinx-serialization-core:1.10.0
+          ╰─── org.jetbrains.kotlinx:kotlinx-serialization-core-jvm:1.10.0
+               ├─── org.jetbrains.kotlinx:kotlinx-serialization-bom:1.10.0
+               ╰─── org.jetbrains.kotlin:kotlin-stdlib:2.3.0 (*)
+Module kotlin-stdlib-override
+│ - test
+│ - scope = COMPILE
+│ - platforms = [jvm]
 ├─── kotlin-stdlib-override:main:org.jetbrains.kotlin:kotlin-stdlib:2.1.10, implicit
 │    ╰─── org.jetbrains.kotlin:kotlin-stdlib:2.1.10 -> 2.3.0
 │         ╰─── org.jetbrains:annotations:13.0

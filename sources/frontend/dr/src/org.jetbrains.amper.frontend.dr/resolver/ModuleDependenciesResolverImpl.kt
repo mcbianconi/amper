@@ -3,14 +3,12 @@
  */
 package org.jetbrains.amper.frontend.dr.resolver
 
-import io.opentelemetry.api.OpenTelemetry
 import kotlinx.serialization.modules.SerializersModuleBuilder
 import org.jetbrains.amper.dependency.resolution.Cache
 import org.jetbrains.amper.dependency.resolution.DependencyGraph.Companion.toSerializableReference
 import org.jetbrains.amper.dependency.resolution.DependencyGraphContext
 import org.jetbrains.amper.dependency.resolution.DependencyNode
 import org.jetbrains.amper.dependency.resolution.DependencyNodeReference
-import org.jetbrains.amper.dependency.resolution.FileCacheBuilder
 import org.jetbrains.amper.dependency.resolution.GraphSerializableTypesProvider
 import org.jetbrains.amper.dependency.resolution.MavenDependencyNode
 import org.jetbrains.amper.dependency.resolution.MavenDependencyNodeWithContext
@@ -20,7 +18,6 @@ import org.jetbrains.amper.dependency.resolution.SerializableDependencyNode
 import org.jetbrains.amper.dependency.resolution.SerializableDependencyNodeConverter
 import org.jetbrains.amper.frontend.AmperModule
 import org.jetbrains.amper.frontend.dr.resolver.flow.Classpath
-import org.jetbrains.amper.incrementalcache.IncrementalCache
 import org.slf4j.LoggerFactory
 import kotlin.reflect.KClass
 
@@ -31,14 +28,11 @@ internal class ModuleDependenciesResolverImpl: ModuleDependenciesResolver {
     // todo (AB) : Move to ModuleDependencies
     override fun AmperModule.resolveDependenciesGraph(
         dependenciesFlowType: DependenciesFlowType.ClassPathType,
-        fileCacheBuilder: FileCacheBuilder.() -> Unit,
-        openTelemetry: OpenTelemetry?,
-        incrementalCache: IncrementalCache?,
+        resolutionSettings: AmperResolutionSettings,
         sharedResolutionCache: Cache,
     ): ModuleDependencyNodeWithModuleAndContext {
         val resolutionFlow = Classpath(dependenciesFlowType)
-        return resolutionFlow.directDependenciesGraph(
-            this, fileCacheBuilder, openTelemetry, incrementalCache, sharedResolutionCache)
+        return resolutionFlow.directDependenciesGraph(this, resolutionSettings, sharedResolutionCache)
     }
 }
 

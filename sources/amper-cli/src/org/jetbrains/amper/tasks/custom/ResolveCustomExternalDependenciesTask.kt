@@ -8,7 +8,6 @@ import com.intellij.openapi.vfs.VirtualFile
 import io.opentelemetry.api.GlobalOpenTelemetry
 import org.jetbrains.amper.cli.telemetry.setAmperModule
 import org.jetbrains.amper.core.AmperUserCacheRoot
-import org.jetbrains.amper.dependency.resolution.ResolutionLevel
 import org.jetbrains.amper.dependency.resolution.ResolutionPlatform
 import org.jetbrains.amper.dependency.resolution.ResolutionScope
 import org.jetbrains.amper.engine.Task
@@ -31,15 +30,12 @@ import org.jetbrains.amper.frontend.VersionCatalog
 import org.jetbrains.amper.frontend.aomBuilder.DefaultLocalModuleDependency
 import org.jetbrains.amper.frontend.api.DefaultTrace
 import org.jetbrains.amper.frontend.dr.resolver.CliReportingMavenResolver
-import org.jetbrains.amper.frontend.dr.resolver.DependenciesFlowType
 import org.jetbrains.amper.frontend.dr.resolver.ModuleDependencies
 import org.jetbrains.amper.frontend.dr.resolver.ModuleResolutionFilter
-import org.jetbrains.amper.frontend.dr.resolver.ResolutionDepth
-import org.jetbrains.amper.frontend.dr.resolver.ResolutionInput
+import org.jetbrains.amper.frontend.dr.resolver.AmperResolutionSettings
 import org.jetbrains.amper.frontend.dr.resolver.ResolutionType
 import org.jetbrains.amper.frontend.dr.resolver.flow.toPlatform
 import org.jetbrains.amper.frontend.dr.resolver.flow.toRepository
-import org.jetbrains.amper.frontend.dr.resolver.getAmperFileCacheBuilder
 import org.jetbrains.amper.frontend.dr.resolver.getExternalDependencies
 import org.jetbrains.amper.frontend.dr.resolver.toDrMavenCoordinates
 import org.jetbrains.amper.frontend.mavenRepositories
@@ -76,6 +72,7 @@ internal class ResolveCustomExternalDependenciesTask(
      */
     private val platform = ResolutionPlatform.JVM
     private val isTest = false
+    private val resolutionType = ResolutionType.MAIN
 
     private val mavenResolver = CliReportingMavenResolver(userCacheRoot, incrementalCache)
 
@@ -122,7 +119,8 @@ internal class ResolveCustomExternalDependenciesTask(
         val module = this
 
         val moduleDependencies = with(ModuleDependencies) {
-            moduleDependencies(userCacheRoot, incrementalCache,GlobalOpenTelemetry.get())
+            val resolutionSettings = AmperResolutionSettings(userCacheRoot, incrementalCache, GlobalOpenTelemetry.get())
+            moduleDependencies(resolutionSettings)
         }
 
         val result = ResolveExternalDependenciesTask(
@@ -187,7 +185,8 @@ internal class ResolveCustomExternalDependenciesTask(
     private suspend fun resolveMixedExternalAndModuleDependencies(): List<Path> {
         val module = getModuleForMixedDeps()
         val moduleDependencies = with(ModuleDependencies) {
-            module.moduleDependencies(userCacheRoot, incrementalCache, GlobalOpenTelemetry.get())
+            val resolutionSettings = AmperResolutionSettings(userCacheRoot, incrementalCache, GlobalOpenTelemetry.get())
+            module.moduleDependencies(resolutionSettings)
         }
 
         val moduleDependenciesRoot = moduleDependencies.allLeafPlatformsGraph(isForTests = false)
@@ -212,18 +211,9 @@ internal class ResolveCustomExternalDependenciesTask(
                     val resolvedGraph = with(ModuleDependencies) {
                         resolveModuleDependencies(
                             moduleDependenciesList = listOf(moduleDependencies),
-                            resolutionInput = ResolutionInput(
-                                dependenciesFlowType = DependenciesFlowType.ClassPathType(resolutionScope, setOf(platform), isTest = isTest, false),
-                                resolutionDepth = ResolutionDepth.GRAPH_FULL,
-                                resolutionLevel = ResolutionLevel.NETWORK,
-                                downloadSources = false,
-                                openTelemetry = GlobalOpenTelemetry.get(),
-                                incrementalCache = incrementalCache,
-                                fileCacheBuilder = { getAmperFileCacheBuilder(userCacheRoot) }
-                            ),
                             leafPlatformsOnly = true,
-                            filter = ModuleResolutionFilter(resolutionScope, platforms = setOf(ResolutionPlatform.JVM)),
-                            resolutionType = ResolutionType.MAIN
+                            filter = ModuleResolutionFilter(resolutionScope, platforms = setOf(platform)),
+                            resolutionType = resolutionType
                         )
                     }
 

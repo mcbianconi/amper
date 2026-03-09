@@ -4,7 +4,6 @@
 
 package org.jetbrains.amper.frontend.dr.resolver
 
-import io.opentelemetry.api.GlobalOpenTelemetry
 import io.opentelemetry.api.OpenTelemetry
 import kotlinx.coroutines.async
 import kotlinx.coroutines.awaitAll
@@ -70,19 +69,14 @@ private val logger = LoggerFactory.getLogger(ModuleDependencies::class.java)
  */
 class ModuleDependencies private constructor(
     val module: AmperModule,
-    internal val userCacheRoot: AmperUserCacheRoot,
-    internal val incrementalCache: IncrementalCache?,
-    internal val openTelemetry: OpenTelemetry?,
-    internal val includeNonExportedNative: Boolean = true,
+    private val resolutionSettings: AmperResolutionSettings,
     private val sharedResolutionCache: Cache,
-    internal val fileCacheBuilder: FileCacheBuilder.() -> Unit = { getAmperFileCacheBuilder(userCacheRoot) }
 ) {
-
     private val mainDepsPerFragment: Map<Fragment, PerFragmentDependencies> =
-        module.perFragmentDependencies( false, userCacheRoot, incrementalCache)
+        module.perFragmentDependencies( false)
 
     private val testDepsPerFragment: Map<Fragment, PerFragmentDependencies> =
-        module.perFragmentDependencies( true, userCacheRoot, incrementalCache)
+        module.perFragmentDependencies( true)
 
     private val mainDepsPerPlatforms: Map<Set<Platform>, PerFragmentDependencies>
     private val testDepsPerPlatforms: Map<Set<Platform>, PerFragmentDependencies>
@@ -109,14 +103,12 @@ class ModuleDependencies private constructor(
             }
         }
 
-    private fun AmperModule.perFragmentDependencies(
-        isTest: Boolean, userCacheRoot: AmperUserCacheRoot, incrementalCache: IncrementalCache?,
-    ): Map<Fragment, PerFragmentDependencies> =
+    private fun AmperModule.perFragmentDependencies(isTest: Boolean): Map<Fragment, PerFragmentDependencies> =
         fragments
             .filter { it.isTest == isTest }
             .sortedBy { it.name }
             .associateBy(keySelector = { it }) {
-                PerFragmentDependencies(it, userCacheRoot, incrementalCache, sharedResolutionCache, includeNonExportedNative)
+                PerFragmentDependencies(it, resolutionSettings, sharedResolutionCache)
             }
 
     /**
@@ -152,11 +144,7 @@ class ModuleDependencies private constructor(
                 isForTests
             )).asRootCacheEntryKey(),
             children = leafPlatformDependencies,
-            templateContext = emptyContext(
-                userCacheRoot = userCacheRoot,
-                openTelemetry = openTelemetry,
-                incrementalCache = incrementalCache
-            )
+            templateContext = resolutionSettings.toEmptyContext()
         )
     }
 
@@ -208,11 +196,7 @@ class ModuleDependencies private constructor(
                     isForTests
                 )).asRootCacheEntryKey(),
                 children = fragmentDependencies,
-                templateContext = emptyContext(
-                    userCacheRoot = userCacheRoot,
-                    openTelemetry = openTelemetry,
-                    incrementalCache = incrementalCache,
-                )
+                templateContext = resolutionSettings.toEmptyContext()
             )
         } else {
             buildList {
@@ -232,7 +216,7 @@ class ModuleDependencies private constructor(
                         isForTests = isForTests,
                         children = it.flatten(),
                         module = module,
-                        templateContext = emptyContext(fileCacheBuilder, openTelemetry, incrementalCache),
+                        templateContext = resolutionSettings.toEmptyContext(),
                         topLevel = true,
                     )
                 }
@@ -342,19 +326,17 @@ class ModuleDependencies private constructor(
          * and call resoltion based on the cached List of [ModuleDependencies] instead of calling this method directly.
          */
         suspend fun Model.resolveProjectDependencies(
-            resolutionInput: ResolutionInput,
-            // todo (AB) : Unify approach: use either fileCacheBuilder or userCacheRoot, not both
-            userCacheRoot: AmperUserCacheRoot,
+            resolutionSettings: AmperResolutionSettings,
+            resolutionRunSettings: ResolutionRunSettings,
             moduleDependencies: List<ModuleDependencies>? = null
-        ) =
-            with (resolutionInput) {
-                resolveProjectDependencies(
-                    moduleDependenciesList = moduleDependencies?.checkModules(this@resolveProjectDependencies)
-                        ?: moduleDependencies(userCacheRoot, incrementalCache, openTelemetry, false),
-                    resolutionInput,
-                    projectRoot.root,
-                )
-            }
+        ) = resolveProjectDependencies(
+            moduleDependenciesList =
+                moduleDependencies
+                    ?.checkModules(this@resolveProjectDependencies)
+                    ?: moduleDependencies(resolutionSettings.copy(includeNonExportedNative = false)),
+            resolutionRunSettings = resolutionRunSettings,
+            projectRoot = projectRoot.root,
+        )
 
         /**
          * This is an entry point into the module-wide resolution of the project.
@@ -372,13 +354,17 @@ class ModuleDependencies private constructor(
          */
         private suspend fun resolveProjectDependencies(
             moduleDependenciesList: List<ModuleDependencies>,
-            resolutionInput: ResolutionInput,
+            resolutionRunSettings: ResolutionRunSettings,
             projectRoot: Path,
         ): ResolvedGraph {
+            val resolutionSettings = moduleDependenciesList.first().resolutionSettings
+            val openTelemetry = resolutionSettings.openTelemetry
+            val incrementalCache = resolutionSettings.incrementalCache
+            val fileCacheBuilder = resolutionSettings.fileCacheBuilder
             // Wrapping into per-project cache entry
             // Goal: if nothing has changed, check inputs once, instead of checking inputs for every module where
             //       one library from shared module is checked as an input as many times as many modules depend on it transitively
-            return with (resolutionInput) {
+            return with (resolutionRunSettings) {
                 openTelemetry.spanBuilder("DR: Resolving project dependencies").use {
                     val moduleGraphs = buildList {
                         moduleDependenciesList.forEach {
@@ -455,23 +441,18 @@ class ModuleDependencies private constructor(
 
         suspend fun resolveModuleDependencies(
             modules: List<AmperModule>,
-            resolutionInput: ResolutionInput,
-            userCacheRoot: AmperUserCacheRoot, // todo (AB) : Looks like a part of [ResolutionInput]
+            resolutionSettings: AmperResolutionSettings,
+            resolutionRunSettings: ResolutionRunSettings = defaultResolutionRunSettings,
             leafPlatformsOnly: Boolean = false,
             filter: ModuleResolutionFilter?,
-            resolutionType: ResolutionType,
+            resolutionType: ResolutionType, // should it be part of a filter?
         ): ResolvedGraph {
-            val moduleDependenciesList = with(resolutionInput) {
-                val sharedResolutionCache = Cache()
-                buildList {
-                    modules.forEach {
-                        add(ModuleDependencies(it, userCacheRoot, incrementalCache, openTelemetry, sharedResolutionCache = sharedResolutionCache))
-                    }
-                }
-            }
+            val sharedResolutionCache = Cache()
+            val moduleDependenciesList = modules.map { ModuleDependencies(it, resolutionSettings, sharedResolutionCache) }
+
             return resolveModuleDependencies(
                 moduleDependenciesList = moduleDependenciesList,
-                resolutionInput,
+                resolutionRunSettings,
                 leafPlatformsOnly,
                 filter,
                 resolutionType,
@@ -480,53 +461,47 @@ class ModuleDependencies private constructor(
 
         suspend fun resolveModuleDependencies(
             moduleDependenciesList: List<ModuleDependencies>,
-            resolutionInput: ResolutionInput,
+            resolutionRunSettings: ResolutionRunSettings = defaultResolutionRunSettings,
             leafPlatformsOnly: Boolean,
             filter: ModuleResolutionFilter?,
             resolutionType: ResolutionType,
         ): ResolvedGraph {
-            return with (resolutionInput) {
-                openTelemetry.spanBuilder("DR: Resolving dependencies for the list of modules").use {
-                    val moduleGraphs = buildList {
-                        moduleDependenciesList.forEach {
-                            if (leafPlatformsOnly) {
-                                //  1. Tests and main should be resolved separately in IdeSync-mode
-                                if (resolutionType.includeMain) {
-                                    add(it.allLeafPlatformsGraph(isForTests = false))
-                                }
-                                if (resolutionType.includeTest) {
-                                    add(it.allLeafPlatformsGraph(isForTests = true))
-                                }
-                            } else {
-                                //  1. Tests and main should be resolved separately in IdeSync-mode
-                                if (resolutionType.includeMain) {
-                                    add(it.allFragmentsGraph(isForTests = false, flattenGraph = false))
-                                }
-                                if (resolutionType.includeTest) {
-                                    add(it.allFragmentsGraph(isForTests = true, flattenGraph = false))
-                                }
+            val openTelemetry = moduleDependenciesList.first().resolutionSettings.openTelemetry
+            return openTelemetry.spanBuilder("DR: Resolving dependencies for the list of modules").use {
+                val moduleGraphs = buildList {
+                    moduleDependenciesList.forEach {
+                        if (leafPlatformsOnly) {
+                            //  1. Tests and main should be resolved separately in IdeSync-mode
+                            if (resolutionType.includeMain) {
+                                add(it.allLeafPlatformsGraph(isForTests = false))
+                            }
+                            if (resolutionType.includeTest) {
+                                add(it.allLeafPlatformsGraph(isForTests = true))
+                            }
+                        } else {
+                            //  1. Tests and main should be resolved separately in IdeSync-mode
+                            if (resolutionType.includeMain) {
+                                add(it.allFragmentsGraph(isForTests = false, flattenGraph = false))
+                            }
+                            if (resolutionType.includeTest) {
+                                add(it.allFragmentsGraph(isForTests = true, flattenGraph = false))
                             }
                         }
                     }
-
-                    resolveDependenciesBatch(moduleGraphs, filter)
                 }
+
+                resolutionRunSettings.resolveDependenciesBatch(moduleGraphs, filter)
             }
         }
 
-        private suspend fun ResolutionInput.resolveDependenciesBatch(
+        private suspend fun ResolutionRunSettings.resolveDependenciesBatch(
             moduleGraphs: List<DependencyNodeHolderWithContext>,
             filter: ModuleResolutionFilter?,
         ): ResolvedGraph {
             val resolvedGraphs = coroutineScope {
                 moduleGraphs.map {
                     async {
-                        it.resolveDependencies(
-                            resolutionDepth = resolutionDepth,
-                            resolutionLevel = resolutionLevel,
-                            downloadSources = downloadSources,
-                            incrementalCacheUsage = incrementalCacheUsage
-                        )
+                        it.resolveDependencies(this@resolveDependenciesBatch)
                     }
                 }
             }.awaitAll()
@@ -543,6 +518,9 @@ class ModuleDependencies private constructor(
                         }
                     }
 
+            // todo (AB) : Introduce context-unaware ModuleDependencyNode that aggregates context-specific
+            //  resolution results. Publicly visible children should be filtered according to given filter,
+            //  but all children should be internally available as well for calculating overriddenBy insights.
             val compositeGraph = ResolvedGraph(
                 RootDependencyNodeStub(children = resolvedGraphsUnwrapped).also { root ->
                     root.children.filterIsInstance<ModuleDependencyNode>().forEach {
@@ -554,43 +532,42 @@ class ModuleDependencies private constructor(
             return compositeGraph
         }
 
-       /**
+        /**
          * todo (AB) : This functional expose low-level API
          * todo (AB) : Make it private after refactoring of the usage in [ModuleDependenciesResolverImpl]
          */
         internal suspend fun DependencyNodeHolderWithContext.resolveDependencies(
-            resolutionDepth: ResolutionDepth,
-            resolutionLevel: ResolutionLevel = ResolutionLevel.NETWORK,
-            downloadSources: Boolean,
-            incrementalCacheUsage: IncrementalCacheUsage = IncrementalCacheUsage.USE,
+            resolutionRunSettings: ResolutionRunSettings,
         ): ResolvedGraph {
             val root = this@resolveDependencies
-            return context.infoSpanBuilder("DR.graph:resolveDependencies").use {
-                when (resolutionDepth) {
-                    ResolutionDepth.GRAPH_ONLY -> {
-                        /* Do nothing, graph is already given */
-                        ResolvedGraph(
-                            root,
-                            null
-                        )
-                    }
+            return with(resolutionRunSettings) {
+                context.infoSpanBuilder("DR.graph:resolveDependencies").use {
+                    when (resolutionDepth) {
+                        ResolutionDepth.GRAPH_ONLY -> {
+                            /* Do nothing, graph is already given */
+                            ResolvedGraph(
+                                root,
+                                null
+                            )
+                        }
 
-                    ResolutionDepth.GRAPH_WITH_DIRECT_DEPENDENCIES,
-                    ResolutionDepth.GRAPH_FULL,
-                        -> {
-                        val resolvedGraph = Resolver().resolveDependencies(
-                            root = root,
-                            resolutionLevel,
-                            downloadSources,
-                            resolutionDepth != ResolutionDepth.GRAPH_WITH_DIRECT_DEPENDENCIES,
-                            incrementalCacheUsage = incrementalCacheUsage,
-                            DirectMavenDependencyUnspecifiedVersionResolver(),
-                            postProcessGraph = {
-                                // Merge the input graph (that has PSI references) with the deserialized one
-                                it.fillNotation(root)
-                            }
-                        )
-                        resolvedGraph
+                        ResolutionDepth.GRAPH_WITH_DIRECT_DEPENDENCIES,
+                        ResolutionDepth.GRAPH_FULL,
+                            -> {
+                            val resolvedGraph = Resolver().resolveDependencies(
+                                root = root,
+                                resolutionLevel,
+                                downloadSources,
+                                resolutionDepth != ResolutionDepth.GRAPH_WITH_DIRECT_DEPENDENCIES,
+                                incrementalCacheUsage = incrementalCacheUsage,
+                                DirectMavenDependencyUnspecifiedVersionResolver(),
+                                postProcessGraph = {
+                                    // Merge the input graph (that has PSI references) with the deserialized one
+                                    it.fillNotation(root)
+                                }
+                            )
+                            resolvedGraph
+                        }
                     }
                 }
             }
@@ -646,15 +623,10 @@ class ModuleDependencies private constructor(
          * The resulting list could be used as an entry point into module-wide dependency resoluion for the entire project
          * (represented by the given [Model])
          */
-        fun Model.moduleDependencies(
-            userCacheRoot: AmperUserCacheRoot,
-            incrementalCache: IncrementalCache?,
-            openTelemetry: OpenTelemetry?,
-            includeNonExportedNative: Boolean = true,
-        ): List<ModuleDependencies> {
+        fun Model.moduleDependencies(resolutionSettings: AmperResolutionSettings): List<ModuleDependencies> {
             val sharedResolutionCache = Cache()
             return modules.map {
-                ModuleDependencies(it, userCacheRoot, incrementalCache, openTelemetry, includeNonExportedNative, sharedResolutionCache)
+                ModuleDependencies(it, resolutionSettings, sharedResolutionCache)
             }
         }
 
@@ -669,14 +641,9 @@ class ModuleDependencies private constructor(
          *
          * The resulting list could be used as an entry point into module-wide dependency resolution for the module
          */
-        fun AmperModule.moduleDependencies(
-            userCacheRoot: AmperUserCacheRoot,
-            incrementalCache: IncrementalCache?,
-            openTelemetry: OpenTelemetry?,
-            includeNonExportedNative: Boolean = false,
-        ): ModuleDependencies {
+        fun AmperModule.moduleDependencies(resolutionSettings: AmperResolutionSettings): ModuleDependencies {
             val sharedResolutionCache = Cache()
-            return ModuleDependencies(this, userCacheRoot, incrementalCache, openTelemetry, includeNonExportedNative, sharedResolutionCache)
+            return ModuleDependencies(this, resolutionSettings, sharedResolutionCache)
         }
 
         /**
@@ -691,7 +658,8 @@ class ModuleDependencies private constructor(
             incrementalCache: IncrementalCache,
             openTelemetry: OpenTelemetry?,
         ) : Sequence<AmperModule> {
-            val moduleDependencies = moduleDependencies(userCacheRoot, incrementalCache, openTelemetry, true)
+            val resolutionSettings = AmperResolutionSettings(userCacheRoot, incrementalCache, openTelemetry)
+            val moduleDependencies = moduleDependencies(resolutionSettings)
             return moduleDependencies
                 .forPlatform(platform = platform, isTest = isTest)
                 .forScope(scope = dependencyReason)
@@ -738,10 +706,8 @@ fun List<ModuleDependencyNode>.fragmentDependencies(module: String, fragment: St
 // todo (AB) : Reuse common dependencies for leaf platform in single-platform modules.
 class PerFragmentDependencies(
     val fragment: Fragment,
-    userCacheRoot: AmperUserCacheRoot,
-    incrementalCache: IncrementalCache?,
+    resolutionSettings: AmperResolutionSettings,
     sharedResolutionCache: Cache,
-    internal val includeNonExportedNative: Boolean = true,
 ) {
     /**
      * This node represents a graph that contains external COMPILE dependencies of the module for the particular platform.
@@ -756,9 +722,7 @@ class PerFragmentDependencies(
             isTest = fragment.isTest,
             platforms = fragment.platforms,
             dependencyReason = ResolutionScope.COMPILE,
-            userCacheRoot = userCacheRoot,
-            incrementalCache = incrementalCache,
-            includeNonExportedNative = includeNonExportedNative,
+            resolutionSettings = resolutionSettings,
             sharedResolutionCache = sharedResolutionCache,
         )
     }
@@ -774,13 +738,12 @@ class PerFragmentDependencies(
     val runtimeDeps: ModuleDependencyNodeWithModuleAndContext? by lazy {
         when {
             fragment.platforms.singleOrNull()?.isDescendantOf(Platform.NATIVE) == true
-                    && includeNonExportedNative -> null  // The native world doesn't distinguish compile/runtime classpath
+                    && resolutionSettings.includeNonExportedNative -> null  // The native world doesn't distinguish compile/runtime classpath
             else -> fragment.module.buildDependenciesGraph(
                 isTest = fragment.isTest,
                 platforms = fragment.platforms,
                 dependencyReason = ResolutionScope.RUNTIME,
-                userCacheRoot = userCacheRoot,
-                incrementalCache = incrementalCache,
+                resolutionSettings = resolutionSettings,
                 sharedResolutionCache = sharedResolutionCache,
             )
         }
@@ -798,9 +761,7 @@ class PerFragmentDependencies(
         isTest: Boolean,
         platforms: Set<Platform>,
         dependencyReason: ResolutionScope,
-        includeNonExportedNative: Boolean = true,
-        userCacheRoot: AmperUserCacheRoot,
-        incrementalCache: IncrementalCache?,
+        resolutionSettings: AmperResolutionSettings,
         sharedResolutionCache: Cache,
     ): ModuleDependencyNodeWithModuleAndContext {
         val resolutionPlatform = platforms.map { it.toResolutionPlatform()
@@ -808,10 +769,8 @@ class PerFragmentDependencies(
 
         return with(moduleDependenciesResolver) {
             resolveDependenciesGraph(
-                DependenciesFlowType.ClassPathType(dependencyReason, resolutionPlatform, isTest, includeNonExportedNative),
-                getAmperFileCacheBuilder(userCacheRoot),
-                GlobalOpenTelemetry.get(),
-                incrementalCache,
+                DependenciesFlowType.ClassPathType(dependencyReason, resolutionPlatform, isTest, resolutionSettings.includeNonExportedNative),
+                resolutionSettings,
                 sharedResolutionCache
             )
         }
@@ -826,3 +785,50 @@ enum class ResolutionType(
     MAIN(true, false),
     ALL(true, true);
 }
+
+/**
+ * Defines resolution settings that define the behavior of the particular resolution run.
+ */
+data class ResolutionRunSettings(
+    val resolutionDepth: ResolutionDepth = ResolutionDepth.GRAPH_FULL,
+    val resolutionLevel: ResolutionLevel = ResolutionLevel.NETWORK,
+    val downloadSources: Boolean = false,
+    val incrementalCacheUsage: IncrementalCacheUsage = IncrementalCacheUsage.USE,
+)
+
+val defaultResolutionRunSettings = ResolutionRunSettings()
+
+/**
+ * Defines project-wide resolution settings that don't vary from one resolution run to another.
+ * It doesn't contain context-specific settings like scope and platform.
+ */
+data class AmperResolutionSettings(
+    val userCacheRoot: AmperUserCacheRoot,
+    val incrementalCache: IncrementalCache? = null,
+    val openTelemetry: OpenTelemetry? = null,
+
+    /**
+     * Compilation of a module for a native platform requires all transitive dependencies (for linkage phase),
+     * even those dependencies that contain symbols not visible in the module,
+     * i.e., non-exported dependencies of dependent modules.
+     * This way the world of native doesn't distinguish between COMPILE/RUNTIME classpath as Java world does.
+     *
+     * But resolving dependencies for the native platform for IDE
+     * requires separating dependencies with symbols that might be used in
+     * module source code from those that could not.
+     * For that case, this flag should be set to <code>true</code>.
+     *
+     * This will cause Java-like resolution of native dependencies
+     * where resulting dependencies for COMPILE scope will contain dependencies "visible" from the module only,
+     * and the RUNTIME graph will contain all dependencies.
+     */
+    val includeNonExportedNative: Boolean = true,
+) {
+    val fileCacheBuilder: FileCacheBuilder.() -> Unit = getAmperFileCacheBuilder(userCacheRoot)
+}
+
+internal fun AmperResolutionSettings.toEmptyContext() = emptyContext(
+    userCacheRoot = userCacheRoot,
+    openTelemetry = openTelemetry,
+    incrementalCache = incrementalCache,
+)

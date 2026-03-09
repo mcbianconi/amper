@@ -5,17 +5,14 @@
 package org.jetbrains.amper.frontend.dr.resolver
 
 import io.opentelemetry.api.GlobalOpenTelemetry
-import io.opentelemetry.api.OpenTelemetry
 import org.jetbrains.amper.core.AmperUserCacheRoot
 import org.jetbrains.amper.dependency.resolution.Context
 import org.jetbrains.amper.dependency.resolution.DependencyNode
-import org.jetbrains.amper.dependency.resolution.IncrementalCacheUsage
 import org.jetbrains.amper.dependency.resolution.JavaVersion
 import org.jetbrains.amper.dependency.resolution.MavenCoordinates
 import org.jetbrains.amper.dependency.resolution.MavenDependencyNode
 import org.jetbrains.amper.dependency.resolution.MavenDependencyNodeWithContext
 import org.jetbrains.amper.dependency.resolution.Repository
-import org.jetbrains.amper.dependency.resolution.ResolutionLevel
 import org.jetbrains.amper.dependency.resolution.ResolutionPlatform
 import org.jetbrains.amper.dependency.resolution.ResolutionScope
 import org.jetbrains.amper.dependency.resolution.ResolvedGraph
@@ -37,12 +34,6 @@ open class MavenResolver(
     private val userCacheRoot: AmperUserCacheRoot,
     private val incrementalCache: IncrementalCache,
 ) {
-    /**
-     * Creates empty DR Context, reusing cache root and incremental cache from the [MavenResolver].
-     */
-    fun emptyContext(openTelemetry: OpenTelemetry? = GlobalOpenTelemetry.get()): Context =
-        emptyContext(userCacheRoot, openTelemetry, incrementalCache)
-
     /**
      * Perform resolution over a set of maven coordinates.
      */
@@ -99,12 +90,8 @@ open class MavenResolver(
      *
      * todo (AB) : This functional expose low-level API
      * todo (AB) : making calling side to prepare DependencyNodeHolderWithContext with properly initialized context.
-     *  It should be split on two parts:
-     *   1. Resolution of maven coordinates (a method that takes the list of maven coordinates and resolution parameters
+     *  It should be replaced with the method that takes a list of maven coordinates and resolution parameters
      *      and create context and nodes inside, hiding those details from caller)
-     *   2. Resolution of module [Classpath] used in plugins
-     *      (a method that takes list of modules and external dependencies and resolve it module-wide aligning version between compile/runtime)
-     *
      */
     suspend fun resolve(
         root: RootDependencyNodeWithContext,
@@ -119,7 +106,8 @@ open class MavenResolver(
             settings.platforms.singleOrNull()?.wasmTarget?.let { setAttribute("wasmTarget", it) }
         }
         .use {
-            with(ModuleDependencies) { root.resolveDependencies(resolutionDepth, downloadSources = false) }
+            val resolutionRunSettings = ResolutionRunSettings(resolutionDepth)
+            with(ModuleDependencies) { root.resolveDependencies(resolutionRunSettings) }
                 .also { resolvedGraph ->
                     // Collecting diagnostics from the resolved graph
                     val reporter = CollectingProblemReporter().also {
@@ -140,19 +128,7 @@ open class MavenResolver(
     ): ResolvedGraph =
         ModuleDependencies.resolveModuleDependencies(
             moduleDependenciesList = listOf(moduleDependencies),
-            resolutionInput = ResolutionInput(
-                dependenciesFlowType = DependenciesFlowType.ClassPathType(
-                    scope = ResolutionScope.COMPILE,
-                    platforms = emptySet(),
-                    isTest = isTest,
-                ),
-                resolutionDepth = resolutionDepth,
-                resolutionLevel = ResolutionLevel.NETWORK,
-                downloadSources = false,
-                incrementalCacheUsage = IncrementalCacheUsage.USE,
-                fileCacheBuilder = getAmperFileCacheBuilder(userCacheRoot),
-                openTelemetry = GlobalOpenTelemetry.get()
-            ),
+            resolutionRunSettings = ResolutionRunSettings(resolutionDepth = resolutionDepth),
             leafPlatformsOnly = true,
             filter = null,
             resolutionType = if(isTest) ResolutionType.TEST else ResolutionType.MAIN,

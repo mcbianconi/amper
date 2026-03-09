@@ -9,6 +9,7 @@ import org.jetbrains.amper.frontend.ModuleTasksPart
 import org.jetbrains.amper.frontend.TaskName
 import org.jetbrains.amper.frontend.allSourceFragmentCompileDependencies
 import org.jetbrains.amper.frontend.dr.resolver.ModuleDependencies
+import org.jetbrains.amper.frontend.dr.resolver.AmperResolutionSettings
 import org.jetbrains.amper.tasks.ProjectTasksBuilder.Companion.getTaskOutputPath
 
 internal enum class CommonTaskType(override val prefix: String) : PlatformTaskType {
@@ -33,7 +34,9 @@ internal enum class CommonFragmentTaskType(override val prefix: String) : Fragme
 
 fun ProjectTasksBuilder.setupCommonTasks() {
     val moduleDependenciesMap = with(ModuleDependencies) {
-        model.moduleDependencies(context.userCacheRoot, context.incrementalCache,GlobalOpenTelemetry.get())
+        val resolutionSettings = AmperResolutionSettings(
+            context.userCacheRoot, context.incrementalCache, GlobalOpenTelemetry.get())
+        model.moduleDependencies(resolutionSettings)
             .associateBy { it.module }
     }
     allModules()

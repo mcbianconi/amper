@@ -5,9 +5,7 @@
 package org.jetbrains.amper.frontend.dr.resolver
 
 import org.jetbrains.amper.dependency.resolution.DependencyNode
-import org.jetbrains.amper.dependency.resolution.IncrementalCacheUsage
 import org.jetbrains.amper.dependency.resolution.MavenDependencyNode
-import org.jetbrains.amper.dependency.resolution.ResolutionPlatform
 import org.jetbrains.amper.dependency.resolution.ResolutionScope
 import org.jetbrains.amper.frontend.schema.DefaultVersions
 import org.jetbrains.amper.test.dr.toMavenCoordinates
@@ -48,10 +46,7 @@ class ModuleDependenciesGraphMultiplatformTest : BaseModuleDrTest() {
         val testFragmentDeps = doTestByFile(
             testInfo,
             aom,
-            resolutionInput = ResolutionInput(
-                DependenciesFlowType.IdeSyncType(aom), ResolutionDepth.GRAPH_FULL,
-                fileCacheBuilder = getAmperFileCacheBuilder(amperUserCacheRoot),
-            ),
+            resolutionInput = ideSyncTestResolutionInput,
             module = "jvm-empty",
         )
 
@@ -68,10 +63,7 @@ class ModuleDependenciesGraphMultiplatformTest : BaseModuleDrTest() {
         val sharedIosFragmentDeps = doTestByFile(
             testInfo,
             aom,
-            ResolutionInput(
-                DependenciesFlowType.IdeSyncType(aom), ResolutionDepth.GRAPH_FULL,
-                fileCacheBuilder = getAmperFileCacheBuilder(amperUserCacheRoot),
-            ),
+            ideSyncTestResolutionInput,
             module = "shared",
             fragment = "ios",
             filter = ModuleResolutionFilter(scope = ResolutionScope.COMPILE)
@@ -85,10 +77,7 @@ class ModuleDependenciesGraphMultiplatformTest : BaseModuleDrTest() {
         val iosAppIosX64FragmentDeps = doTestByFile(
             testInfo,
             aom,
-            ResolutionInput(
-                DependenciesFlowType.IdeSyncType(aom), ResolutionDepth.GRAPH_FULL,
-                fileCacheBuilder = getAmperFileCacheBuilder(amperUserCacheRoot),
-            ),
+            ideSyncTestResolutionInput,
             module = "shared",
             fragment = "iosX64",
             filter = ModuleResolutionFilter(scope = ResolutionScope.COMPILE)
@@ -103,10 +92,7 @@ class ModuleDependenciesGraphMultiplatformTest : BaseModuleDrTest() {
         val iosAppIosX64FragmentDeps = doTestByFile(
             testInfo,
             aom,
-            ResolutionInput(
-                DependenciesFlowType.IdeSyncType(aom), ResolutionDepth.GRAPH_FULL,
-                fileCacheBuilder = getAmperFileCacheBuilder(amperUserCacheRoot),
-            ),
+            ideSyncTestResolutionInput,
             module = "shared",
             fragment = "iosX64Test",
             filter = ModuleResolutionFilter(scope = ResolutionScope.COMPILE)
@@ -125,10 +111,7 @@ class ModuleDependenciesGraphMultiplatformTest : BaseModuleDrTest() {
         val iosAppIosX64FragmentDeps = doTestByFile(
             testInfo,
             aom,
-            ResolutionInput(
-                DependenciesFlowType.IdeSyncType(aom), ResolutionDepth.GRAPH_FULL,
-                fileCacheBuilder = getAmperFileCacheBuilder(amperUserCacheRoot),
-            ),
+            ideSyncTestResolutionInput,
             module = "ios-app",
             fragment = "iosX64Test",
             filter = ModuleResolutionFilter(scope = ResolutionScope.COMPILE)
@@ -144,10 +127,7 @@ class ModuleDependenciesGraphMultiplatformTest : BaseModuleDrTest() {
         val iosAppIosFragmentDeps = doTestByFile(
             testInfo,
             aom,
-            ResolutionInput(
-                DependenciesFlowType.IdeSyncType(aom), ResolutionDepth.GRAPH_FULL,
-                fileCacheBuilder = getAmperFileCacheBuilder(amperUserCacheRoot),
-            ),
+            ideSyncTestResolutionInput,
             module = "ios-app",
             fragment = "ios",
             filter = ModuleResolutionFilter(scope = ResolutionScope.COMPILE)
@@ -161,10 +141,7 @@ class ModuleDependenciesGraphMultiplatformTest : BaseModuleDrTest() {
         val iosAppIosX64FragmentDeps = doTestByFile(
             testInfo,
             aom,
-            ResolutionInput(
-                DependenciesFlowType.IdeSyncType(aom), ResolutionDepth.GRAPH_FULL,
-                fileCacheBuilder = getAmperFileCacheBuilder(amperUserCacheRoot),
-            ),
+            ideSyncTestResolutionInput,
             module = "ios-app",
             fragment = "iosX64",
             filter = ModuleResolutionFilter(scope = ResolutionScope.COMPILE)
@@ -183,11 +160,7 @@ class ModuleDependenciesGraphMultiplatformTest : BaseModuleDrTest() {
         val androidAppAndroidFragmentDeps = doTestByFile(
             testInfo,
             aom,
-            ResolutionInput(
-                DependenciesFlowType.IdeSyncType(aom),
-                ResolutionDepth.GRAPH_FULL,
-                fileCacheBuilder = getAmperFileCacheBuilder(amperUserCacheRoot),
-            ),
+            ideSyncTestResolutionInput,
             module = "android-app",
             fragment = "main",
             filter = ModuleResolutionFilter(scope = ResolutionScope.COMPILE)
@@ -203,10 +176,7 @@ class ModuleDependenciesGraphMultiplatformTest : BaseModuleDrTest() {
         val sharedAndroidFragmentDeps = doTestByFile(
             testInfo,
             aom,
-            ResolutionInput(
-                DependenciesFlowType.IdeSyncType(aom), ResolutionDepth.GRAPH_FULL,
-                fileCacheBuilder = getAmperFileCacheBuilder(amperUserCacheRoot),
-            ),
+            ideSyncTestResolutionInput,
             module = "shared",
             fragment = "android",
             filter = ModuleResolutionFilter(scope = ResolutionScope.COMPILE)
@@ -230,19 +200,10 @@ class ModuleDependenciesGraphMultiplatformTest : BaseModuleDrTest() {
 
         val sharedModuleDeps = doTest(
             aom,
-            ResolutionInput(
-                DependenciesFlowType.ClassPathType(
-                    ResolutionScope.COMPILE,
-                    setOf(ResolutionPlatform.JVM),
-                    isTest = false,
-                    includeNonExportedNative = false
-                ),
-                ResolutionDepth.GRAPH_FULL,
-                fileCacheBuilder = getAmperFileCacheBuilder(amperUserCacheRoot),
-                incrementalCacheUsage = IncrementalCacheUsage.SKIP
-            ),
+            defaultTestResolutionInput.copy(
+                resolutionSettings = defaultTestResolutionInput.resolutionSettings.copy(includeNonExportedNative = false)),
             module = "shared",
-            filter = ModuleResolutionFilter(scope = ResolutionScope.COMPILE)
+            filter = ModuleResolutionFilter(scope = ResolutionScope.COMPILE) // todo (AB) : ResolutionPlatform.JVM???
         )
 
         sharedModuleDeps.assertMapping(
@@ -272,11 +233,7 @@ class ModuleDependenciesGraphMultiplatformTest : BaseModuleDrTest() {
 
         val moduleDeps = doTest(
             aom,
-            ResolutionInput(
-                DependenciesFlowType.IdeSyncType(aom),
-                ResolutionDepth.GRAPH_FULL,
-                fileCacheBuilder = getAmperFileCacheBuilder(amperUserCacheRoot),
-            ),
+            ideSyncTestResolutionInput,
             module = "kmp-library",
             filter = ModuleResolutionFilter(scope = ResolutionScope.COMPILE)
         )

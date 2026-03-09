@@ -4,11 +4,9 @@
 
 package org.jetbrains.amper.frontend.dr.resolver.flow
 
-import io.opentelemetry.api.OpenTelemetry
 import org.jetbrains.amper.dependency.resolution.Cache
 import org.jetbrains.amper.dependency.resolution.CacheEntryKey
 import org.jetbrains.amper.dependency.resolution.Context
-import org.jetbrains.amper.dependency.resolution.FileCacheBuilder
 import org.jetbrains.amper.dependency.resolution.ResolutionPlatform
 import org.jetbrains.amper.dependency.resolution.ResolutionScope
 import org.jetbrains.amper.frontend.AmperModule
@@ -23,9 +21,9 @@ import org.jetbrains.amper.frontend.dr.resolver.DependenciesFlowType
 import org.jetbrains.amper.frontend.dr.resolver.DirectFragmentDependencyNodeHolderWithContext
 import org.jetbrains.amper.frontend.dr.resolver.ModuleDependencyNode
 import org.jetbrains.amper.frontend.dr.resolver.ModuleDependencyNodeWithModuleAndContext
-import org.jetbrains.amper.frontend.dr.resolver.emptyContext
+import org.jetbrains.amper.frontend.dr.resolver.AmperResolutionSettings
 import org.jetbrains.amper.frontend.dr.resolver.spanBuilder
-import org.jetbrains.amper.incrementalcache.IncrementalCache
+import org.jetbrains.amper.frontend.dr.resolver.toEmptyContext
 import org.jetbrains.amper.telemetry.useWithoutCoroutines
 import org.slf4j.LoggerFactory
 import kotlin.io.path.absolutePathString
@@ -83,24 +81,19 @@ internal class IdeSync(
 
     override fun directDependenciesGraph(
         module: AmperModule,
-        fileCacheBuilder: FileCacheBuilder.() -> Unit,
-        openTelemetry: OpenTelemetry?,
-        incrementalCache: IncrementalCache?,
+        resolutionSettings: AmperResolutionSettings,
         sharedResolutionCache: Cache,
-    ): ModuleDependencyNodeWithModuleAndContext =
-        module.toGraph(fileCacheBuilder, openTelemetry, incrementalCache, sharedResolutionCache)
+    ): ModuleDependencyNodeWithModuleAndContext = module.toGraph(resolutionSettings, sharedResolutionCache)
 
     private fun AmperModule.toGraph(
-        fileCacheBuilder: FileCacheBuilder.() -> Unit,
-        openTelemetry: OpenTelemetry?,
-        incrementalCache: IncrementalCache?,
+        resolutionSettings: AmperResolutionSettings,
         sharedResolutionCache: Cache,
     ): ModuleDependencyNodeWithModuleAndContext {
         val node = ModuleDependencyNodeWithModuleAndContext(
             isForTests = false, // todo (AB) : it doesn't make sense, since it contains both main and test and it is no longer valid usage.
-            children = fragments.flatMap { it.toGraph(fileCacheBuilder, openTelemetry, incrementalCache, sharedResolutionCache) },
+            children = fragments.flatMap { it.toGraph(resolutionSettings, sharedResolutionCache) },
             module = this,
-            templateContext = emptyContext(fileCacheBuilder, openTelemetry, incrementalCache),
+            templateContext = resolutionSettings.toEmptyContext(),
             topLevel = true,
         )
         return node
@@ -129,13 +122,11 @@ internal class IdeSync(
      * (flag 'exported' takes effect in the case of native modules during graph resolution)
      */
     private fun Fragment.toGraph(
-        fileCacheBuilder: FileCacheBuilder.() -> Unit,
-        openTelemetry: OpenTelemetry?,
-        incrementalCache: IncrementalCache?,
+        resolutionSettings: AmperResolutionSettings,
         sharedResolutionCache: Cache,
     ): List<DirectFragmentDependencyNodeHolderWithContext> {
-        return openTelemetry.spanBuilder("DR: Resolving direct graph").useWithoutCoroutines {
-            val moduleDependencies = openTelemetry.spanBuilder("DR: directDependenciesGraph").useWithoutCoroutines {
+        return resolutionSettings.openTelemetry.spanBuilder("DR: Resolving direct graph").useWithoutCoroutines {
+            val moduleDependencies = resolutionSettings.openTelemetry.spanBuilder("DR: directDependenciesGraph").useWithoutCoroutines {
                 Classpath(
                     DependenciesFlowType.ClassPathType(
                         scope = ResolutionScope.COMPILE,
@@ -143,7 +134,7 @@ internal class IdeSync(
                         isTest = isTest,
                         includeNonExportedNative = false
                     )
-                ).directDependenciesGraph(this, fileCacheBuilder, openTelemetry, incrementalCache, sharedResolutionCache)
+                ).directDependenciesGraph(this, resolutionSettings, sharedResolutionCache)
             }
 
             if (hasSinglePlatformDependenciesOnly(moduleDependencies)) {
@@ -151,7 +142,7 @@ internal class IdeSync(
                     .flatMap { externalDependencies }
                     .filterIsInstance<MavenDependencyBase>()
                     .distinct()
-                    .mapNotNull { it.toGraph(this, fileCacheBuilder, openTelemetry, incrementalCache, sharedResolutionCache) }
+                    .mapNotNull { it.toGraph(this, resolutionSettings, sharedResolutionCache) }
                     .toList()
                 // In a single-platform case we could rely on IDE dependencies resolution.
                 // Exported dependencies of the fragment on other modules will be taken into account by IDE while preparing
@@ -159,7 +150,7 @@ internal class IdeSync(
                 return@useWithoutCoroutines directDependencies
             }
 
-            val allMavenDeps = openTelemetry.spanBuilder("DR: allMavenDeps").useWithoutCoroutines {
+            val allMavenDeps = resolutionSettings.openTelemetry.spanBuilder("DR: allMavenDeps").useWithoutCoroutines {
                 moduleDependencies
                     .distinctBfsSequence()
                     .filterIsInstance<DirectFragmentDependencyNodeHolderWithContext>()
@@ -168,7 +159,7 @@ internal class IdeSync(
                     .distinctBy { it.dependencyNode }
                     .mapNotNull {
                         val mavenDependencyNotation = it.notation
-                        val context = mavenDependencyNotation.resolveFragmentContext(this, fileCacheBuilder, openTelemetry, incrementalCache, sharedResolutionCache)
+                        val context = mavenDependencyNotation.resolveFragmentContext(this, resolutionSettings, sharedResolutionCache)
                         context?.let { mavenDependencyNotation.toFragmentDirectDependencyNode(this, context) }
                     }.toList()
             }
@@ -217,21 +208,17 @@ internal class IdeSync(
 
     private fun MavenDependencyBase.toGraph(
         fragment: Fragment,
-        fileCacheBuilder: FileCacheBuilder.() -> Unit,
-        openTelemetry: OpenTelemetry?,
-        incrementalCache: IncrementalCache?,
+        resolutionSettings: AmperResolutionSettings,
         sharedResolutionCache: Cache,
     ): DirectFragmentDependencyNodeHolderWithContext? {
-        val context = resolveFragmentContext(fragment, fileCacheBuilder, openTelemetry, incrementalCache, sharedResolutionCache)
+        val context = resolveFragmentContext(fragment, resolutionSettings, sharedResolutionCache)
             ?: return null
         return toFragmentDirectDependencyNode(fragment, context)
     }
 
     private fun MavenDependencyBase.resolveFragmentContext(
         fragment: Fragment,
-        fileCacheBuilder: FileCacheBuilder.() -> Unit,
-        openTelemetry: OpenTelemetry?,
-        incrementalCache: IncrementalCache?,
+        resolutionSettings : AmperResolutionSettings,
         sharedResolutionCache: Cache,
     ): Context? {
         val fragmentPlatforms = fragment.resolutionPlatforms ?: return null
@@ -239,7 +226,7 @@ internal class IdeSync(
             is MavenDependency -> if (compile) ResolutionScope.COMPILE else ResolutionScope.RUNTIME
             is BomDependency -> ResolutionScope.COMPILE
         }
-        return fragment.module.resolveModuleContext(fragmentPlatforms, scope, false, fileCacheBuilder, openTelemetry, incrementalCache, sharedResolutionCache)
+        return fragment.module.resolveModuleContext(fragmentPlatforms, scope, false, resolutionSettings, sharedResolutionCache)
     }
 }
 

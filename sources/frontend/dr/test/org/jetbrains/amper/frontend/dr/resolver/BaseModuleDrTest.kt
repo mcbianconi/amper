@@ -61,7 +61,7 @@ abstract class BaseModuleDrTest {
     protected suspend fun doTestByFile(
         testInfo: TestInfo,
         aom: Model,
-        resolutionInput: ResolutionInput,
+        resolutionInput: TestResolutionInput = defaultTestResolutionInput,
         verifyMessages: Boolean = true,
         module: String? = null,
         fragment: String? = null,
@@ -79,7 +79,7 @@ abstract class BaseModuleDrTest {
 
     protected suspend fun doTest(
         aom: Model,
-        resolutionInput: ResolutionInput,
+        resolutionInput: TestResolutionInput = defaultTestResolutionInput,
         verifyMessages: Boolean = true,
         @Language("text") expected: String? = null,
         module: String? = null,
@@ -87,33 +87,30 @@ abstract class BaseModuleDrTest {
         filter: ModuleResolutionFilter? = null,
         messagesCheck: (DependencyNode) -> Unit = defaultMessagesCheck
     ): DependencyNode {
-        val resolutionInputCopy = resolutionInput
-            .copy(fileCacheBuilder = cacheBuilder(Dirs.userCacheRoot))
+        val resolutionSettings = resolutionInput.resolutionSettings
+        val resolutionRunSettings = resolutionInput.resolutionRunSettings
             .copy(incrementalCacheUsage = getIncrementalCacheUsage())
 
         val graph =
-            if (module == null && resolutionInput.dependenciesFlowType is DependenciesFlowType.IdeSyncType) {
+            if (module == null
+                && ideSyncTestResolutionInput.resolutionSettings.includeNonExportedNative == resolutionSettings.includeNonExportedNative
+                && ideSyncTestResolutionInput.resolutionType == resolutionInput.resolutionType)
+            {
                 with (ModuleDependencies) {
                     aom.resolveProjectDependencies(
-                        resolutionInputCopy,
-                        AmperUserCacheRoot(Dirs.userCacheRoot)
+                        resolutionSettings,
+                        resolutionRunSettings,
                     ).also { checkMessages(verifyMessages, it, messagesCheck) }
                         .root
                 }
             } else {
-                val resolutionType = when {
-                    resolutionInput.dependenciesFlowType is DependenciesFlowType.IdeSyncType
-                            || (resolutionInput.dependenciesFlowType is DependenciesFlowType.ClassPathType
-                                && resolutionInput.dependenciesFlowType.isTest) -> ResolutionType.ALL
-                    else -> ResolutionType.MAIN
-                }
                 val modules = aom.modules.filter { module == null || it.userReadableName == module }
                 ModuleDependencies.resolveModuleDependencies(
                     modules,
-                    resolutionInputCopy,
-                    AmperUserCacheRoot(Dirs.userCacheRoot),
+                    resolutionSettings,
+                    resolutionRunSettings,
                     filter = filter,
-                    resolutionType = resolutionType,
+                    resolutionType = resolutionInput.resolutionType,
                 )
                     .also { checkMessages(verifyMessages, it, messagesCheck) }
                     .let {
@@ -137,20 +134,13 @@ abstract class BaseModuleDrTest {
             val moduleDeps = graph.children.filterIsInstance<ModuleDependencyNode>()
             assertEquals(moduleDeps.size, graph.children.size,
                 "Unexpected dependency type is among root children: " +
-                        (graph.children - moduleDeps).map{ it::class.simpleName }.joinToString()
+                        (graph.children - moduleDeps.toSet()).joinToString { it::class.java.simpleName }
             )
             assertModuleDepsEquals(expected, moduleDeps)
         }
 
         return graph
     }
-
-    internal fun List<DirectFragmentDependencyNode>.filterByScope(scope: ResolutionScope?) =
-        scope?.let {
-            filter {
-                (it.dependencyNode as? MavenDependencyNode)?.dependency?.resolutionConfig?.scope == scope
-            }
-        } ?: this
 
     protected fun cacheBuilder(cacheRoot: Path): FileCacheBuilder.() -> Unit = {
         getDefaultFileCacheBuilder(cacheRoot).invoke(this)
@@ -198,7 +188,7 @@ abstract class BaseModuleDrTest {
         root: DependencyNode,
         withSources: Boolean = false,
         checkExistence: Boolean = false,// could be set to true only in case dependency files were downloaded by caller already
-        checkAutoAddedDocumentation: Boolean = true, // auto-added documentation files are skipped fom check if this flag is false.
+        checkAutoAddedDocumentation: Boolean = true, // auto-added documentation files are skipped from check if this flag is false.
         scope: ResolutionScope? = null,
     ) {
         root.distinctBfsSequence()
@@ -271,7 +261,7 @@ abstract class BaseModuleDrTest {
          * Run every test twice if [checkIncrementalCache] is set to true
          * (the first run without cache, the second with cache populated during the first run)
          *
-         * test timeout is 5 minutes by default
+         * Test timeout is 5 minutes by default
          */
         internal fun runSlowModuleDependenciesTest(
             checkIncrementalCache: Boolean = true,
@@ -447,3 +437,17 @@ internal class IncrementalCacheUsageContextElement(
     override fun toString(): String = "ResolutionCacheUsageContextElement"
 }
 
+data class TestResolutionInput(
+    // todo (AB) : Shouldn't it be a part of filter?
+    val resolutionType: ResolutionType = ResolutionType.MAIN,
+    val resolutionSettings: AmperResolutionSettings = defaultTestResolutionSettings,
+    val resolutionRunSettings: ResolutionRunSettings = defaultResolutionRunSettings,
+)
+
+internal val defaultTestResolutionSettings = AmperResolutionSettings(amperUserCacheRoot)
+internal val defaultTestResolutionInput = TestResolutionInput()
+internal val ideSyncTestResolutionInput = defaultTestResolutionInput
+    .copy(
+        resolutionType = ResolutionType.ALL,
+        resolutionSettings = defaultTestResolutionInput.resolutionSettings.copy(includeNonExportedNative = false)
+    )

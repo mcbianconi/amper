@@ -18,6 +18,7 @@ import org.jetbrains.amper.frontend.TaskName
 import org.jetbrains.amper.frontend.dr.resolver.CliReportingMavenResolver
 import org.jetbrains.amper.frontend.dr.resolver.ModuleDependencies
 import org.jetbrains.amper.frontend.dr.resolver.ModuleDependencyNodeWithModuleAndContext
+import org.jetbrains.amper.frontend.dr.resolver.AmperResolutionSettings
 import org.jetbrains.amper.incrementalcache.IncrementalCache
 import org.jetbrains.amper.tasks.EmptyTaskResult
 import org.jetbrains.amper.tasks.TaskResult
@@ -185,8 +186,10 @@ class InitialMavenPhaseTask(parameters: PhaseTaskParameters) : BeforeMavenPhaseT
      */
     private fun getModuleDependencies() =
         with(ModuleDependencies) {
-            parameters.module
-                .moduleDependencies(parameters.cacheRoot, parameters.incrementalCache, GlobalOpenTelemetry.get())
+            val resolutionSettings = AmperResolutionSettings(
+                parameters.cacheRoot, parameters.incrementalCache, GlobalOpenTelemetry.get()
+            )
+            parameters.module.moduleDependencies(resolutionSettings)
         }
 
     // Here we are converting the external dependencies graph to the flat list of maven artifacts.

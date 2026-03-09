@@ -31,11 +31,9 @@ import org.jetbrains.amper.dependency.resolution.mavenCoordinatesTrimmed
 import org.jetbrains.amper.frontend.AmperModule
 import org.jetbrains.amper.frontend.Model
 import org.jetbrains.amper.frontend.Platform
-import org.jetbrains.amper.frontend.dr.resolver.DependenciesFlowType
 import org.jetbrains.amper.frontend.dr.resolver.ModuleDependencies
 import org.jetbrains.amper.frontend.dr.resolver.ModuleDependencyNode
-import org.jetbrains.amper.frontend.dr.resolver.ResolutionDepth
-import org.jetbrains.amper.frontend.dr.resolver.ResolutionInput
+import org.jetbrains.amper.frontend.dr.resolver.AmperResolutionSettings
 import org.jetbrains.amper.frontend.dr.resolver.ResolutionType
 import org.jetbrains.amper.frontend.dr.resolver.flow.toResolutionPlatform
 import org.jetbrains.amper.frontend.dr.resolver.moduleDependenciesResolver
@@ -138,20 +136,11 @@ internal class ShowDependenciesCommand: AmperModelAwareCommand(name = "dependenc
             ModuleDependencies
                 .resolveModuleDependencies(
                     modules = listOf(this@resolveDependencies),
-                    resolutionInput = ResolutionInput(
-                        // todo (AB) : This not needed
-                        DependenciesFlowType.ClassPathType(
-                            scope = ResolutionScope.COMPILE,
-                            platforms = emptySet(),
-                            isTest = includeTests,
-                            includeNonExportedNative = false
-                        ),
-                        resolutionDepth = ResolutionDepth.GRAPH_FULL,
+                    resolutionSettings = AmperResolutionSettings(
+                        userCacheRoot = commonOptions.sharedCachesRoot,
                         incrementalCache = cliContext.incrementalCache,
                         openTelemetry = GlobalOpenTelemetry.get(),
-                        fileCacheBuilder = {},
                     ),
-                    userCacheRoot = commonOptions.sharedCachesRoot,
                     resolutionType = if (includeTests) ResolutionType.ALL else ResolutionType.MAIN,
                     filter = null,
                 )

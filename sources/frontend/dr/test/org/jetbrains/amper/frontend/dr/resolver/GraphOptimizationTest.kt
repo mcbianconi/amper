@@ -26,10 +26,7 @@ class GraphOptimizationsTest : BaseModuleDrTest() {
             val testFragmentDeps = doTestByFile(
                 testInfo,
                 aom,
-                resolutionInput = ResolutionInput(
-                    DependenciesFlowType.IdeSyncType(aom), ResolutionDepth.GRAPH_FULL,
-                    fileCacheBuilder = getAmperFileCacheBuilder(amperUserCacheRoot),
-                ),
+                resolutionInput = ideSyncTestResolutionInput,
                 module = "jvm-empty",
             )
 

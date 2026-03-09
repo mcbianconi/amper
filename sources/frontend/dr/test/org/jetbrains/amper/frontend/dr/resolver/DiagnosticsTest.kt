@@ -43,7 +43,7 @@ class DiagnosticsTest : BaseModuleDrTest() {
         get() = super.testGoldenFilesRoot.resolve("diagnostics")
 
     @Test
-    fun `test sync diagnostics`(testInfo: TestInfo) = runModuleDependenciesTest {
+    fun `test sync diagnostics`(testInfo: TestInfo) = runSlowModuleDependenciesTest {
         val aom = getTestProjectModel("multi-module-failed-resolve", testDataRoot)
 
         assertEquals(
@@ -55,10 +55,7 @@ class DiagnosticsTest : BaseModuleDrTest() {
         val sharedTestFragmentDeps = doTestByFile(
             testInfo,
             aom,
-            ResolutionInput(
-                DependenciesFlowType.IdeSyncType(aom), ResolutionDepth.GRAPH_FULL,
-                fileCacheBuilder = getAmperFileCacheBuilder(amperUserCacheRoot)
-            ),
+            ideSyncTestResolutionInput,
             module = "shared",
             messagesCheck = { node ->
                 if (!assertDependencyError(node, "org.jetbrains.compose.foundation", "foundation")
@@ -138,13 +135,11 @@ class DiagnosticsTest : BaseModuleDrTest() {
             val projectDeps = doTestByFile(
                 testInfo,
                 aom,
-                ResolutionInput(
-                    DependenciesFlowType.IdeSyncType(aom), ResolutionDepth.GRAPH_FULL,
-                    fileCacheBuilder = getAmperFileCacheBuilder(amperUserCacheRoot)
-                ),
+                ideSyncTestResolutionInput,
                 messagesCheck = { node ->
                     node.messages.all { it.severity <= Severity.WARNING }
-                }
+                },
+                filter = ModuleResolutionFilter(scope = ResolutionScope.COMPILE)
             )
 
             assertFiles(testInfo,projectDeps)
@@ -201,10 +196,7 @@ class DiagnosticsTest : BaseModuleDrTest() {
                 doTestByFile(
                     testInfo,
                     aom,
-                    ResolutionInput(
-                        DependenciesFlowType.IdeSyncType(aom), ResolutionDepth.GRAPH_FULL,
-                        fileCacheBuilder = getAmperFileCacheBuilder(amperUserCacheRoot)
-                    ),
+                    ideSyncTestResolutionInput,
                     messagesCheck = { node ->
                         node.messages.all { it.severity <= Severity.WARNING }
                     }
@@ -260,10 +252,7 @@ class DiagnosticsTest : BaseModuleDrTest() {
         val aom = getTestProjectModel("jvm-bom-support", testDataRoot)
         val mainFragmentDeps = doTest(
             aom,
-            ResolutionInput(
-                DependenciesFlowType.IdeSyncType(aom), ResolutionDepth.GRAPH_FULL,
-                fileCacheBuilder = getAmperFileCacheBuilder(amperUserCacheRoot)
-            ),
+            ideSyncTestResolutionInput,
             module = "app",
             fragment = "main",
             expected = """
@@ -314,10 +303,7 @@ class DiagnosticsTest : BaseModuleDrTest() {
         val commonDeps = doTestByFile(
             testInfo = testInfo,
             aom,
-            ResolutionInput(
-                DependenciesFlowType.IdeSyncType(aom), ResolutionDepth.GRAPH_FULL,
-                fileCacheBuilder = getAmperFileCacheBuilder(amperUserCacheRoot)
-            ),
+            ideSyncTestResolutionInput,
             module = "app",
             fragment = "main",
             filter = ModuleResolutionFilter(
@@ -368,10 +354,7 @@ class DiagnosticsTest : BaseModuleDrTest() {
         val commonDeps = doTestByFile(
             testInfo = testInfo,
             aom,
-            ResolutionInput(
-                DependenciesFlowType.IdeSyncType(aom), ResolutionDepth.GRAPH_FULL,
-                fileCacheBuilder = getAmperFileCacheBuilder(amperUserCacheRoot)
-            ),
+            ideSyncTestResolutionInput,
             module = "app",
             fragment = "main",
             filter = ModuleResolutionFilter(
@@ -398,11 +381,9 @@ class DiagnosticsTest : BaseModuleDrTest() {
         val deps = doTestByFile(
             testInfo = testInfo,
             aom,
-            ResolutionInput(
-                DependenciesFlowType.IdeSyncType(aom), ResolutionDepth.GRAPH_FULL,
-                fileCacheBuilder = getAmperFileCacheBuilder(amperUserCacheRoot)
-            ),
+            ideSyncTestResolutionInput,
             module = "kotlin-stdlib-override",
+            filter = ideSyncModuleResolutionFilter.copy(scope = ResolutionScope.COMPILE),
             verifyMessages = false,
         )
 

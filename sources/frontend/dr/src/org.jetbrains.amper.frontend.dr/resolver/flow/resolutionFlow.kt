@@ -3,11 +3,9 @@
  */
 package org.jetbrains.amper.frontend.dr.resolver.flow
 
-import io.opentelemetry.api.OpenTelemetry
 import org.jetbrains.amper.dependency.resolution.Cache
 import org.jetbrains.amper.dependency.resolution.CacheEntryKey
 import org.jetbrains.amper.dependency.resolution.Context
-import org.jetbrains.amper.dependency.resolution.FileCacheBuilder
 import org.jetbrains.amper.dependency.resolution.JavaVersion
 import org.jetbrains.amper.dependency.resolution.MavenDependencyNode
 import org.jetbrains.amper.dependency.resolution.MavenGroupAndArtifact
@@ -24,10 +22,10 @@ import org.jetbrains.amper.frontend.RepositoriesModulePart
 import org.jetbrains.amper.frontend.dr.resolver.DependenciesFlowType
 import org.jetbrains.amper.frontend.dr.resolver.DirectFragmentDependencyNodeHolderWithContext
 import org.jetbrains.amper.frontend.dr.resolver.ModuleDependencyNodeWithModuleAndContext
+import org.jetbrains.amper.frontend.dr.resolver.AmperResolutionSettings
 import org.jetbrains.amper.frontend.dr.resolver.toDrMavenCoordinates
 import org.jetbrains.amper.frontend.jdkSettings
 import org.jetbrains.amper.frontend.schema.Repository.Companion.SpecialMavenLocalUrl
-import org.jetbrains.amper.incrementalcache.IncrementalCache
 import org.slf4j.LoggerFactory
 import java.util.concurrent.ConcurrentHashMap
 
@@ -36,9 +34,7 @@ private val logger = LoggerFactory.getLogger("resolutionFlow.kt")
 interface DependenciesFlow<T: DependenciesFlowType> {
     fun directDependenciesGraph(
         module: AmperModule,
-        fileCacheBuilder: FileCacheBuilder.() -> Unit,
-        openTelemetry: OpenTelemetry?,
-        incrementalCache: IncrementalCache?,
+        resolutionSettings: AmperResolutionSettings,
         sharedResolutionCache: Cache,
     ): ModuleDependencyNodeWithModuleAndContext
 
@@ -118,9 +114,7 @@ abstract class AbstractDependenciesFlow<T: DependenciesFlowType>(
         platforms: Set<ResolutionPlatform>,
         scope: ResolutionScope,
         isTest: Boolean,
-        fileCacheBuilder: FileCacheBuilder.() -> Unit,
-        openTelemetry: OpenTelemetry?,
-        incrementalCache: IncrementalCache?,
+        resolutionSettings: AmperResolutionSettings,
         sharedResolutionCache: Cache,
     ): Context {
         val repositories = getValidRepositories()
@@ -136,9 +130,9 @@ abstract class AbstractDependenciesFlow<T: DependenciesFlowType>(
                 this.scope = key.scope
                 this.platforms = key.platforms
                 this.repositories = repositories
-                this.cache = fileCacheBuilder
-                this.openTelemetry = openTelemetry
-                this.incrementalCache = incrementalCache
+                this.cache = resolutionSettings.fileCacheBuilder
+                this.openTelemetry = resolutionSettings.openTelemetry
+                this.incrementalCache = resolutionSettings.incrementalCache
                 // todo (AB): [AMPER-4905] It should be taken from the module being resolved, not the nested one from the module classpath
                 this.jdkVersion = JavaVersion(jdkSettings.version)
                 fragments.firstOrNull()?.let { rootFragment ->

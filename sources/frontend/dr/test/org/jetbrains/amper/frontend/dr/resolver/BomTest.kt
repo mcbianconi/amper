@@ -4,7 +4,6 @@
 
 package org.jetbrains.amper.frontend.dr.resolver
 
-import org.jetbrains.amper.dependency.resolution.ResolutionPlatform
 import org.jetbrains.amper.dependency.resolution.ResolutionScope
 import org.jetbrains.amper.dependency.resolution.diagnostics.DependencyResolutionDiagnostics.UnspecifiedDependencyVersion
 import org.jetbrains.amper.dependency.resolution.diagnostics.Severity
@@ -27,17 +26,6 @@ class BomTest: BaseModuleDrTest() {
 
         val jvmAppDeps = doTest(
             aom,
-            ResolutionInput(
-                DependenciesFlowType.ClassPathType(
-                    ResolutionScope.COMPILE,
-                    setOf(ResolutionPlatform.JVM),
-                    false,
-                    false
-                )
-                ,
-                ResolutionDepth.GRAPH_FULL,
-                fileCacheBuilder = getAmperFileCacheBuilder(amperUserCacheRoot),
-            ),
             verifyMessages = false,
             module = "app",
             filter = ModuleResolutionFilter(scope = ResolutionScope.COMPILE),
@@ -79,17 +67,9 @@ class BomTest: BaseModuleDrTest() {
 
         val jvmAppDirectOnlyDeps = doTest(
             aom,
-            ResolutionInput(
-                DependenciesFlowType.ClassPathType(
-                    ResolutionScope.COMPILE,
-                    setOf(ResolutionPlatform.JVM),
-                    false
-                ),
-
-                ResolutionDepth.GRAPH_WITH_DIRECT_DEPENDENCIES,
-
-                fileCacheBuilder = getAmperFileCacheBuilder(amperUserCacheRoot),
-            ),
+            defaultTestResolutionInput
+                .copy(resolutionRunSettings =
+                    defaultTestResolutionInput.resolutionRunSettings.copy(resolutionDepth = ResolutionDepth.GRAPH_WITH_DIRECT_DEPENDENCIES)),
             verifyMessages = false,
             module = "app",
             filter = ModuleResolutionFilter(scope = ResolutionScope.COMPILE),
@@ -128,17 +108,6 @@ class BomTest: BaseModuleDrTest() {
         val jvmAppDeps = doTestByFile(
             testInfo,
             aom,
-            ResolutionInput(
-                DependenciesFlowType.ClassPathType(
-                    ResolutionScope.COMPILE,
-                    setOf(ResolutionPlatform.JVM),
-                    false,
-                    false
-                )
-                ,
-                ResolutionDepth.GRAPH_FULL,
-                fileCacheBuilder = getAmperFileCacheBuilder(amperUserCacheRoot),
-            ),
             verifyMessages = false,
             module = "app",
             filter = ModuleResolutionFilter(scope = ResolutionScope.COMPILE),
@@ -169,17 +138,6 @@ class BomTest: BaseModuleDrTest() {
         val androidAppDeps = doTestByFile(
             testInfo = testInfo,
             aom,
-            ResolutionInput(
-                DependenciesFlowType.ClassPathType(
-                    ResolutionScope.RUNTIME,
-                    setOf(ResolutionPlatform.ANDROID),
-                    false,
-                    false
-                )
-                ,
-                ResolutionDepth.GRAPH_FULL,
-                fileCacheBuilder = getAmperFileCacheBuilder(amperUserCacheRoot),
-            ),
             module = "app",
             filter = ModuleResolutionFilter(scope = ResolutionScope.RUNTIME),
         )
@@ -209,17 +167,6 @@ class BomTest: BaseModuleDrTest() {
         val androidAppDeps = doTestByFile(
             testInfo = testInfo,
             aom,
-            ResolutionInput(
-                DependenciesFlowType.ClassPathType(
-                    ResolutionScope.RUNTIME,
-                    setOf(ResolutionPlatform.ANDROID),
-                    false,
-                    false
-                )
-                ,
-                ResolutionDepth.GRAPH_FULL,
-                fileCacheBuilder = getAmperFileCacheBuilder(amperUserCacheRoot),
-            ),
             verifyMessages = false,
             module = "app",
             filter = ModuleResolutionFilter(scope = ResolutionScope.RUNTIME),

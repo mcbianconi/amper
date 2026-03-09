@@ -3,11 +3,9 @@
  */
 package org.jetbrains.amper.frontend.dr.resolver
 
-import io.opentelemetry.api.OpenTelemetry
 import kotlinx.serialization.SerialName
 import kotlinx.serialization.Serializable
 import kotlinx.serialization.Transient
-import org.jetbrains.amper.core.AmperUserCacheRoot
 import org.jetbrains.amper.dependency.resolution.Cache
 import org.jetbrains.amper.dependency.resolution.CacheEntryKey
 import org.jetbrains.amper.dependency.resolution.Context
@@ -17,19 +15,14 @@ import org.jetbrains.amper.dependency.resolution.DependencyNodeHolder
 import org.jetbrains.amper.dependency.resolution.DependencyNodeHolderWithContext
 import org.jetbrains.amper.dependency.resolution.DependencyNodeReference
 import org.jetbrains.amper.dependency.resolution.DependencyNodeWithContext
-import org.jetbrains.amper.dependency.resolution.FileCacheBuilder
-import org.jetbrains.amper.dependency.resolution.IncrementalCacheUsage
 import org.jetbrains.amper.dependency.resolution.Key
 import org.jetbrains.amper.dependency.resolution.MavenDependencyNode
 import org.jetbrains.amper.dependency.resolution.MavenDependencyNodeWithContext
 import org.jetbrains.amper.dependency.resolution.ResolutionConfig
 import org.jetbrains.amper.dependency.resolution.ResolutionConfigPlain
-import org.jetbrains.amper.dependency.resolution.ResolutionLevel
 import org.jetbrains.amper.dependency.resolution.ResolutionPlatform
 import org.jetbrains.amper.dependency.resolution.ResolutionScope
-import org.jetbrains.amper.dependency.resolution.ResolvedGraph
 import org.jetbrains.amper.dependency.resolution.RootDependencyNode
-import org.jetbrains.amper.dependency.resolution.RootDependencyNodeWithContext
 import org.jetbrains.amper.dependency.resolution.SerializableDependencyNodeHolderBase
 import org.jetbrains.amper.dependency.resolution.currentGraphContext
 import org.jetbrains.amper.dependency.resolution.diagnostics.Message
@@ -46,7 +39,6 @@ import org.jetbrains.amper.frontend.api.PsiTrace
 import org.jetbrains.amper.frontend.api.ResolvedReferenceTrace
 import org.jetbrains.amper.frontend.api.TransformedValueTrace
 import org.jetbrains.amper.frontend.dr.resolver.flow.toPlatform
-import org.jetbrains.amper.incrementalcache.IncrementalCache
 import kotlin.error
 
 val moduleDependenciesResolver: ModuleDependenciesResolver = ModuleDependenciesResolverImpl()
@@ -56,17 +48,6 @@ enum class ResolutionDepth {
     GRAPH_WITH_DIRECT_DEPENDENCIES,
     GRAPH_FULL
 }
-
-data class ResolutionInput(
-    val dependenciesFlowType: DependenciesFlowType,
-    val resolutionDepth: ResolutionDepth,
-    val resolutionLevel: ResolutionLevel = ResolutionLevel.NETWORK,
-    val downloadSources: Boolean = false,
-    val incrementalCacheUsage: IncrementalCacheUsage = IncrementalCacheUsage.USE,
-    val fileCacheBuilder: FileCacheBuilder.() -> Unit,
-    val openTelemetry: OpenTelemetry? = null,
-    val incrementalCache: IncrementalCache? = null,
-)
 
 sealed interface DependenciesFlowType {
     data class ClassPathType(
@@ -83,9 +64,7 @@ interface ModuleDependenciesResolver {
     // todo (AB) : [AMPER-4905] Move to ModuleDependencies
     fun AmperModule.resolveDependenciesGraph(
         dependenciesFlowType: DependenciesFlowType.ClassPathType,
-        fileCacheBuilder: FileCacheBuilder.() -> Unit,
-        openTelemetry: OpenTelemetry?,
-        incrementalCache: IncrementalCache?,
+        resolutionSettings: AmperResolutionSettings,
         sharedResolutionCache: Cache,
     ): ModuleDependencyNodeWithModuleAndContext
 }

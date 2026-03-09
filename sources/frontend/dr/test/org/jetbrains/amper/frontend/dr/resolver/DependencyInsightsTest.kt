@@ -4,7 +4,6 @@
 
 package org.jetbrains.amper.frontend.dr.resolver
 
-import org.jetbrains.amper.core.AmperUserCacheRoot
 import org.jetbrains.amper.dependency.resolution.DependencyNode
 import org.jetbrains.amper.dependency.resolution.MavenCoordinates
 import org.jetbrains.amper.dependency.resolution.MavenDependencyConstraintNode
@@ -16,13 +15,10 @@ import org.jetbrains.amper.dependency.resolution.group
 import org.jetbrains.amper.dependency.resolution.module
 import org.jetbrains.amper.dependency.resolution.originalVersion
 import org.jetbrains.amper.dependency.resolution.resolvedVersion
-import org.jetbrains.amper.frontend.schema.DefaultVersions
-import org.jetbrains.amper.test.Dirs
 import org.junit.jupiter.api.Test
 import org.junit.jupiter.api.TestInfo
 import java.nio.file.Path
 import kotlin.io.path.div
-import kotlin.test.Ignore
 import kotlin.test.assertEquals
 import kotlin.test.assertNotNull
 import kotlin.test.assertNull
@@ -44,10 +40,7 @@ class DependencyInsightsTest : BaseModuleDrTest() {
         val jvmEmptyModuleGraph = doTestByFile(
             testInfo,
             aom,
-            resolutionInput = ResolutionInput(
-                DependenciesFlowType.IdeSyncType(aom), ResolutionDepth.GRAPH_FULL,
-                fileCacheBuilder = getAmperFileCacheBuilder(AmperUserCacheRoot(Dirs.userCacheRoot)),
-            ),
+            resolutionInput = ideSyncTestResolutionInput,
             module = "jvm-empty",
             filter = ModuleResolutionFilter(scope = ResolutionScope.COMPILE),
         )
@@ -87,15 +80,6 @@ class DependencyInsightsTest : BaseModuleDrTest() {
         val sharedModuleIosArm64Graph = doTestByFile(
             testInfo,
             aom,
-            ResolutionInput(
-                DependenciesFlowType.ClassPathType(
-                    scope = ResolutionScope.COMPILE,
-                    platforms = setOf(ResolutionPlatform.IOS_ARM64),
-                    isTest = false,
-                ),
-                ResolutionDepth.GRAPH_FULL,
-                fileCacheBuilder = getAmperFileCacheBuilder(AmperUserCacheRoot(Dirs.userCacheRoot)),
-            ),
             module = "shared",
             filter = ModuleResolutionFilter(
                 scope = ResolutionScope.COMPILE,
@@ -173,15 +157,6 @@ class DependencyInsightsTest : BaseModuleDrTest() {
             doTestByFile(
                 testInfo,
                 aom,
-                ResolutionInput(
-                    DependenciesFlowType.ClassPathType(
-                        scope = ResolutionScope.COMPILE,
-                        platforms = setOf(ResolutionPlatform.IOS_ARM64),
-                        isTest = false,
-                    ),
-                    ResolutionDepth.GRAPH_FULL,
-                    fileCacheBuilder = getAmperFileCacheBuilder(AmperUserCacheRoot(Dirs.userCacheRoot)),
-                ),
                 module = "ios-app",
                 filter = ModuleResolutionFilter(
                     scope = ResolutionScope.COMPILE,
@@ -211,15 +186,6 @@ class DependencyInsightsTest : BaseModuleDrTest() {
         val aGraph = doTestByFile(
             testInfo,
             aom,
-            ResolutionInput(
-                DependenciesFlowType.ClassPathType(
-                    scope = ResolutionScope.COMPILE,
-                    platforms = setOf(ResolutionPlatform.JVM),
-                    isTest = false,
-                ),
-                ResolutionDepth.GRAPH_FULL,
-                fileCacheBuilder = getAmperFileCacheBuilder(AmperUserCacheRoot(Dirs.userCacheRoot)),
-            ),
             module = "A",
             filter = ModuleResolutionFilter(
                 scope = ResolutionScope.COMPILE,
@@ -285,15 +251,6 @@ class DependencyInsightsTest : BaseModuleDrTest() {
         val bGraph = doTestByFile(
             testInfo,
             aom,
-            ResolutionInput(
-                DependenciesFlowType.ClassPathType(
-                    scope = ResolutionScope.COMPILE,
-                    platforms = setOf(ResolutionPlatform.JVM),
-                    isTest = false,
-                ),
-                ResolutionDepth.GRAPH_FULL,
-                fileCacheBuilder = getAmperFileCacheBuilder(AmperUserCacheRoot(Dirs.userCacheRoot)),
-            ),
             module = "B",
             filter = ModuleResolutionFilter(
                 scope = ResolutionScope.COMPILE,
@@ -319,15 +276,6 @@ class DependencyInsightsTest : BaseModuleDrTest() {
         val cGraph = doTestByFile(
             testInfo,
             aom,
-            ResolutionInput(
-                DependenciesFlowType.ClassPathType(
-                    scope = ResolutionScope.COMPILE,
-                    platforms = setOf(ResolutionPlatform.JVM),
-                    isTest = false,
-                ),
-                ResolutionDepth.GRAPH_FULL,
-                fileCacheBuilder = getAmperFileCacheBuilder(AmperUserCacheRoot(Dirs.userCacheRoot)),
-            ),
             module = "C",
             filter = ModuleResolutionFilter(
                 scope = ResolutionScope.COMPILE,
@@ -350,15 +298,6 @@ class DependencyInsightsTest : BaseModuleDrTest() {
         val dGraph = doTestByFile(
             testInfo,
             aom,
-            ResolutionInput(
-                DependenciesFlowType.ClassPathType(
-                    scope = ResolutionScope.COMPILE,
-                    platforms = setOf(ResolutionPlatform.JVM),
-                    isTest = false,
-                ),
-                ResolutionDepth.GRAPH_FULL,
-                fileCacheBuilder = getAmperFileCacheBuilder(AmperUserCacheRoot(Dirs.userCacheRoot)),
-            ),
             module = "D",
             filter = ModuleResolutionFilter(
                 scope = ResolutionScope.COMPILE,
@@ -381,15 +320,6 @@ class DependencyInsightsTest : BaseModuleDrTest() {
         val eGraph = doTestByFile(
             testInfo,
             aom,
-            ResolutionInput(
-                DependenciesFlowType.ClassPathType(
-                    scope = ResolutionScope.COMPILE,
-                    platforms = setOf(ResolutionPlatform.JVM),
-                    isTest = false,
-                ),
-                ResolutionDepth.GRAPH_FULL,
-                fileCacheBuilder = getAmperFileCacheBuilder(AmperUserCacheRoot(Dirs.userCacheRoot)),
-            ),
             module = "E",
             filter = ModuleResolutionFilter(
                 scope = ResolutionScope.COMPILE,

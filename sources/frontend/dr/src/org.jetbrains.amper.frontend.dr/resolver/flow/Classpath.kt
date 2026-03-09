@@ -4,11 +4,9 @@
 
 package org.jetbrains.amper.frontend.dr.resolver.flow
 
-import io.opentelemetry.api.OpenTelemetry
 import org.jetbrains.amper.dependency.resolution.Cache
 import org.jetbrains.amper.dependency.resolution.CacheEntryKey
 import org.jetbrains.amper.dependency.resolution.Context
-import org.jetbrains.amper.dependency.resolution.FileCacheBuilder
 import org.jetbrains.amper.dependency.resolution.ResolutionPlatform
 import org.jetbrains.amper.dependency.resolution.ResolutionScope
 import org.jetbrains.amper.frontend.AmperModule
@@ -23,9 +21,9 @@ import org.jetbrains.amper.frontend.allFragmentDependencies
 import org.jetbrains.amper.frontend.dr.resolver.DependenciesFlowType
 import org.jetbrains.amper.frontend.dr.resolver.DependencyNodeHolderWithNotationAndContext
 import org.jetbrains.amper.frontend.dr.resolver.ModuleDependencyNodeWithModuleAndContext
+import org.jetbrains.amper.frontend.dr.resolver.AmperResolutionSettings
 import org.jetbrains.amper.frontend.dr.resolver.uniqueModuleKey
 import org.jetbrains.amper.frontend.fragmentsTargeting
-import org.jetbrains.amper.incrementalcache.IncrementalCache
 
 /**
  * Performs the initial resolution of module classpath dependencies.
@@ -72,27 +70,19 @@ internal class Classpath(
 
     override fun directDependenciesGraph(
         module: AmperModule,
-        fileCacheBuilder: FileCacheBuilder.() -> Unit,
-        openTelemetry: OpenTelemetry?,
-        incrementalCache: IncrementalCache?,
+        resolutionSettings: AmperResolutionSettings,
         sharedResolutionCache: Cache,
     ): ModuleDependencyNodeWithModuleAndContext {
-        return module.fragmentsModuleDependencies(flowType, fileCacheBuilder = fileCacheBuilder,
-            openTelemetry = openTelemetry, incrementalCache = incrementalCache,
-            sharedResolutionCache = sharedResolutionCache)
+        return module.fragmentsModuleDependencies(flowType, resolutionSettings = resolutionSettings, sharedResolutionCache = sharedResolutionCache)
     }
 
     @Deprecated("To be removed. Used in obsoleteIdeSync only")
     internal fun directDependenciesGraph(
         fragment: Fragment,
-        fileCacheBuilder: FileCacheBuilder.() -> Unit,
-        openTelemetry: OpenTelemetry?,
-        incrementalCache: IncrementalCache?,
+        resolutionSettings: AmperResolutionSettings,
         sharedResolutionCache: Cache
     ): ModuleDependencyNodeWithModuleAndContext {
-        return fragment.module.fragmentsModuleDependencies(flowType, initialFragment = fragment,
-            fileCacheBuilder = fileCacheBuilder, openTelemetry = openTelemetry, incrementalCache = incrementalCache,
-            sharedResolutionCache = sharedResolutionCache)
+        return fragment.module.fragmentsModuleDependencies(flowType, resolutionSettings = resolutionSettings, sharedResolutionCache = sharedResolutionCache)
     }
 
     override fun resolutionCacheEntryKey(modules: List<AmperModule>): CacheEntryKey {
@@ -115,16 +105,13 @@ internal class Classpath(
         notation: LocalModuleDependency? = null,
         visitedModules: MutableSet<AmperModule> = mutableSetOf(),
         initialFragment: Fragment? = null,
-        fileCacheBuilder: FileCacheBuilder.() -> Unit,
-        openTelemetry: OpenTelemetry?,
-        incrementalCache: IncrementalCache?,
+        resolutionSettings: AmperResolutionSettings,
         sharedResolutionCache: Cache,
     ): ModuleDependencyNodeWithModuleAndContext {
 
         visitedModules.add(this)
 
-        val moduleContext = resolveModuleContext(flowType.platforms, flowType.scope, flowType.isTest,
-            fileCacheBuilder, openTelemetry, incrementalCache, sharedResolutionCache)
+        val moduleContext = resolveModuleContext(flowType.platforms, flowType.scope, flowType.isTest, resolutionSettings, sharedResolutionCache)
 
         val resolutionPlatforms = moduleContext.settings.platforms
 
@@ -146,7 +133,7 @@ internal class Classpath(
 
         val dependencies = fragments
             .sortedForClasspath(platforms)
-            .flatMap { it.toDependencyNode(resolutionPlatforms, directDependencies, moduleContext, visitedModules, flowType, fileCacheBuilder, openTelemetry, incrementalCache, sharedResolutionCache) }
+            .flatMap { it.toDependencyNode(resolutionPlatforms, directDependencies, moduleContext, visitedModules, flowType, resolutionSettings, sharedResolutionCache) }
             .sortedByDescending { (it.notation as? DefaultScopedNotation)?.exported == true }
 
         val node = ModuleDependencyNodeWithModuleAndContext(
@@ -167,9 +154,7 @@ internal class Classpath(
         moduleContext: Context,
         visitedModules: MutableSet<AmperModule>,
         flowType: DependenciesFlowType.ClassPathType,
-        fileCacheBuilder: FileCacheBuilder.() -> Unit,
-        openTelemetry: OpenTelemetry?,
-        incrementalCache: IncrementalCache?,
+        resolutionSettings: AmperResolutionSettings,
         sharedResolutionCache: Cache,
     ): List<DependencyNodeHolderWithNotationAndContext> {
         val fragmentDependencies = externalDependencies
@@ -190,7 +175,7 @@ internal class Classpath(
                             if (includeDependency) {
                                 resolvedDependencyModule.fragmentsModuleDependencies(
                                     flowType, directDependencies = false, notation = dependency, visitedModules = visitedModules,
-                                    fileCacheBuilder = fileCacheBuilder, openTelemetry = openTelemetry, incrementalCache = incrementalCache,
+                                    resolutionSettings = resolutionSettings,
                                     sharedResolutionCache = sharedResolutionCache
                                 )
                             } else null
