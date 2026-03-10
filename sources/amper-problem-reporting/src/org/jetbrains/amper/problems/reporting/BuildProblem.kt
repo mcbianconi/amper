@@ -84,6 +84,8 @@ interface BuildProblem {
 
     /**
      * The message to display to the user.
+     *
+     * For CLI, prefer rendering it via [renderMessage] to have file links and offsets.
      */
     val message: @Nls String
 

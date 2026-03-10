@@ -29,7 +29,7 @@ import org.jetbrains.amper.frontend.TaskName
 import org.jetbrains.amper.frontend.VersionCatalog
 import org.jetbrains.amper.frontend.aomBuilder.DefaultLocalModuleDependency
 import org.jetbrains.amper.frontend.api.DefaultTrace
-import org.jetbrains.amper.frontend.dr.resolver.CliReportingMavenResolver
+import org.jetbrains.amper.CliReportingMavenResolver
 import org.jetbrains.amper.frontend.dr.resolver.ModuleDependencies
 import org.jetbrains.amper.frontend.dr.resolver.ModuleResolutionFilter
 import org.jetbrains.amper.frontend.dr.resolver.AmperResolutionSettings

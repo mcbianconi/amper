@@ -12,7 +12,7 @@ import org.jetbrains.amper.core.AmperUserCacheRoot
 import org.jetbrains.amper.dependency.resolution.MavenRepository
 import org.jetbrains.amper.dependency.resolution.ResolutionPlatform
 import org.jetbrains.amper.dependency.resolution.ResolutionScope
-import org.jetbrains.amper.frontend.dr.resolver.CliReportingMavenResolver
+import org.jetbrains.amper.CliReportingMavenResolver
 import org.jetbrains.amper.incrementalcache.IncrementalCache
 import org.jetbrains.amper.test.dr.toMavenCoordinates
 import org.jetbrains.amper.test.runTestWithMdc

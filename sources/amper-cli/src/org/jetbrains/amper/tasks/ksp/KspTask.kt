@@ -22,7 +22,7 @@ import org.jetbrains.amper.frontend.aomBuilder.kspGeneratedClassesPath
 import org.jetbrains.amper.frontend.aomBuilder.kspGeneratedJavaSourcesPath
 import org.jetbrains.amper.frontend.aomBuilder.kspGeneratedKotlinSourcesPath
 import org.jetbrains.amper.frontend.aomBuilder.kspGeneratedResourcesPath
-import org.jetbrains.amper.frontend.dr.resolver.CliReportingMavenResolver
+import org.jetbrains.amper.CliReportingMavenResolver
 import org.jetbrains.amper.frontend.dr.resolver.flow.toRepository
 import org.jetbrains.amper.frontend.dr.resolver.toIncrementalCacheResult
 import org.jetbrains.amper.frontend.mavenRepositories

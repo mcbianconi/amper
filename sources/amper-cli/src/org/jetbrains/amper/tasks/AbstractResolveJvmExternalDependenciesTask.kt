@@ -18,7 +18,7 @@ import org.jetbrains.amper.frontend.AmperModule
 import org.jetbrains.amper.frontend.Platform
 import org.jetbrains.amper.frontend.api.TraceableString
 import org.jetbrains.amper.frontend.api.asTraceableValue
-import org.jetbrains.amper.frontend.dr.resolver.CliReportingMavenResolver
+import org.jetbrains.amper.CliReportingMavenResolver
 import org.jetbrains.amper.frontend.dr.resolver.flow.toRepository
 import org.jetbrains.amper.frontend.dr.resolver.toDrMavenCoordinates
 import org.jetbrains.amper.frontend.jdkSettings
