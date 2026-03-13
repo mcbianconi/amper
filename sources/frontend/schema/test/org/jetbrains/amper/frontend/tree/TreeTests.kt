@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+ * Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
  */
 
 package org.jetbrains.amper.frontend.tree
@@ -81,6 +81,7 @@ class TreeTests : FrontendTestCaseBase(Path(".") / "testResources" / "valueTree"
             PluginData(
                 id = PluginData.Id("myPlugin"),
                 pluginSettingsSchemaName = PluginData.SchemaName("com.example", listOf("CustomPluginSchema")),
+                source = PluginData.Source.Local(Path("/")),
                 declarations = PluginData.Declarations(
                     classes = listOf(
                         PluginData.ClassData(

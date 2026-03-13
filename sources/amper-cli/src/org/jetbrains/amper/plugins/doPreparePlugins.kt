@@ -101,7 +101,8 @@ internal suspend fun doPreparePlugins(
         }
 
         val allPluginData = results.map { result ->
-            val plugin = checkNotNull(plugins[result.sourcePath.parent]) {
+            val pluginRootDir = result.sourcePath.parent
+            val plugin = checkNotNull(plugins[pluginRootDir]) {
                 "Processing of ${result.sourcePath} requested, but no corresponding result is found"
             }
             PluginData(
@@ -110,6 +111,7 @@ internal suspend fun doPreparePlugins(
                     it.qualifiedName == plugin.settingsClass
                 },
                 description = plugin.description,
+                source = PluginData.Source.Local(pluginRootDir),
                 declarations = result.declarations,
             )
         }
