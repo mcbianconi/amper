@@ -7,6 +7,7 @@ package org.jetbrains.amper.lazyload
 import java.nio.file.Path
 import kotlin.io.path.Path
 import kotlin.io.path.listDirectoryEntries
+import kotlin.io.path.name
 
 /**
  * This list comes from `amper-cli`'s `module.yaml`.
@@ -27,5 +28,26 @@ internal enum class ExtraClasspath(val dirName: String) {
     /**
      * Returns the list of jars that belong to this [ExtraClasspath] from the Amper distribution.
      */
-    fun findJarsInDistribution(): List<Path> = distRoot.resolve(dirName).listDirectoryEntries("*.jar")
+    fun findJarsInDistribution(): List<Path> = distRoot.resolve(dirName)
+        .listDirectoryEntries("*.jar")
+        .sortedWith(jarComparator)
 }
+
+private val jarComparator = Comparator<Path> { jar1, jar2 ->
+    val jar1IsNaughty = jar1.isNaughtyJar()
+    val jar2IsNaughty = jar2.isNaughtyJar()
+    when {
+        jar1IsNaughty && !jar2IsNaughty -> 1 // naughty jar1 should be considered "bigger" (last)
+        !jar1IsNaughty && jar2IsNaughty -> -1 // naughty jar2 should be considered "bigger" (last)
+        else -> jar1.name.compareTo(jar2.name) // both naughty or both good - order normally
+    }
+}
+
+/**
+ * These jars embed some non-shaded dependencies and, as such, will hijack the classloading of 3rd party classes
+ * if they are in these dependencies. For example, kotlin-compiler-2.3.0.jar contains opentelemetry classes that
+ * will be loaded instead of the correct ones if the kotlin-compiler jar is first in the classpath.
+ */
+private val prefixesOfNaughtyJarsThatShouldBeLast = listOf("kotlin-compiler-", "analysis-api-")
+
+private fun Path.isNaughtyJar(): Boolean = prefixesOfNaughtyJarsThatShouldBeLast.any { name.startsWith(it) }

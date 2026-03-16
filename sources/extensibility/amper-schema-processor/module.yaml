@@ -11,6 +11,7 @@ settings:
     serialization: json
 
 dependencies:
+  - ../../amper-telemetry
   - ../amper-schema-processing
   - $libs.kotlin.analysis.api.standalone.for.ide
 
