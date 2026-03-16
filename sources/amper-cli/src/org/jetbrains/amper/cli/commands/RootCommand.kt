@@ -29,10 +29,10 @@ import org.jetbrains.amper.cli.AmperHelpFormatter
 import org.jetbrains.amper.cli.AmperVersion
 import org.jetbrains.amper.cli.commands.show.ShowCommand
 import org.jetbrains.amper.cli.commands.tools.ToolCommand
-import org.jetbrains.amper.cli.createMordantTerminal
 import org.jetbrains.amper.cli.logging.LoggingInitializer
 import org.jetbrains.amper.cli.options.choiceWithTypoSuggestion
 import org.jetbrains.amper.cli.telemetry.TelemetryEnvironment
+import org.jetbrains.amper.cli.terminal.createMordantTerminal
 import org.jetbrains.amper.cli.unwrap
 import org.jetbrains.amper.cli.withShowCommandSuggestions
 import org.jetbrains.amper.core.AmperUserCacheRoot
