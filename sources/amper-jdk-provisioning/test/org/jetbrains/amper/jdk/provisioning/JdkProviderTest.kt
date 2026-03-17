@@ -54,7 +54,12 @@ class JdkProviderTest {
         assertValidJdk(
             JdkProvisioningCriteria(
                 // there is no Dragonwell JDK 25 yet
-                majorVersion = if (distribution == JvmDistribution.AlibabaDragonwell) 21 else 25,
+                majorVersion = when (distribution) {
+                    JvmDistribution.AlibabaDragonwell -> 21
+                    // TODO: AMPER-5202 Oracle OpenJDK 25 is not provided by the list from JetBrains
+                    JvmDistribution.OracleOpenJdk -> 26
+                    else -> 25
+                },
                 distributions = listOf(distribution),
                 acknowledgedLicenses = buildList {
                     if (distribution.requiresLicense) {
