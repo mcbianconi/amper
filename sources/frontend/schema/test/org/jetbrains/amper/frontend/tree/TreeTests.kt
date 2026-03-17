@@ -7,8 +7,10 @@ package org.jetbrains.amper.frontend.tree
 import org.jetbrains.amper.frontend.api.SchemaNode
 import org.jetbrains.amper.frontend.contexts.PathCtx
 import org.jetbrains.amper.frontend.contexts.PlatformCtx
+import org.jetbrains.amper.frontend.helpers.DiagnosticsTreeTestRun
 import org.jetbrains.amper.frontend.helpers.FrontendTestCaseBase
 import org.jetbrains.amper.frontend.helpers.diagnoseModuleRead
+import org.jetbrains.amper.frontend.helpers.readAndRefineModule
 import org.jetbrains.amper.frontend.helpers.testModuleRead
 import org.jetbrains.amper.frontend.helpers.testRefineModule
 import org.jetbrains.amper.frontend.helpers.testRefineModuleWithTemplates
@@ -71,6 +73,30 @@ class TreeTests : FrontendTestCaseBase(Path(".") / "testResources" / "valueTree"
             pluginData = testPluginData(),
         )
     )
+
+    @Test
+    fun `context conflicts on a scalar`() = DiagnosticsTreeTestRun(
+        caseName = "context-conflicts-scalar",
+        testCase = this,
+        types = SchemaTypingContext(),
+        treeBuilder = readAndRefineModule(platformCtxs("jvm")),
+    ).doTest()
+
+    @Test
+    fun `no context conflicts if value is the same`() = DiagnosticsTreeTestRun(
+        caseName = "context-no-conflicts",
+        testCase = this,
+        types = SchemaTypingContext(),
+        treeBuilder = readAndRefineModule(platformCtxs("jvm")),
+    ).doTest()
+
+    @Test
+    fun `context conflicts are not reported if resolved in a more specific context`() = DiagnosticsTreeTestRun(
+        caseName = "context-conflicts-resolved",
+        testCase = this,
+        types = SchemaTypingContext(),
+        treeBuilder = readAndRefineModule(platformCtxs("jvm")),
+    ).doTest()
 
     private fun platformCtxs(vararg values: String) =
         values.map { PlatformCtx(it, null) }.toSet()

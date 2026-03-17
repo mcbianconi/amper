@@ -12,6 +12,7 @@ import org.jetbrains.amper.problems.reporting.DiagnosticId
 enum class TreeDiagnosticId : DiagnosticId {
     AliasesAreNotSupported,
     CompoundKeysAreNotSupported,
+    ConflictingProperties,
     ExpectedKeyValue,
     ExpectedSingleKeyValuePair,
     InvalidPath,

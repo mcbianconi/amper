@@ -89,6 +89,7 @@ private class RefineRequest(
         return refined
     }
 
+    context(_: ProblemReporter)
     private fun refine(node: TreeNode): RefinedTreeNode {
         return when (node) {
             is RefinedTreeNode -> node
@@ -110,25 +111,37 @@ private class RefineRequest(
     /**
      * Merge named properties, comparing them by their contexts and by their name.
      */
+    context(_: ProblemReporter)
     private fun List<KeyValue>.refineProperties(): Map<String, RefinedKeyValue> =
         filterByContexts().run {
             // Do actual overriding for key-value pairs.
             val refinedProperties = refineOrReduceByKeys { props ->
-                val sorted = props.sortedWith(::compareAndReport)
+                val groupedKeyValues = groupMostSpecificKeyValues(props)
+                check(groupedKeyValues.isNotEmpty()) { "Key values grouped by value shouldn't be empty" }
 
-                val mostSpecificKeyValue = sorted.last()
-                val newTrace = reduceTrace(sorted)
+                // TODO: This is incorrect as we should build graph of props and traverse them in
+                //  the topological order.
+                val partiallySortedProps = props.sortedWith { first, second ->
+                    first.contexts.compareContexts(second.contexts).asCompareResult ?: 0
+                }
+
+                // TODO: This is completely incorrect as we should build graph of traces instead of a chain.
+                val newTrace = reduceTrace(partiallySortedProps)
+
+                if (groupedKeyValues.size > 1) {
+                    // We have conflicts, let's report an error node
+                    val anyConflictingValueList = groupedKeyValues.values.first()
+                    val anyKeyValue = anyConflictingValueList.first()
+                    return@refineOrReduceByKeys anyKeyValue.copyWithValue(ErrorNode(newTrace))
+                }
+
+                val actualKeyValues = groupedKeyValues.values.single()
+                val valueToUse = actualKeyValues.first()
                 // We consider the most specific key value as the source of truth for the type of the node and contexts.
-                val refinedValue = when (val value = mostSpecificKeyValue.value) {
-                    is ErrorNode -> {
-                        // We try recovering as much information for the invalid but "best-effort" tree by finding
-                        // last non-error node.
-                        val lastNonErrorNode = sorted.lastOrNull { it.value !is ErrorNode }
-                        lastNonErrorNode?.let { refine(it.value) } ?: ErrorNode(newTrace)
-                    }
+                val refinedValue = when (val value = valueToUse.value) {
                     is LeafTreeNode -> value.copyWithTrace(newTrace)
                     is ListNode -> {
-                        val children = sorted.flatMap { (it.value as? ListNode)?.children.orEmpty() }
+                        val children = partiallySortedProps.flatMap { (it.value as? ListNode)?.children.orEmpty() }
                         RefinedListNode(
                             children = children.filterByContexts().map { refine(it) },
                             type = value.type,
@@ -137,7 +150,7 @@ private class RefineRequest(
                         )
                     }
                     is MappingNode -> {
-                        val children = sorted.flatMap { (it.value as? MappingNode)?.children.orEmpty() }
+                        val children = partiallySortedProps.flatMap { (it.value as? MappingNode)?.children.orEmpty() }
                         refinedMappingNodeWithDefaults(
                             refinedChildren = children.refineProperties(),
                             type = value.type,
@@ -146,13 +159,66 @@ private class RefineRequest(
                         )
                     }
                 }
-                mostSpecificKeyValue.copyWithValue(refinedValue)
+                valueToUse.copyWithValue(refinedValue)
             }
 
             // Restore order. Also, ignore NoValues if anything is overwriting them.
             val unordered = refinedProperties.associateBy { it.key }
             return mapTo(mutableSetOf()) { it.key }.associateWith { unordered[it]!! }
         }
+
+    /**
+     * Groups most specific [keyValues] by unique values.
+     *
+     * The returned map contains node values as keys (where containers don't have separation between contents and
+     * are identical by type) and lists of incomparable key values as values of the map.
+     *
+     * NB: the presence of multiple incomparable key values in the list doesn't mean that there is a conflict,
+     * because they are all providing the same value. However, the presence of multiple keys in the map definitely
+     * means that we don't know what the final value should be.
+     */
+    context(problemReporter: ProblemReporter)
+    private fun groupMostSpecificKeyValues(keyValues: List<KeyValue>): Map<Any?, List<KeyValue>> {
+        val indeterminateValues = buildList<KeyValue> {
+            for (keyValue in keyValues) {
+                // For each of the key values in the list of indeterminate ones, we want to be sure in the final list
+                // there are no values that are more specific than this one. Thus, on each step we delete less specific
+                // values from the list and then add an item if no values are more specific as the current.
+                // This way we end up with the list of values that are either indeterminate or same with any other
+                // value in the list.
+                removeAll { it.contexts.compareContexts(keyValue.value.contexts) == ContextsInheritance.Result.IS_LESS_SPECIFIC }
+                if (none { it.contexts.compareContexts(keyValue.value.contexts) == ContextsInheritance.Result.IS_MORE_SPECIFIC }) add(keyValue)
+            }
+        }.distinct() // A key value might have come from the same tree read multiple times; we deduplicate them here.
+
+        val keyValuesGroupedByNodeValue = indeterminateValues.groupBy { keyValue ->
+            when (val value = keyValue.value) {
+                is MappingNode, is ListNode, is ErrorNode -> CanMergeWithoutConflicts
+                is ReferenceNode -> value.referencedPath
+                is StringInterpolationNode -> value.parts
+                is NullLiteralNode -> null
+                is BooleanNode -> value.value
+                is EnumNode -> value.entryName
+                is IntNode -> value.value
+                is PathNode -> value.value
+                is StringNode -> value.value
+            }
+        }
+
+        if (keyValuesGroupedByNodeValue.size > 1) {
+            problemReporter.reportMessage(
+                ConflictingProperties(selectedContexts, indeterminateValues)
+            )
+        }
+
+        return keyValuesGroupedByNodeValue
+    }
+
+    /**
+     * Helper object to represent the equality for containers when detecting conflicts as we can meaningfully merge
+     * mappings, lists, and errors.
+     */
+    private object CanMergeWithoutConflicts
 
     /**
      * Reduces the traces of sorted list of key-value pairs by merging them into a single trace
@@ -168,6 +234,7 @@ private class RefineRequest(
         return trace
     }
 
+    context(_: ProblemReporter)
     private fun refinedMappingNodeWithDefaults(
         refinedChildren: Map<String, RefinedKeyValue>,
         type: SchemaType.MapLikeType,
@@ -198,19 +265,9 @@ private class RefineRequest(
     }
 
     /**
-     * Compares two nodes by their contexts.
-     * If they are not comparable ([compareContexts] had returned null), then the problem is reported.
-     * Node is treated as "greater than" another node if its contexts can be inherited from other node contexts.
-     */
-    fun compareAndReport(first: KeyValue, second: KeyValue): Int =
-        (first.value.contexts.compareContexts(second.value.contexts)).asCompareResult ?: run {
-            // TODO AMPER-4516 Report unable to sort. Maybe even same contexts? See [asCompareResult].
-            0
-        }
-
-    /**
      * Refines the element if it is single or applies [reduce] to a collection of properties grouped by keys.
      */
+    context(_: ProblemReporter)
     private fun List<KeyValue>.refineOrReduceByKeys(reduce: (List<KeyValue>) -> RefinedKeyValue) =
         groupBy { it.key }.values.map { props ->
             props.singleOrNull()?.let { it.copyWithValue(refine(it.value)) }
