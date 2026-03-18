@@ -132,7 +132,8 @@ nav:
           - 'Kotlin/Wasm application': user-guide/product-types/wasm-app.md
       - 'Built-in technologies':
           - 'Compose Multiplatform': user-guide/builtin-tech/compose-multiplatform.md
-          - 'Kotlin Serialization': user-guide/builtin-tech/kotlin-serialization.md
+          - 'Kotlinx Serialization': user-guide/builtin-tech/kotlinx-serialization.md
+          - 'Kotlinx RPC': user-guide/builtin-tech/kotlinx-rpc.md
           - 'Ktor': user-guide/builtin-tech/ktor.md
           - 'Lombok': user-guide/builtin-tech/lombok.md
           - 'Spring Boot': user-guide/builtin-tech/spring.md

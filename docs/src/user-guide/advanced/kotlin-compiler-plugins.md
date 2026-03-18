@@ -120,7 +120,12 @@ The Compose compiler plugin is covered in the mode general
 ## Kotlinx Serialization
 
 The Kotlinx Serialization compiler plugin is covered in the more general 
-[Kotlin Serialization](../builtin-tech/kotlin-serialization.md) section.
+[Kotlinx Serialization](../builtin-tech/kotlinx-serialization.md) section.
+
+## Kotlinx RPC
+
+The Kotlinx RPC compiler plugin is covered in the more general
+[Kotlinx RPC](../builtin-tech/kotlinx-rpc.md) section.
 
 ## Parcelize
 
