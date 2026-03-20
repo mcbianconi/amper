@@ -7,10 +7,11 @@ package org.jetbrains.amper.cli.test
 import org.jetbrains.amper.cli.test.utils.assertStderrContains
 import org.jetbrains.amper.cli.test.utils.assertStdoutContains
 import org.jetbrains.amper.cli.test.utils.runSlowTest
+import org.jetbrains.amper.processes.runProcessAndCaptureOutput
 import org.jetbrains.amper.test.assertEqualsIgnoreLineSeparator
+import org.jetbrains.amper.test.processes.checkExitCodeIsZero
 import org.junit.jupiter.api.parallel.Execution
 import org.junit.jupiter.api.parallel.ExecutionMode
-import kotlin.io.path.Path
 import kotlin.io.path.absolutePathString
 import kotlin.io.path.div
 import kotlin.io.path.exists
@@ -18,9 +19,9 @@ import kotlin.io.path.notExists
 import kotlin.io.path.pathString
 import kotlin.io.path.readText
 import kotlin.io.path.writeText
-import kotlin.test.Ignore
 import kotlin.test.Test
 import kotlin.test.assertEquals
+import kotlin.test.assertFalse
 import kotlin.test.assertNotEquals
 import kotlin.test.assertTrue
 
@@ -657,6 +658,94 @@ class MavenConvertTest : AmperCliTestBase() {
         assertTrue(moduleYaml.contains("layout: maven-like"))
         assertTrue(moduleYaml.contains("name: commons-lang3"))
         assertTrue(moduleYaml.contains("group: org.apache.commons"))
+    }
+
+    @Test
+    fun `spring-petclinic with enable-compatibility-plugins`() = runSlowTest {
+        val projectRoot = testProject("maven-convert/spring-petclinic")
+
+        val buildResult = runCli(
+            projectRoot,
+            "tool", "convert-project", "--enable-compatibility-plugins",
+            copyToTempDir = true,
+        )
+
+        val moduleContent = (buildResult.projectDir / "module.yaml").readText()
+        assertFalse(moduleContent.contains("enabled: false"), "All compatibility plugins should be enabled")
+        // Plugins with configuration keep full form
+        assertTrue(moduleContent.contains("enabled: true"), "Plugins with configuration should have enabled: true")
+        // Plugins without configuration use shorthand form
+        assertTrue(
+            moduleContent.contains("maven-enforcer-plugin.display-info: enabled"),
+            "Plugins without configuration should use shorthand 'enabled' form"
+        )
+        assertFalse(
+            moduleContent.contains("Maven compatibility plugins are disabled by default"),
+            "Disabled plugins hint comment should not be present"
+        )
+    }
+
+    @Test
+    fun `duplicate-executions with enable-compatibility-plugins`() = runSlowTest {
+        val projectRoot = testProject("maven-convert/duplicate-executions")
+
+        val buildResult = runCli(
+            projectRoot,
+            "tool", "convert-project", "--enable-compatibility-plugins",
+            copyToTempDir = true,
+        )
+
+        val moduleContent = (buildResult.projectDir / "module.yaml").readText()
+        assertFalse(moduleContent.contains("enabled: false"), "All compatibility plugins should be enabled")
+        // Plugins without configuration use shorthand form
+        assertTrue(
+            moduleContent.contains(": enabled"),
+            "Plugins without configuration should use shorthand 'enabled' form"
+        )
+        assertFalse(
+            moduleContent.contains("Maven compatibility plugins are disabled by default"),
+            "Disabled plugins hint comment should not be present"
+        )
+        // Duplicate execution warning comments should still be present
+        assertTrue(
+            moduleContent.contains("configured in multiple executions"),
+            "Duplicate execution warnings should still be present"
+        )
+    }
+
+    @Test
+    fun `git-commit-id with enable-compatibility-plugins`() = runSlowTest {
+        val projectRoot = testProject("maven-convert/git-commit-id")
+
+        val buildResult = runCli(
+            projectRoot,
+            "tool", "convert-project", "--enable-compatibility-plugins",
+            copyToTempDir = true,
+        )
+
+        val moduleContent = (buildResult.projectDir / "module.yaml").readText()
+        // Plugin without configuration uses shorthand form
+        assertTrue(
+            moduleContent.contains("git-commit-id-maven-plugin.revision: enabled"),
+            "git-commit-id-maven-plugin.revision should use shorthand 'enabled' form"
+        )
+
+        // Initialize a git repo so the git-commit-id plugin can run
+        val dir = buildResult.projectDir
+        runProcessAndCaptureOutput(workingDir = dir, command = listOf("git", "init")).checkExitCodeIsZero()
+        runProcessAndCaptureOutput(workingDir = dir, command = listOf("git", "add", ".")).checkExitCodeIsZero()
+        runProcessAndCaptureOutput(
+            workingDir = dir,
+            command = listOf("git", "-c", "user.name=test", "-c", "user.email=test@test.com", "commit", "-m", "initial"),
+        ).checkExitCodeIsZero()
+
+        val converted = testProject(buildResult.projectDir.pathString)
+        runCli(
+            converted,
+            "test",
+            // jgit cleanup message on JVM shutdown
+            assertEmptyStdErr = false,
+        )
     }
 
 }

@@ -45,12 +45,14 @@ object MavenProjectConvertor {
      * @param overwrite If true, existing files will be overwritten.
      * @param userCacheRoot The user cache root for dependency resolution
      * @param codeVersion Code version for the cache.
+     * @param enableCompatibilityPlugins If true, compatibility plugins are generated with `enabled: true` instead of `enabled: false`.
      */
     suspend fun convert(
         pomXml: Path,
         overwrite: Boolean = false,
         userCacheRoot: AmperUserCacheRoot,
         codeVersion: String = "1.0-SNAPSHOT",
+        enableCompatibilityPlugins: Boolean = false,
     ) {
         val reactorProjects = spanBuilder("Reading Maven reactor projects").use {
             logger.info("Reading Maven reactor projects from $pomXml")
@@ -92,7 +94,7 @@ object MavenProjectConvertor {
         val unknownPluginXmls = reactorProjects.extractUnknownPluginXmls(userCacheRoot, codeVersion)
         val unknownPluginBuilder = amperProjectTreeBuilder(amperProjectPath, unknownPluginXmls) {
             contributeProjectMavenPlugins(unknownPluginXmls)
-            contributeUnknownPlugins(reactorProjects, unknownPluginXmls)
+            contributeUnknownPlugins(reactorProjects, unknownPluginXmls, enableCompatibilityPlugins)
         }
 
         val trees = builder.merge(unknownPluginBuilder).build()

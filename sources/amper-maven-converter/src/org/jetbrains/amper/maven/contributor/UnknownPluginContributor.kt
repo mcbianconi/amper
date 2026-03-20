@@ -41,6 +41,7 @@ private val WINDOWS_UNC_PATTERN = Regex("""(?<!\\)\\\\[^\s\\]+""")
 internal fun ProjectTreeBuilder.contributeUnknownPlugins(
     reactorProjects: Set<MavenProject>,
     pluginXmls: List<MavenPluginXml>,
+    enableCompatibilityPlugins: Boolean = false,
 ) {
     val pluginXmlMap = pluginXmls.associateBy { "${it.groupId}:${it.artifactId}" }
 
@@ -50,7 +51,7 @@ internal fun ProjectTreeBuilder.contributeUnknownPlugins(
                 pluginXmlMap.containsKey("${plugin.groupId}:${plugin.artifactId}")
             }
 
-            if (hasUnknownPlugins) {
+            if (hasUnknownPlugins && !enableCompatibilityPlugins) {
                 addYamlComment(YamlComment(
                     path = listOf(Module::mavenPlugins.name),
                     beforeKeyComment = MavenConverterBundle.message("disabled.plugins.hint"),
@@ -60,7 +61,7 @@ internal fun ProjectTreeBuilder.contributeUnknownPlugins(
             project.buildPlugins.forEach { plugin ->
                 val pluginXml = pluginXmlMap["${plugin.groupId}:${plugin.artifactId}"]
                 if (pluginXml != null) {
-                    contributeUnknownPlugin(plugin, pluginXml)
+                    contributeUnknownPlugin(plugin, pluginXml, enableCompatibilityPlugins)
                 }
             }
         }
@@ -70,6 +71,7 @@ internal fun ProjectTreeBuilder.contributeUnknownPlugins(
 private fun ProjectTreeBuilder.ModuleTreeBuilder.contributeUnknownPlugin(
     plugin: Plugin,
     pluginXml: MavenPluginXml,
+    enableCompatibilityPlugins: Boolean = false,
 ) {
     val executions = plugin.executions
     val pluginConfiguration = plugin.configuration as? Xpp3Dom
@@ -113,7 +115,7 @@ private fun ProjectTreeBuilder.ModuleTreeBuilder.contributeUnknownPlugin(
             else -> null
         }
 
-        contributePluginMojo(pluginXml, mojo, configuration)
+        contributePluginMojo(pluginXml, mojo, configuration, enableCompatibilityPlugins)
     }
 }
 
@@ -121,6 +123,7 @@ private fun ProjectTreeBuilder.ModuleTreeBuilder.contributePluginMojo(
     pluginXml: MavenPluginXml,
     mojo: Mojo,
     configuration: Xpp3Dom?,
+    enableCompatibilityPlugins: Boolean = false,
 ) {
     val pluginKey = "${pluginXml.artifactId}.${mojo.goal}"
 
@@ -134,24 +137,28 @@ private fun ProjectTreeBuilder.ModuleTreeBuilder.contributePluginMojo(
         }
     }
 
+    val enabledValue = if (enableCompatibilityPlugins) "true" else "false"
+
     withDefaultContext {
         val mavenPluginConfiguration = context(SimpleTreeNodeFactory(trace, contexts)) {
             mapping {
                 if (hasConfiguration) {
                     put(pluginKey, mapping {
-                        put(MavenMojoSettings::enabled.name, scalar("false"))
+                        put(MavenMojoSettings::enabled.name, scalar(enabledValue))
                         put(MavenMojoSettings::configuration.name, mapping {
                             mapConfiguration(configuration, mojo)
                         })
                     })
+                } else if (enableCompatibilityPlugins) {
+                    put(pluginKey, scalar(MavenMojoSettings::enabled.name))
                 } else {
                     put(pluginKey, mapping {
-                        put(MavenMojoSettings::enabled.name, scalar("false"))
+                        put(MavenMojoSettings::enabled.name, scalar(enabledValue))
                     })
                 }
             }
         }
-        
+
         mavenPlugins(mavenPluginConfiguration, unsafe = true)
     }
 }
