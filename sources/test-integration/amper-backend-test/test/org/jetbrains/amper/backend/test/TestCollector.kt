@@ -2,11 +2,8 @@
  * Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
  */
 
-package org.jetbrains.amper.test
+package org.jetbrains.amper.backend.test
 
-import com.github.ajalt.mordant.rendering.AnsiLevel
-import com.github.ajalt.mordant.terminal.Terminal
-import com.github.ajalt.mordant.terminal.TerminalRecorder
 import io.opentelemetry.context.Context
 import io.opentelemetry.context.ContextKey
 import io.opentelemetry.extension.kotlin.asContextElement
@@ -27,10 +24,6 @@ class TestCollector(val backgroundScope: CoroutineScope) : SpansTestCollector {
     override val spans: List<SpanData>
         get() = synchronized(collectedSpans) { collectedSpans.toList() }
     override fun clearSpans() = synchronized(collectedSpans) { collectedSpans.clear() }
-
-    val terminalRecorder = TerminalRecorder(ansiLevel = AnsiLevel.NONE)
-    val terminal: Terminal = Terminal(terminalInterface = terminalRecorder)
-    fun clearTerminalRecording() = terminalRecorder.clearOutput()
 
     companion object {
         private const val MDC_KEY = "test-collector"
@@ -53,8 +46,6 @@ class TestCollector(val backgroundScope: CoroutineScope) : SpansTestCollector {
                             block(testCollector)
                         } finally {
                             OpenTelemetryCollector.removeListener(listener)
-
-                            println(testCollector.terminalRecorder.output())
                         }
                     }
                 }
