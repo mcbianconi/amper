@@ -174,7 +174,7 @@ class BuildGraphIncrementalCacheTest : BaseDRTest() {
         val resolver = Resolver()
 
         val testExporter = InMemorySpanExporter.create()
-
+        val testTelemetry = createTestTelemetry(testExporter)
         val context = Context {
             this.repositories = repositories
             this.cache = getDefaultFileCacheBuilder(localStorage).let {
@@ -184,10 +184,11 @@ class BuildGraphIncrementalCacheTest : BaseDRTest() {
                 }
             }
             this.incrementalCache = IncrementalCache(
-                incrementalCacheDir,
-                "1"
+                stateRoot = incrementalCacheDir,
+                codeVersion = "1",
+                openTelemetry = testTelemetry,
             )
-            this.openTelemetry = createTestTelemetry(testExporter)
+            this.openTelemetry = testTelemetry
         }
 
         if (httpClient != null) context.resolutionCache[httpClientKey] = httpClient
