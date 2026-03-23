@@ -36,13 +36,8 @@ internal class DependencyNodeWithChildren(val node: DependencyNode): DependencyN
 fun DependencyNode.filterGraph(group: String, module: String, resolvedVersionOnly: Boolean = false): DependencyNode {
     val graph = this
 
-    val nodes = graph.distinctBfsSequence(
-        childrenPredicate = { child, parent ->
-            !resolvedVersionOnly
-                    || child.correspondsToResolvedVersionOf(group, module)
-                    || (!child.belongsTo(group, module) && parent.children.none { it.correspondsToResolvedVersionOf(group, module) })
-        }
-    ).filter { it.belongsTo(group, module) }
+    val nodes = graph.distinctBfsSequence()
+        .filter { it.belongsTo(group, module) }
         .toSet()
         .let {
             if (resolvedVersionOnly && it.any { it is MavenDependencyNode })
