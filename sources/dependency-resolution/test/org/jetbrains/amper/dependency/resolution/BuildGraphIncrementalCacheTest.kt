@@ -43,7 +43,7 @@ class BuildGraphIncrementalCacheTest : BaseDRTest() {
      */
     @Test
     fun `com_jetbrains_intellij_platform core-impl SNAPSHOT`(testInfo: TestInfo) = runSlowDrTest {
-        val coordinates = "com.jetbrains.intellij.platform:core-impl:253.29346.50-EAP-SNAPSHOT".toMavenCoordinates()
+        val coordinates = "com.jetbrains.intellij.platform:core-impl:261.22158.182-EAP-SNAPSHOT".toMavenCoordinates()
         val repositories = listOf(REDIRECTOR_MAVEN_CENTRAL, REDIRECTOR_INTELLIJ_DEPS, REDIRECTOR_INTELLIJ_SNAPSHOTS)
 
         // Incremental cache root is calculated once and reused between all resolution runs.
