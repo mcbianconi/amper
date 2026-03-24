@@ -162,7 +162,7 @@ private class RefineRequest(
                 valueToUse.copyWithValue(refinedValue)
             }
 
-            // Restore order. Also, ignore NoValues if anything is overwriting them.
+            // Restore order of key values to the one in the original mapping
             val unordered = refinedProperties.associateBy { it.key }
             return mapTo(mutableSetOf()) { it.key }.associateWith { unordered[it]!! }
         }
