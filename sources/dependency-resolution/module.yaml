@@ -33,6 +33,9 @@ test-dependencies:
   - $libs.system.stubs.jupiter
 
 settings:
+  jvm:
+    # Used in IDEA (max 21) and Kotlin Notebook (max 11), so we take the lowest version 11
+    release: 11
   kotlin:
     serialization:
       format: json
