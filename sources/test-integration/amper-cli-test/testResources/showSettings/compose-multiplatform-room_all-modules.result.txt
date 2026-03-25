@@ -190,7 +190,7 @@ settings@jvm:
   springBoot:
     applyBom: true  # default
     enabled: false  # default
-    version: 4.0.2  # default
+    version: 4.0.5  # default
 
 Module: shared
 
@@ -290,7 +290,7 @@ settings@jvm+android:
   springBoot:
     applyBom: true  # default
     enabled: false  # default
-    version: 4.0.2  # default
+    version: 4.0.5  # default
 
 settings@jvm:
   compose:
@@ -380,7 +380,7 @@ settings@jvm:
   springBoot:
     applyBom: true  # default
     enabled: false  # default
-    version: 4.0.2  # default
+    version: 4.0.5  # default
 
 settings@android:
   android:

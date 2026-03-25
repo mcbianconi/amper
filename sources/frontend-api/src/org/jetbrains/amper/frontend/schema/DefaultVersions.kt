@@ -29,5 +29,5 @@ object DefaultVersions {
     /*managed_default*/ val ksp = "2.3.6"
     /*managed_default*/ val ktor = "3.4.1"
     /*managed_default*/ val lombok = "1.18.38"
-    /*managed_default*/ val springBoot = "4.0.2"
+    /*managed_default*/ val springBoot = "4.0.5"
 }

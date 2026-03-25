@@ -43,7 +43,7 @@ val kotlinxSerializationVersion = "1.10.0"
 val kspVersion = "2.3.6"
 val ktorVersion = "3.4.1"
 val lombokVersion = "1.18.38"
-val springBootVersion = "4.0.2"
+val springBootVersion = "4.0.5"
 
 /**
  * The minimum JUnit Platform version we should be compatible with.
