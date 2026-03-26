@@ -43,8 +43,8 @@ the corresponding `module.yaml` files already exists, by default converter fails
 
 The converter creates:
 
-- a `project.yaml` at the reactor root with a `modules` list
-- a `module.yaml` in each module directory (regardless of whether it's single-module or reactor)
+- `project.yaml` at the reactor root, with the list of modules
+- `module.yaml` in every module directory, both in single-module projects and in multi-module reactor projects
 
 All converted modules use `layout: maven-like`, so your existing `src/main/java`, `src/test/kotlin`, etc. directories
 continue to work without moving any files. See [Maven-like layout](../user-guide/advanced/maven-like-layout.md)
@@ -96,7 +96,7 @@ mavenPlugins:
     enabled: false
 ```
 
-The `mavenPlugins` section allows you to run third-party Maven plugins directly in yourAmper project.
+The `mavenPlugins` section allows you to run third-party Maven plugins directly in your Amper project.
 However, not all plugins are guaranteed to work, so by default they are disabled. You can selectively enable
 plugins you need by setting `enabled: true` in their configuration after the conversion.
 
@@ -203,4 +203,4 @@ The following Maven features are not handled by the converter and require manual
 - **Optional dependencies**
 - **System-scoped dependencies**
 - **Variable substitution** — values are inlined where possible. For dependencies, it's recommended to use a
-  [library catalog](../user-guide/dependencies.md#library-catalogs)
+  [library catalog](../user-guide/dependencies.md#library-catalogs).
