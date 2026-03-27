@@ -86,10 +86,11 @@ class KotlinNativeCompiler(
                             konanLib / "trove4j.jar",
                         ),
                         programArgs = listOf("konanc", "@${argFile}"),
-                        // JVM args partially copied from <kotlinNativeHome>/bin/run_konan
                         argsMode = ArgsMode.ArgFile(tempRoot = tempRoot),
+                        // JVM args partially copied from <kotlinNativeHome>/bin/run_konan
                         jvmArgs = listOf(
                             "-ea",
+                            "-Xmx3G",
                             "-XX:TieredStopAtLevel=1",
                             "-Dfile.encoding=UTF-8",
                             "-Dkonan.home=$kotlinNativeHome",
