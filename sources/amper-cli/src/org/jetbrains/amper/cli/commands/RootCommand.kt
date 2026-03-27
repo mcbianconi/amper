@@ -58,6 +58,7 @@ internal class RootCommand : SuspendingCliktCommand(name = "amper") {
         )
         subcommands(
             BuildCommand(),
+            CheckCommand(),
             CleanCommand(),
             CleanSharedCachesCommand(),
             SuspendingCompletionCommand(

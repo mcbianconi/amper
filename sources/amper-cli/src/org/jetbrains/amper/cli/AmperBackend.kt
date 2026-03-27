@@ -22,6 +22,7 @@ import org.jetbrains.amper.frontend.Platform
 import org.jetbrains.amper.frontend.TaskName
 import org.jetbrains.amper.frontend.isDescendantOf
 import org.jetbrains.amper.frontend.mavenRepositories
+import org.jetbrains.amper.frontend.plugins.qualifiedName
 import org.jetbrains.amper.frontend.schema.ProductType
 import org.jetbrains.amper.system.info.OsFamily
 import org.jetbrains.amper.tasks.AllRunSettings
@@ -310,6 +311,102 @@ class AmperBackend(
         taskExecutor.runTasksAndReportOnFailure(testTasks)
     }
 
+    /**
+     * Called by the 'check' command.
+     * Runs checks in the project.
+     *
+     * The builtin check is "tests", which runs all tests (equivalent to `amper test`).
+     * Custom checks are contributed by plugins via [org.jetbrains.amper.frontend.plugins.CheckerFromPlugin].
+     *
+     * If [modules] is specified, only checks for those modules are run.
+     * If [checkNames] is specified, only those specific checks are run.
+     * If [skip] is specified, those checks are skipped (incompatible with [checkNames]).
+     */
+    suspend fun check(
+        modules: Set<String>? = null,
+        checkNames: Set<String>? = null,
+        skip: Set<String> = emptySet(),
+        // TODO: arguments for tests, like buildType, filter, etc.
+    ) {
+        val selectedModules = modules?.map { resolveModule(it) }?.toSet() ?: model.modules.toSet()
+
+        val customCheckers = selectedModules.flatMap { it.checkersFromPlugins }
+        val allCheckQualifiedNames = buildSet {
+            add(TESTS_BUILTIN_CHECK_NAME)
+            customCheckers.mapTo(this) { it.qualifiedName }
+        }
+
+        fun formatAllAvailableChecks() = buildList {
+            add("'$TESTS_BUILTIN_CHECK_NAME'")
+            customCheckers.groupBy { it.name }.forEach { (name, checkers) ->
+                val singleCheckerWithTheName = checkers.singleOrNull()
+                if (singleCheckerWithTheName != null) {
+                    add("'$name' (or '${singleCheckerWithTheName.qualifiedName}')")
+                } else {
+                    checkers.forEach { checker ->
+                        add("'${checker.qualifiedName}'")
+                    }
+                }
+            }
+        }.joinToString(prefix = "Available checks: ")
+
+        // Resolves a user-provided check name to qualified name(s), erroring on ambiguity
+        fun resolveToQualifiedName(name: String, context: String): String {
+            if (':' in name || name == TESTS_BUILTIN_CHECK_NAME) {
+                // Already qualified or builtin
+                if (name !in allCheckQualifiedNames) {
+                    userReadableError("Unknown check '$name'$context. ${formatAllAvailableChecks()}")
+                }
+                return name
+            }
+            // Simple name: resolve to all matching qualified names
+            val resolved = customCheckers.filter { it.name == name }.map { it.qualifiedName }.distinct()
+            if (resolved.isEmpty()) {
+                userReadableError("Unknown check '$name'$context. ${formatAllAvailableChecks()}")
+            }
+            if (resolved.size > 1) {
+                userReadableError(
+                    "Ambiguous check name '$name'$context. " +
+                            "Multiple plugins provide a check with this name. " +
+                            "Please use a qualified name: ${resolved.sorted().joinToString()}"
+                )
+            }
+            return resolved.single()
+        }
+
+        // Resolve all user-provided names to qualified names
+        val resolvedCheckNames = checkNames?.mapTo(mutableSetOf()) { resolveToQualifiedName(it, "") }
+        val resolvedSkip = skip.mapTo(mutableSetOf()) { resolveToQualifiedName(it, " in --skip") }
+
+        val effectiveCheckNames = resolvedCheckNames ?: (allCheckQualifiedNames - resolvedSkip)
+
+        val taskNamesToRun = buildSet {
+            // Builtin "tests" check
+            if (TESTS_BUILTIN_CHECK_NAME in effectiveCheckNames) {
+                val testTasks = taskGraph.tasks
+                    .filterIsInstance<TestTask>()
+                    .filter {
+                        it.module in selectedModules && it.platform in PlatformUtil.platformsMayRunOnCurrentSystem
+                    }
+                    .map { it.taskName }
+                addAll(testTasks)
+            }
+
+            // Custom checks from plugins
+            for (checker in customCheckers) {
+                if (checker.qualifiedName in effectiveCheckNames) {
+                    add(checker.performedBy)
+                }
+            }
+        }
+
+        if (taskNamesToRun.isEmpty()) {
+            userReadableError("No checks were found for the specified filters")
+        }
+
+        taskExecutor.runTasksAndReportOnFailure(taskNamesToRun)
+    }
+
     suspend fun runApplication(moduleName: String?, platform: Platform?, buildType: BuildType?) {
         if (platform != null && platform != Platform.JVM && runSettings.composeHotReloadMode) {
             userReadableError("Compose Hot Reload doesn't support running on the '${platform.pretty}' platform")
@@ -476,3 +573,5 @@ class AmperBackend(
 
     private val logger: Logger = LoggerFactory.getLogger(javaClass)
 }
+
+internal const val TESTS_BUILTIN_CHECK_NAME = "tests"

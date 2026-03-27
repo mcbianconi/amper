@@ -27,6 +27,7 @@ import org.jetbrains.amper.frontend.tree.ErrorNode
 import org.jetbrains.amper.frontend.tree.MappingNode
 import org.jetbrains.amper.frontend.tree.MissingPropertiesHandler
 import org.jetbrains.amper.frontend.tree.RefinedMappingNode
+import org.jetbrains.amper.frontend.tree.StringNode
 import org.jetbrains.amper.frontend.tree.TreeDiagnosticId
 import org.jetbrains.amper.frontend.tree.TreeRefiner
 import org.jetbrains.amper.frontend.tree.add
@@ -39,6 +40,8 @@ import org.jetbrains.amper.frontend.tree.mergeTrees
 import org.jetbrains.amper.frontend.tree.put
 import org.jetbrains.amper.frontend.tree.reading.ReferencesParsingMode
 import org.jetbrains.amper.frontend.tree.reading.readTree
+import org.jetbrains.amper.frontend.tree.visitNodes
+import org.jetbrains.amper.frontend.types.SchemaType
 import org.jetbrains.amper.frontend.types.SchemaTypingContext
 import org.jetbrains.amper.frontend.types.generated.*
 import org.jetbrains.amper.plugins.schema.model.PluginData
@@ -90,7 +93,29 @@ internal class PluginTreeReader(
                 messageKey = "plugin.missing.tasks",
                 level = Level.Warning,
             )
+        } else {
+            val taskNames = tasks.children.map { it.key }
+            val allTaskNameReferences = buildSet {
+                pluginTree.visitNodes { node ->
+                    if (node is StringNode && node.type.semantics == SchemaType.StringType.Semantics.TaskName) {
+                        add(node)
+                    }
+                }
+            }
+            allTaskNameReferences.forEach { taskNameReference ->
+                if (taskNameReference.value !in taskNames) {
+                    problemReporter.reportBundleError(
+                        source = taskNameReference.asBuildProblemSource(),
+                        diagnosticId = PluginDiagnosticId.InvalidCheckerTaskName,
+                        messageKey = "plugin.invalid.task.name.reference",
+                        taskNameReference.value,
+                        taskNames.joinToString { "`$it`" },
+                    )
+                }
+            }
         }
+
+        // TODO: Diagnose duplicate checkers (forbid external unresolved references to the checker name)
     }
 
     context(problemReporter: ProblemReporter)

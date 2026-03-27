@@ -189,6 +189,7 @@ private class TreeReferencesResolver(
                     SchemaType.StringType.Semantics.JvmMainClass,
                     SchemaType.StringType.Semantics.PluginSettingsClass,
                     SchemaType.StringType.Semantics.MavenPlexusConfigXml,
+                    SchemaType.StringType.Semantics.TaskName,
                     null -> {}
                 }
                 StringNode(interpolated, type, trace, node.contexts)

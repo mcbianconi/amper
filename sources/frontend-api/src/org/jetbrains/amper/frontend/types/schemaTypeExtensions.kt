@@ -50,6 +50,7 @@ fun SchemaType.render(
             SchemaType.StringType.Semantics.JvmMainClass -> append("jvm-main-class")
             SchemaType.StringType.Semantics.PluginSettingsClass -> append("plugin-settings-class")
             SchemaType.StringType.Semantics.MavenPlexusConfigXml -> append("valid-xml")
+            SchemaType.StringType.Semantics.TaskName -> append("task-name")
         }
         is SchemaType.ListType -> append("sequence [${elementType.render(false)}]")
         is SchemaType.MapType -> append("mapping {${keyType.render(false)} : ${valueType.render(false)}}")

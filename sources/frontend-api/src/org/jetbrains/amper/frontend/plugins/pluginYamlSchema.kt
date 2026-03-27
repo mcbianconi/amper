@@ -12,6 +12,8 @@ import org.jetbrains.amper.frontend.api.ReadOnly
 import org.jetbrains.amper.frontend.api.SchemaDoc
 import org.jetbrains.amper.frontend.api.SchemaNode
 import org.jetbrains.amper.frontend.api.Shorthand
+import org.jetbrains.amper.frontend.api.StringSemantics
+import org.jetbrains.amper.frontend.types.SchemaType
 import org.jetbrains.amper.frontend.plugins.generated.ShadowClasspath
 import org.jetbrains.amper.frontend.plugins.generated.ShadowCompilationArtifact
 import org.jetbrains.amper.frontend.plugins.generated.ShadowDependencyLocal
@@ -25,6 +27,10 @@ class PluginYamlRoot : SchemaNode() {
             "Task names are simple identifiers which are local to the plugin and are not required to be globally unique. " +
             "They are conventionally lowerCamelCase.")
     val tasks by value<Map<String, Task>>(default = emptyMap())
+
+    @SchemaDoc("The checks registered by this plugin. Each check defines a custom checker " +
+            "that can be invoked via the 'amper check' command.")
+    val checks by value<List<CustomCheck>>(default = emptyList())
 
     @ReadOnly
     @SchemaDoc("Data from the module the plugin is applied to")
@@ -132,6 +138,16 @@ class FragmentDescriptor : SchemaNode() {
 
     @SchemaDoc("`true` to select a test fragment, `false` by default")
     val isTest by value(default = false)
+}
+
+class CustomCheck : SchemaNode() {
+    @Shorthand
+    @SchemaDoc("The name of the task that performs this check.")
+    @StringSemantics(SchemaType.StringType.Semantics.TaskName)
+    val performedBy by value<String>()
+
+    @SchemaDoc("The name of this check. Defaults to the task name specified in 'performedBy'.")
+    val name: String by referenceValue(::performedBy)
 }
 
 enum class GeneratedPathKind(

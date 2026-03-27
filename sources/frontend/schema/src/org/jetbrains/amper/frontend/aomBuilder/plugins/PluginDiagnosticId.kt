@@ -12,6 +12,7 @@ import org.jetbrains.amper.problems.reporting.DiagnosticId
 enum class PluginDiagnosticId : DiagnosticId {
     ConflictingMarkedPluginPaths,
     ConflictingPluginTaskPaths,
+    InvalidCheckerTaskName,
     PluginDescriptionShouldBeTopLevel,
     PluginDoesntRegisterAnyTasks,
     PluginDuplicateId,

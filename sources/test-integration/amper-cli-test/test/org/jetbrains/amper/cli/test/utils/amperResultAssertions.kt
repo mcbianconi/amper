@@ -72,3 +72,21 @@ fun AmperCliResult.assertLogContains(text: String, level: Level) {
         logs.any { it.level == level && text in it.message }
     }
 }
+
+fun AmperCliResult.assertErrors(
+    vararg expectedErrors: String,
+) {
+    assertEquals(
+        expected = expectedErrors.sorted(),
+        actual = infoLogs.filter { it.level == Level.ERROR }.map { it.message.trim() }.sorted(),
+    )
+}
+
+fun AmperCliResult.assertWarnings(
+    vararg expectedWarnings: String,
+) {
+    assertEquals(
+        expected = expectedWarnings.sorted(),
+        actual = infoLogs.filter { it.level == Level.WARN }.map { it.message.trim() }.sorted(),
+    )
+}

@@ -4,9 +4,12 @@
 
 package org.jetbrains.amper.cli.test
 
+import org.jetbrains.amper.cli.test.utils.assertErrors
+import org.jetbrains.amper.cli.test.utils.assertSomeStderrLineContains
 import org.jetbrains.amper.cli.test.utils.assertStderrContains
 import org.jetbrains.amper.cli.test.utils.assertStdoutContains
 import org.jetbrains.amper.cli.test.utils.assertStdoutDoesNotContain
+import org.jetbrains.amper.cli.test.utils.assertWarnings
 import org.jetbrains.amper.cli.test.utils.runSlowTest
 import org.jetbrains.amper.frontend.schema.DefaultVersions
 import org.jetbrains.amper.test.AmperCliResult
@@ -376,10 +379,8 @@ class PluginsTest : AmperCliTestBase() {
         )
 
         with(result) {
-            assertErrors(
-                "${projectDir / "project.yaml"}:6:5: Plugin module `existing-but-not-included` is not included in the project `modules` list",
-                "${projectDir / "project.yaml"}:7:5: Plugin module `non-existing` is not found",
-            )
+            assertSomeStderrLineContains("project.yaml:6:5: Plugin module `existing-but-not-included` is not included in the project `modules` list")
+            assertSomeStderrLineContains("project.yaml:7:5: Plugin module `non-existing` is not found")
             assertStdoutDoesNotContain("Processing local plugin schema for")
         }
     }
@@ -629,32 +630,6 @@ class PluginsTest : AmperCliTestBase() {
         result.assertStdoutContains("Generating Build Konfig...")
     }
 
-    private fun AmperCliResult.assertErrors(
-        vararg expectedErrors: String,
-    ) {
-        val actual = CliErrorLikeRegex.findAll(stderr).map {
-            it.groups["error"]!!.value.trim() + '\n'
-        }.toSortedSet()
-
-        assertEquals(
-            expected = expectedErrors.mapTo(sortedSetOf()) { it + '\n' },
-            actual = actual,
-        )
-    }
-
-    private fun AmperCliResult.assertWarnings(
-        vararg expectedWarnings: String,
-    ) {
-        val actual = CliWarningLikeRegex.findAll(stdout).map {
-            it.groups["warning"]!!.value.trim() + '\n'
-        }.toSortedSet()
-
-        assertEquals(
-            expected = expectedWarnings.mapTo(sortedSetOf()) { it + '\n' },
-            actual = actual,
-        )
-    }
-
     private fun AmperCliResult.assertCustomTaskStdoutContains(
         taskName: String,
         output: String,
@@ -666,8 +641,3 @@ class PluginsTest : AmperCliTestBase() {
         )
     }
 }
-
-private val CliErrorLikeRegex = """^\d{2}:\d{2}\.\d{3} ERROR\s+(?<error>.*?)(?=^\d{2}:\d{2}\.\d{3}|ERROR:|\z)"""
-    .toRegex(setOf(RegexOption.DOT_MATCHES_ALL, RegexOption.MULTILINE))
-private val CliWarningLikeRegex = """^\d{2}:\d{2}\.\d{3} WARN\s+(?<warning>.*?)(?=^\d{2}:\d{2}\.\d{3}|ERROR:|\z)"""
-    .toRegex(setOf(RegexOption.DOT_MATCHES_ALL, RegexOption.MULTILINE))

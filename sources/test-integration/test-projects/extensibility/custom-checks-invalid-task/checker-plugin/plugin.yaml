@@ -1,0 +1,7 @@
+tasks:
+  runCheckA:
+    action: !org.jetbrains.amper.plugins.checker.runCheckA {}
+
+checks:
+  - performedBy: nonExistentTask
+    name: badCheck
