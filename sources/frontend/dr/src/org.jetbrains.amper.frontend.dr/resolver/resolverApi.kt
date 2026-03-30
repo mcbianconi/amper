@@ -153,7 +153,6 @@ class ModuleDependencyNodeWithModuleAndContext(
 internal class SerializableModuleDependencyNodeWithModule internal constructor(
     override val moduleName: String,
     override val graphEntryName: String,
-    override val parentsRefs: MutableSet<DependencyNodeReference> = mutableSetOf(),
     override val childrenRefs: List<DependencyNodeReference> = mutableListOf(),
     @Transient
     private val graphContext: DependencyGraphContext = currentGraphContext(),
@@ -211,7 +210,6 @@ internal class SerializableDirectFragmentDependencyNodeHolder internal construct
     override val fragmentName: String,
     override val graphEntryName: String,
     override val messages: List<Message> = emptyList(),
-    override val parentsRefs: MutableSet<DependencyNodeReference> = mutableSetOf(),
     override val childrenRefs: List<DependencyNodeReference> = mutableListOf(),
     @Transient
     private val graphContext: DependencyGraphContext = currentGraphContext()

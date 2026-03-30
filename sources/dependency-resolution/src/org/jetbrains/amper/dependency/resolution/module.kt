@@ -116,7 +116,6 @@ class SerializableRootDependencyNode internal constructor(
     @Transient
     private val graphContext: DependencyGraphContext = currentGraphContext(),
 ): RootDependencyNode, SerializableDependencyNodeHolderBase(graphContext) {
-    override val parentsRefs = mutableSetOf<DependencyNodeReference>()
     override val messages: List<Message> = emptyList()
 
 }

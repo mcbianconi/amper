@@ -558,6 +558,21 @@ class DependencyGraphContext(
         return allResolutionConfigsList.getOrNull(index) ?: error("ResolutionConfig with index $index is absent in the graph")
     }
 
+    /**
+     * This is an optimization of the graph footprint.
+     * parentRefs are not stored in the graph,
+     * because otherwise each edge is stored twice — in both childrenRefs and parentsRefs.
+     * Here, we reconstruct parents from children.
+     */
+    fun rebuildDependencyNodesParentRefs() {
+        allDependencyNodesList.forEachIndexed { index, node ->
+            val parentRef = DependencyNodeReference(index)
+            for (childRef in node.childrenRefs) {
+                allDependencyNodesList.getOrNull(childRef.index)?.parentsRefs?.add(parentRef)
+            }
+        }
+    }
+
     companion object {
         val currentGraphContext = ThreadLocal<DependencyGraphContext?>()
     }
@@ -633,6 +648,9 @@ class DependencyGraphContextSerializer: KSerializer<DependencyGraphContext> {
             graphContext.allMavenDependencyConstraints.putAll(allMavenDependencyConstraints!!)
             graphContext.allResolutionConfigs.putAll(allResolutionConfigs!!)
 
+            // Rebuild dependency nodes parentsRefs from childrenRefs
+            graphContext.rebuildDependencyNodesParentRefs()
+
             graphContext
         }
     }
@@ -658,7 +676,14 @@ abstract class SerializableDependencyNodeBase(
     @Transient
     private val graphContext: DependencyGraphContext = currentGraphContext()
 ) : SerializableDependencyNode {
-    abstract override val parentsRefs: MutableSet<DependencyNodeReference>
+    /**
+     * Parent refs are not stored in a serialized graph.
+     * It prevents every edge between dependency nodes being stored twice (child -> parent, parent -> child).
+     * Instead, the 'child-> parent' reference is restored from the stored 'parent -> child' association
+     * on graph deserialization.
+     */
+    @Transient
+    final override val parentsRefs: MutableSet<DependencyNodeReference> = mutableSetOf()
     abstract override val childrenRefs: List<DependencyNodeReference>
 
     override val parents: MutableSet<DependencyNode> by lazy { parentsRefs.map { it.toNodePlain(graphContext) }.toMutableSet() }
