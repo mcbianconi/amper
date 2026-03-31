@@ -3,12 +3,11 @@ product: jvm/app
 settings:
   ktor: enabled
   jvm:
-    mainClass: org.jetbrains.amper.ktor.ApplicationKt
+    mainClass: org.jetbrains.amper.test.ktor.ApplicationKt
 
 dependencies:
   - $ktor.server.core
-  - $ktor.server.netty
-  - $ktor.server.config.yaml
+  - $ktor.server.jetty
   - ch.qos.logback:logback-classic:1.5.18
 
 test-dependencies:
