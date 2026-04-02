@@ -364,7 +364,7 @@ private fun library(groupAndModule: String, version: TraceableVersion): Traceabl
         trace = BuiltinCatalogTrace(catalog, version = version),
     )
 
-internal const val UNKNOWN_COMPOSE_MATERIAL3_VERSION_DESCRIPTION_PREFIX = "aligned with the Compose version because the correct material3 version was unknown"
+internal const val UNKNOWN_COMPOSE_MATERIAL3_VERSION_DESCRIPTION_PREFIX = "latest version, because the correct material3 version was unknown"
 
 /**
  * Gets the Compose Material3 version corresponding to a given Compose version.
