@@ -22,7 +22,8 @@ import org.jetbrains.amper.frontend.Platform
 import org.jetbrains.amper.frontend.TaskName
 import org.jetbrains.amper.frontend.isDescendantOf
 import org.jetbrains.amper.frontend.mavenRepositories
-import org.jetbrains.amper.frontend.plugins.qualifiedName
+import org.jetbrains.amper.frontend.plugins.CheckFromPlugin
+import org.jetbrains.amper.frontend.plugins.CustomCommandFromPlugin
 import org.jetbrains.amper.frontend.schema.ProductType
 import org.jetbrains.amper.system.info.OsFamily
 import org.jetbrains.amper.tasks.AllRunSettings
@@ -316,7 +317,7 @@ class AmperBackend(
      * Runs checks in the project.
      *
      * The builtin check is "tests", which runs all tests (equivalent to `amper test`).
-     * Custom checks are contributed by plugins via [org.jetbrains.amper.frontend.plugins.CheckerFromPlugin].
+     * Custom checks are contributed by plugins via [org.jetbrains.amper.frontend.plugins.CheckFromPlugin].
      *
      * If [modules] is specified, only checks for those modules are run.
      * If [checkNames] is specified, only those specific checks are run.
@@ -330,81 +331,65 @@ class AmperBackend(
     ) {
         val selectedModules = modules?.map { resolveModule(it) }?.toSet() ?: model.modules.toSet()
 
-        val customCheckers = selectedModules.flatMap { it.checkersFromPlugins }
-        val allCheckQualifiedNames = buildSet {
-            add(TESTS_BUILTIN_CHECK_NAME)
-            customCheckers.mapTo(this) { it.qualifiedName }
-        }
-
-        fun formatAllAvailableChecks() = buildList {
-            add("'$TESTS_BUILTIN_CHECK_NAME'")
-            customCheckers.groupBy { it.name }.forEach { (name, checkers) ->
-                val singleCheckerWithTheName = checkers.singleOrNull()
-                if (singleCheckerWithTheName != null) {
-                    add("'$name' (or '${singleCheckerWithTheName.qualifiedName}')")
-                } else {
-                    checkers.forEach { checker ->
-                        add("'${checker.qualifiedName}'")
-                    }
-                }
-            }
-        }.joinToString(prefix = "Available checks: ")
-
-        // Resolves a user-provided check name to qualified name(s), erroring on ambiguity
-        fun resolveToQualifiedName(name: String, context: String): String {
-            if (':' in name || name == TESTS_BUILTIN_CHECK_NAME) {
-                // Already qualified or builtin
-                if (name !in allCheckQualifiedNames) {
-                    userReadableError("Unknown check '$name'$context. ${formatAllAvailableChecks()}")
-                }
-                return name
-            }
-            // Simple name: resolve to all matching qualified names
-            val resolved = customCheckers.filter { it.name == name }.map { it.qualifiedName }.distinct()
-            if (resolved.isEmpty()) {
-                userReadableError("Unknown check '$name'$context. ${formatAllAvailableChecks()}")
-            }
-            if (resolved.size > 1) {
-                userReadableError(
-                    "Ambiguous check name '$name'$context. " +
-                            "Multiple plugins provide a check with this name. " +
-                            "Please use a qualified name: ${resolved.sorted().joinToString()}"
-                )
-            }
-            return resolved.single()
-        }
+        val allChecks = listOf(CheckEntry.Tests) + selectedModules.flatMap { it.checksFromPlugins }
+            .map(CheckEntry::Custom)
 
         // Resolve all user-provided names to qualified names
-        val resolvedCheckNames = checkNames?.mapTo(mutableSetOf()) { resolveToQualifiedName(it, "") }
-        val resolvedSkip = skip.mapTo(mutableSetOf()) { resolveToQualifiedName(it, " in --skip") }
-
-        val effectiveCheckNames = resolvedCheckNames ?: (allCheckQualifiedNames - resolvedSkip)
-
-        val taskNamesToRun = buildSet {
-            // Builtin "tests" check
-            if (TESTS_BUILTIN_CHECK_NAME in effectiveCheckNames) {
-                val testTasks = taskGraph.tasks
-                    .filterIsInstance<TestTask>()
-                    .filter {
-                        it.module in selectedModules && it.platform in PlatformUtil.platformsMayRunOnCurrentSystem
-                    }
-                    .map { it.taskName }
-                addAll(testTasks)
-            }
-
-            // Custom checks from plugins
-            for (checker in customCheckers) {
-                if (checker.qualifiedName in effectiveCheckNames) {
-                    add(checker.performedBy)
-                }
-            }
+        val selectedChecks = checkNames?.flatMapTo(mutableSetOf()) {
+            resolveMatchingEntities(it, allChecks, "check")
         }
+        val skippedChecks = skip.flatMapTo(mutableSetOf()) {
+            resolveMatchingEntities(it, allChecks, "check", " in --skip")
+        }
+
+        val effectiveChecks = selectedChecks ?: (allChecks - skippedChecks)
+
+        val taskNamesToRun = effectiveChecks.flatMap { check ->
+            when (check) {
+                is CheckEntry.Custom -> listOf(check.custom.performedBy)
+                CheckEntry.Tests ->
+                    taskGraph.tasks.filterIsInstance<TestTask>().filter {
+                        it.module in selectedModules && it.platform in PlatformUtil.platformsMayRunOnCurrentSystem
+                    }.map { it.taskName }
+            }
+        }.toSet()
 
         if (taskNamesToRun.isEmpty()) {
             userReadableError("No checks were found for the specified filters")
         }
 
         taskExecutor.runTasksAndReportOnFailure(taskNamesToRun)
+    }
+
+    /**
+     * Called by the 'do' command.
+     * Runs custom commands in the project.
+     *
+     * @param modules If specified, only run commands in these modules.
+     * @param commandName The name of the command to run.
+     */
+    suspend fun doCustomCommand(
+        modules: Set<String>? = null,
+        commandName: String,
+    ) {
+        data class CustomCommandEntry(
+            val custom: CustomCommandFromPlugin,
+        ) : QualifiedEntity {
+            override val name get() = custom.name
+            override val pluginId get() = custom.pluginId.value
+        }
+
+        val selectedModules = modules?.map { resolveModule(it) }?.toSet() ?: model.modules.toSet()
+
+        val allCustomCommands = selectedModules.flatMap { it.customCommandsFromPlugins }.map(::CustomCommandEntry)
+
+        val resolvedCommands = resolveMatchingEntities(
+            userProvidedName = commandName,
+            entities = allCustomCommands,
+            entityDisplayName = "command",
+        ).mapTo(mutableSetOf()) { it.custom.performedBy }
+
+        taskExecutor.runTasksAndReportOnFailure(resolvedCommands)
     }
 
     suspend fun runApplication(moduleName: String?, platform: Platform?, buildType: BuildType?) {
@@ -571,7 +556,19 @@ class AmperBackend(
         }
     }
 
+    private sealed interface CheckEntry : QualifiedEntity {
+        /** Builtin 'tests' check */
+        data object Tests : CheckEntry {
+            override val name get() = "tests"
+            override val pluginId get() = null
+        }
+
+        /** Custom check from a plugin */
+        data class Custom(val custom: CheckFromPlugin) : CheckEntry {
+            override val name get() = custom.name
+            override val pluginId get() = custom.pluginId.value
+        }
+    }
+
     private val logger: Logger = LoggerFactory.getLogger(javaClass)
 }
-
-internal const val TESTS_BUILTIN_CHECK_NAME = "tests"

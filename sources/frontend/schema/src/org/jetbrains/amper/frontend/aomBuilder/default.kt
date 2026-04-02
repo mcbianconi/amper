@@ -22,7 +22,8 @@ import org.jetbrains.amper.frontend.VersionCatalog
 import org.jetbrains.amper.frontend.api.Trace
 import org.jetbrains.amper.frontend.classBasedSet
 import org.jetbrains.amper.frontend.plugins.AmperMavenPluginDescription
-import org.jetbrains.amper.frontend.plugins.CheckerFromPlugin
+import org.jetbrains.amper.frontend.plugins.CheckFromPlugin
+import org.jetbrains.amper.frontend.plugins.CustomCommandFromPlugin
 import org.jetbrains.amper.frontend.plugins.TaskFromPluginDescription
 import org.jetbrains.amper.frontend.schema.MavenPluginSettings
 import org.jetbrains.amper.frontend.schema.PluginSettings
@@ -52,7 +53,8 @@ internal open class DefaultModule(
     override var fragments = emptyList<Fragment>()
     override var artifacts = emptyList<Artifact>()
     override var tasksFromPlugins = emptyList<TaskFromPluginDescription>()
-    override var checkersFromPlugins = emptyList<CheckerFromPlugin>()
+    override var checksFromPlugins = emptyList<CheckFromPlugin>()
+    override var customCommandsFromPlugins = emptyList<CustomCommandFromPlugin>()
     override var amperMavenPluginsDescriptions = emptyList<AmperMavenPluginDescription>()
 }
 

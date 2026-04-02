@@ -11,7 +11,8 @@ import org.jetbrains.amper.frontend.api.TraceablePath
 import org.jetbrains.amper.frontend.api.asTraceableValue
 import org.jetbrains.amper.frontend.asBuildProblemSource
 import org.jetbrains.amper.frontend.diagnostics.FrontendDiagnosticId
-import org.jetbrains.amper.frontend.plugins.CheckerFromPlugin
+import org.jetbrains.amper.frontend.plugins.CheckFromPlugin
+import org.jetbrains.amper.frontend.plugins.CustomCommandFromPlugin
 import org.jetbrains.amper.frontend.plugins.PluginYamlRoot
 import org.jetbrains.amper.frontend.plugins.TaskFromPluginDescription
 import org.jetbrains.amper.frontend.plugins.generated.ShadowDependencyLocal
@@ -132,12 +133,24 @@ internal fun applyPlugins(
             if (checker.performedBy !in taskNames) {
                 continue
             }
-            val checkerDescription = CheckerFromPlugin(
+            val checkerDescription = CheckFromPlugin(
                 name = checker.name,
                 performedBy = plugin.taskNameFor(moduleBuildCtx.module, checker.performedBy),
                 pluginId = plugin.pluginData.id,
             )
-            moduleBuildCtx.module.checkersFromPlugins += checkerDescription
+            moduleBuildCtx.module.checksFromPlugins += checkerDescription
+        }
+
+        for (command in appliedPlugin.commands) {
+            if (command.performedBy !in taskNames) {
+                continue
+            }
+            val commandDescription = CustomCommandFromPlugin(
+                name = command.name,
+                performedBy = plugin.taskNameFor(moduleBuildCtx.module, command.performedBy),
+                pluginId = plugin.pluginData.id,
+            )
+            moduleBuildCtx.module.customCommandsFromPlugins += commandDescription
         }
     }
 }

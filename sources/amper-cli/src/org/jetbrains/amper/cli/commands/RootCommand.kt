@@ -61,6 +61,7 @@ internal class RootCommand : SuspendingCliktCommand(name = "amper") {
             CheckCommand(),
             CleanCommand(),
             CleanSharedCachesCommand(),
+            DoCustomCommand(),
             SuspendingCompletionCommand(
                 help = "Generate a tab-completion script for the Amper command for the given shell (bash, zsh, or fish)",
             ),

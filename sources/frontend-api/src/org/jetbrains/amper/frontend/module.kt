@@ -8,7 +8,8 @@ import com.intellij.openapi.util.NlsSafe
 import com.intellij.openapi.vfs.VirtualFile
 import org.jetbrains.amper.core.UsedInIdePlugin
 import org.jetbrains.amper.frontend.plugins.AmperMavenPluginDescription
-import org.jetbrains.amper.frontend.plugins.CheckerFromPlugin
+import org.jetbrains.amper.frontend.plugins.CheckFromPlugin
+import org.jetbrains.amper.frontend.plugins.CustomCommandFromPlugin
 import org.jetbrains.amper.frontend.plugins.TaskFromPluginDescription
 import org.jetbrains.amper.frontend.schema.JdkSettings
 import org.jetbrains.amper.frontend.schema.MavenPluginSettings
@@ -121,7 +122,9 @@ interface AmperModule {
 
     val tasksFromPlugins: List<TaskFromPluginDescription>
 
-    val checkersFromPlugins: List<CheckerFromPlugin>
+    val checksFromPlugins: List<CheckFromPlugin>
+
+    val customCommandsFromPlugins: List<CustomCommandFromPlugin>
 
     val layout: Layout
 

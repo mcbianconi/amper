@@ -32,6 +32,10 @@ class PluginYamlRoot : SchemaNode() {
             "that can be invoked via the 'amper check' command.")
     val checks by value<List<CustomCheck>>(default = emptyList())
 
+    @SchemaDoc("The commands registered by this plugin. Each command defines a custom command " +
+            "that can be invoked via the 'amper do' command.")
+    val commands by value<List<CustomCommand>>(default = emptyList())
+
     @ReadOnly
     @SchemaDoc("Data from the module the plugin is applied to")
     val module by value<ModuleDataForPlugin>()
@@ -97,8 +101,7 @@ class ProjectDataForPlugin : SchemaNode() {
 
 @CustomSchemaDeclaration
 class TaskAction(
-    // TODO: Remove @IgnoreForSchema here?
-    @IgnoreForSchema val taskInfo: PluginData.TaskInfo,
+    val taskInfo: PluginData.TaskInfo,
 ) : SchemaNode()
 
 class Task : SchemaNode() {
@@ -157,6 +160,16 @@ class CustomCheck : SchemaNode() {
     val performedBy by value<String>()
 
     @SchemaDoc("The name of this check. Defaults to the task name specified in 'performedBy'.")
+    val name: String by referenceValue(::performedBy)
+}
+
+class CustomCommand : SchemaNode() {
+    @Shorthand
+    @SchemaDoc("The name of the task that performs this command.")
+    @StringSemantics(SchemaType.StringType.Semantics.TaskName)
+    val performedBy by value<String>()
+
+    @SchemaDoc("The name of this command. Defaults to the task name specified in 'performedBy'.")
     val name: String by referenceValue(::performedBy)
 }
 

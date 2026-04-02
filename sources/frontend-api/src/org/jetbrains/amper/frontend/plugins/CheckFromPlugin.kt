@@ -11,7 +11,7 @@ import org.jetbrains.amper.plugins.schema.model.PluginData
  * A custom checker contributed by a plugin.
  * It defines a check that can be invoked via the `amper check` command.
  */
-class CheckerFromPlugin(
+class CheckFromPlugin(
     /**
      * The name of this check as it appears in the CLI.
      */
@@ -27,9 +27,3 @@ class CheckerFromPlugin(
      */
     val pluginId: PluginData.Id,
 )
-
-/**
- * The qualified name of this check: "<plugin-id>:<check-name>".
- * Can be used to disambiguate checks with the same [CheckerFromPlugin.name] from different plugins.
- */
-val CheckerFromPlugin.qualifiedName: String get() = "${pluginId.value}:$name"
