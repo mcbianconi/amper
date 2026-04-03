@@ -9,6 +9,8 @@ import org.jetbrains.amper.dependency.resolution.diagnostics.UnableToResolveDepe
 import org.jetbrains.amper.dependency.resolution.metadata.xml.SnapshotVersion
 import org.jetbrains.amper.dependency.resolution.metadata.xml.parseMetadata
 import org.jetbrains.amper.dependency.resolution.metadata.xml.serialize
+import org.jetbrains.amper.test.dr.toMavenCoordinates
+import org.jetbrains.amper.test.dr.toMavenNode
 import org.junit.jupiter.api.Test
 import org.junit.jupiter.api.TestInfo
 import org.junit.jupiter.api.assertNotNull

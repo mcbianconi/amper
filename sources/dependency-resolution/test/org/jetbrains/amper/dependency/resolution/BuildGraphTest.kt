@@ -13,6 +13,7 @@ import org.jetbrains.amper.dependency.resolution.diagnostics.PomResolvedWithMeta
 import org.jetbrains.amper.dependency.resolution.diagnostics.RegularDependencyDeclaredAsBom
 import org.jetbrains.amper.dependency.resolution.diagnostics.Severity
 import org.jetbrains.amper.dependency.resolution.diagnostics.UnableToDownloadChecksums
+import org.jetbrains.amper.test.dr.toMavenNode
 import org.junit.jupiter.api.TestInfo
 import java.nio.file.Path
 import kotlin.io.path.div
@@ -266,7 +267,7 @@ class BuildGraphTest : BaseDRTest() {
      * (where the parameter `transitive` of the API method [Resolver.buildGraph] is set to `false`).
      */
     @Test
-    fun `non transitive resolution basic BOM support`(testInfo: TestInfo) = runDrTest {
+    fun `non transitive resolution basic BOM support`() = runDrTest {
         val root = context().use { context ->
             val root = listOf(
                 "bom:org.jetbrains.kotlinx:kotlinx-coroutines-bom:1.6.4",
@@ -379,7 +380,7 @@ class BuildGraphTest : BaseDRTest() {
      * of transitive dependencies are correctly processed (ignored).
      *
      * Particularly, pom.xml of 'myfaces:myfaces-parent:1.1.0' declares dependency
-     * on 'commons-fileupload:commons-fileupload:1.0' with leading space in artifactId:
+     * on 'commons-fileupload:commons-fileupload:1.0' with a leading space in artifactId:
      *   <artifactId> commons-fileupload</artifactId>
      */
     @Test
@@ -396,7 +397,7 @@ class BuildGraphTest : BaseDRTest() {
      * which is unexpected by library authors.
      * Maven parser relaxes restriction here on the consumer side and allows such tag names.
      * So does Amper. Although it is not a generic behavior, but a case-by-case support (rare/unique examples).
-     * See [pomResolver.sanitizePom] for more details.
+     * See [org.jetbrains.amper.dependency.resolution.maven.sanitizePom] for more details.
      *
      * ```
      * <compilerArguments>

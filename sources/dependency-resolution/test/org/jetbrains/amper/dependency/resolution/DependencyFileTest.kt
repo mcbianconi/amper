@@ -7,6 +7,7 @@ package org.jetbrains.amper.dependency.resolution
 import org.jetbrains.amper.dependency.resolution.diagnostics.PlatformsAreNotSupported
 import org.jetbrains.amper.dependency.resolution.diagnostics.Severity
 import org.jetbrains.amper.dependency.resolution.diagnostics.detailedMessage
+import org.jetbrains.amper.test.dr.toMavenNode
 import org.junit.jupiter.api.Test
 import org.junit.jupiter.api.io.TempDir
 import java.nio.file.Path
@@ -236,15 +237,15 @@ class DependencyFileTest: BaseDRTest() {
         }.use { context ->
             val root = RootDependencyNodeWithContext(
                 children = listOf(
-                    context.toMavenDependencyNode(MavenCoordinates(
+                    MavenCoordinates(
                         "org.jetbrains.compose.foundation", "foundation", "1.6.10"
-                    )),
-                    context.toMavenDependencyNode(MavenCoordinates(
+                    ).toMavenNode(context),
+                    MavenCoordinates(
                         "org.jetbrains.compose.material3", "material3", "1.6.10"
-                    )),
-                    context.toMavenDependencyNode(MavenCoordinates(
+                    ).toMavenNode(context),
+                    MavenCoordinates(
                         "org.jetbrains.kotlin", "kotlin-stdlib", "2.0.0"
-                    ))
+                    ).toMavenNode(context)
                 ),
                 templateContext = context
             )
@@ -343,9 +344,9 @@ class DependencyFileTest: BaseDRTest() {
                 readOnlyExternalRepositories = emptyList()
             }
         }.use { context ->
-            val dependencyNode = context.toMavenDependencyNode(MavenCoordinates(
+            val dependencyNode = MavenCoordinates(
                 "org.jetbrains.kotlinx", "kotlinx-coroutines-core-jvm", "1.8.0"
-            ))
+            ).toMavenNode(context)
 
             Resolver().buildGraph(dependencyNode)
 

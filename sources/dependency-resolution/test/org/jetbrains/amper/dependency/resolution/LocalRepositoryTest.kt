@@ -4,6 +4,7 @@
 
 package org.jetbrains.amper.dependency.resolution
 
+import org.jetbrains.amper.test.dr.toMavenNode
 import org.jetbrains.amper.test.runTestWithMdc
 import org.junit.jupiter.api.Test
 import org.junit.jupiter.api.extension.ExtendWith

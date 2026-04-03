@@ -14,6 +14,7 @@ import org.jetbrains.amper.dependency.resolution.diagnostics.SimpleMessage
 import org.jetbrains.amper.dependency.resolution.diagnostics.detailedMessage
 import org.jetbrains.amper.test.Dirs
 import org.jetbrains.amper.test.assertEqualsWithDiff
+import org.jetbrains.amper.test.dr.toMavenNode
 import org.jetbrains.amper.test.golden.goldenFileOsAware
 import org.jetbrains.amper.test.runTestRespectingDelays
 import org.junit.jupiter.api.TestInfo
@@ -244,28 +245,6 @@ abstract class BaseDRTest {
 
     protected fun List<String>.toRootNode(context: Context) =
         RootDependencyNodeWithContext(children = map { it.toMavenNode(context) }, templateContext = context)
-
-    protected fun MavenCoordinates.toMavenNode(context: Context): MavenDependencyNodeWithContext {
-        return MavenDependencyNodeWithContext(context, this, isBom = false)
-    }
-
-    protected fun String.toMavenCoordinates(): MavenCoordinates {
-        val parts = split(":")
-        val group = parts[0]
-        val module = parts[1]
-        val version = if (parts.size > 2) parts[2] else null
-        return MavenCoordinates(group, module, version)
-    }
-
-    private fun String.toMavenNode(context: Context): MavenDependencyNodeWithContext {
-        val isBom = startsWith("bom:")
-        val parts = removePrefix("bom:").trim().split(":")
-        val group = parts[0]
-        val module = parts[1]
-        val version = if (parts.size > 2) parts[2] else null
-        val coordinates = MavenCoordinates(group, module, version)
-        return MavenDependencyNodeWithContext(context, coordinates, isBom = isBom)
-    }
 
     protected fun assertFiles(
         files: List<String>, root: DependencyNode,

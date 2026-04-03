@@ -10,6 +10,7 @@ import org.jetbrains.amper.dependency.resolution.MavenDependencyNode
 import org.jetbrains.amper.dependency.resolution.ResolutionPlatform
 import org.jetbrains.amper.dependency.resolution.ResolutionScope
 import org.jetbrains.amper.frontend.schema.DefaultVersions
+import org.jetbrains.amper.test.dr.toMavenCoordinates
 import org.junit.jupiter.api.TestInfo
 import java.nio.file.Path
 import kotlin.io.path.div
@@ -268,14 +269,14 @@ class ModuleDependenciesGraphMultiplatformTest : BaseModuleDrTest() {
                 "org.jetbrains.kotlin:kotlin-stdlib:${DefaultVersions.kotlin}" to "org.jetbrains.kotlin:kotlin-stdlib:${DefaultVersions.kotlin}",
                 "org.jetbrains.compose.runtime:runtime:${DefaultVersions.compose}" to "org.jetbrains.compose.runtime:runtime-desktop:${DefaultVersions.compose}",
                 "org.jetbrains.compose.foundation:foundation:${DefaultVersions.compose}" to "org.jetbrains.compose.foundation:foundation-desktop:${DefaultVersions.compose}",
-                // Note: this has to be updated when changing the compose version. See composeMaterial3VersionForCMPVersion() in catalog.kt
+                // Note: this has to be updated when changing the 'compose' version. See composeMaterial3VersionForCMPVersion() in catalog.kt
                 "org.jetbrains.compose.material3:material3:1.10.0-alpha05" to "org.jetbrains.compose.material3:material3-desktop:1.10.0-alpha05",
             )
         )
     }
 
     /**
-     * For platform-specific artifacts that were introduced into the resolution by KMP libraries
+     * For platform-specific artifacts introduced into the resolution by KMP libraries
      * (as one of their `available-at`), DR provides API [MavenDependencyNode.getParentKmpLibraryCoordinates]
      * for getting coordinates of the original KMP libraries.
      * These coordinates are used in the IDE to deduplicate dependencies when searching for symbols that appear
