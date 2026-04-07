@@ -18,7 +18,3 @@ settings:
     # Currently, we add the amper-extensibility-api as a regular dependency downloaded from maven,
     # so we have to publish it.
     enabled: true
-
-tasks:
-  testJvm:
-    dependsOn: [ apiCheck@binary-compatibility-validator ]
