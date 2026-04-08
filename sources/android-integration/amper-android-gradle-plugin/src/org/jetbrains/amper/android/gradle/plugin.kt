@@ -199,6 +199,7 @@ class AmperAndroidIntegrationProjectPlugin @Inject constructor(private val probl
                 .resolve("AndroidManifest.xml")
             it.manifest.srcFile(androidApplicationSourceRoot)
             it.res.setSrcDirs(setOf(module.buildDir.resolve("res")))
+            it.jniLibs.setSrcDirs(setOf(module.buildDir.resolve("jniLibs")))
         }
 
         project.afterEvaluate {
