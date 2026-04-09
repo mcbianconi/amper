@@ -5,6 +5,7 @@
 package org.jetbrains.amper.cli.test
 
 import org.jetbrains.amper.cli.test.utils.assertErrors
+import org.jetbrains.amper.cli.test.utils.assertLogContains
 import org.jetbrains.amper.cli.test.utils.assertSomeStderrLineContains
 import org.jetbrains.amper.cli.test.utils.assertStderrContains
 import org.jetbrains.amper.cli.test.utils.assertStdoutContains
@@ -15,12 +16,14 @@ import org.jetbrains.amper.frontend.schema.DefaultVersions
 import org.jetbrains.amper.test.AmperCliResult
 import org.jetbrains.amper.test.Dirs
 import org.jetbrains.amper.test.normalizeLineSeparators
+import org.slf4j.event.Level
 import java.io.File
 import kotlin.io.path.div
+import kotlin.io.path.exists
 import kotlin.io.path.readText
 import kotlin.test.Test
 import kotlin.test.assertContains
-import kotlin.test.assertEquals
+import kotlin.test.assertNotEquals
 
 class PluginsTest : AmperCliTestBase() {
     @Test
@@ -365,7 +368,7 @@ class PluginsTest : AmperCliTestBase() {
                 "${projectDir / "not-a-plugin" / "module.yaml"}:1:10: Unexpected product type for plugin. Expected jvm/amper-plugin, got jvm/app",
                 "${projectDir / "plugin-empty-id" / "module.yaml"}:5:18: Plugin settings class `com.example.Settings` is not found",
             )
-            assertStdoutContains("Processing local plugin schema for [plugin-empty-id, plugin-no-plugin-block, hello]...")
+            assertLogContains("Processing local plugin schema for [plugin-empty-id, plugin-no-plugin-block, hello]...", level = Level.INFO)
         }
     }
 
@@ -382,7 +385,8 @@ class PluginsTest : AmperCliTestBase() {
         with(result) {
             assertSomeStderrLineContains("project.yaml:6:5: Plugin module `existing-but-not-included` is not included in the project `modules` list")
             assertSomeStderrLineContains("project.yaml:7:5: Plugin module `non-existing` is not found")
-            assertStdoutDoesNotContain("Processing local plugin schema for")
+            // May be changed in the future, beware
+            assertNotEquals(illegal = true, actual = logsDir?.exists(), message = "logs dir should not exist when project context parsing is failed")
         }
     }
 

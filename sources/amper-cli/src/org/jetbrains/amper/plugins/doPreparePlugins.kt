@@ -4,13 +4,17 @@
 
 package org.jetbrains.amper.plugins
 
+import com.github.ajalt.mordant.terminal.Terminal
+import kotlinx.coroutines.coroutineScope
 import kotlinx.serialization.SerializationException
 import kotlinx.serialization.json.Json
 import org.jetbrains.amper.ProcessRunner
 import org.jetbrains.amper.cli.AmperProjectRoot
 import org.jetbrains.amper.cli.CliProblemReporter
 import org.jetbrains.amper.cli.lazyload.ExtraClasspath
+import org.jetbrains.amper.cli.logging.withoutConsoleLogging
 import org.jetbrains.amper.cli.userReadableError
+import org.jetbrains.amper.cli.widgets.simpleSpinnerProgressIndicator
 import org.jetbrains.amper.frontend.messages.FileWithRangesBuildProblemSource
 import org.jetbrains.amper.frontend.plugins.PluginManifest
 import org.jetbrains.amper.incrementalcache.IncrementalCache
@@ -38,15 +42,16 @@ import kotlin.io.path.div
 import kotlin.io.path.relativeTo
 
 internal suspend fun doPreparePlugins(
+    terminal: Terminal,
     projectRoot: AmperProjectRoot,
     jdkProvider: JdkProvider,
     incrementalCache: IncrementalCache,
     plugins: Map<Path, PluginManifest>,
     processRunner: ProcessRunner,
-): List<PluginData> {
+): List<PluginData> = coroutineScope {
     require(plugins.isNotEmpty())
 
-    return incrementalCache.executeForSerializable(
+    incrementalCache.executeForSerializable(
         key = "prepare-plugins",
         inputValues = mapOf(
             "plugins" to plugins.values.joinToString()
@@ -69,18 +74,27 @@ internal suspend fun doPreparePlugins(
                 )
             }
         )
-        logger.info("Processing local plugin schema for [${plugins.values.joinToString { it.id }}]...")
-        val result = processRunner.runJava(
-            jdk = jdk,
-            workingDir = Path("."),
-            mainClass = "org.jetbrains.amper.schema.processing.MainKt",
-            programArgs = emptyList(),
-            argsMode = ArgsMode.CommandLine,
-            classpath = toolClasspath,
-            outputListener = outputCaptor,
-            // Input request is passed via STDIN
-            input = ProcessInput.Text(Json.encodeToString(request))
-        )
+
+        withoutConsoleLogging {
+            logger.info("Processing local plugin schema for [${plugins.values.joinToString { it.id }}]...")
+        }
+        val widgetJob = simpleSpinnerProgressIndicator(terminal, "Pre-processing local plugins (will be cached)")
+
+        val result = try {
+            processRunner.runJava(
+                jdk = jdk,
+                workingDir = Path("."),
+                mainClass = "org.jetbrains.amper.schema.processing.MainKt",
+                programArgs = emptyList(),
+                argsMode = ArgsMode.CommandLine,
+                classpath = toolClasspath,
+                outputListener = outputCaptor,
+                // Input request is passed via STDIN
+                input = ProcessInput.Text(Json.encodeToString(request))
+            )
+        } finally {
+            widgetJob.cancel()
+        }
         if (result.exitCode != 0) {
             logger.error(outputCaptor.stderr)
             error("Failed to process local plugin schema")

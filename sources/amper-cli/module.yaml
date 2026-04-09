@@ -65,6 +65,7 @@ dependencies:
   - $libs.android.tools.ddmlib
   - $libs.clikt
   - $libs.clikt.markdown
+  - $libs.mordantCoroutines
   - $libs.xmlutil.serialization
   - $libs.intellij.deps.asyncProfiler
   - $libs.kotlinx.coroutines.debug
