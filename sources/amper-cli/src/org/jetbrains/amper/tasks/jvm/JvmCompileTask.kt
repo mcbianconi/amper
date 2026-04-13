@@ -33,7 +33,9 @@ import org.jetbrains.amper.frontend.Fragment
 import org.jetbrains.amper.frontend.Platform
 import org.jetbrains.amper.frontend.TaskName
 import org.jetbrains.amper.frontend.aomBuilder.javaAnnotationProcessingGeneratedSourcesPath
+import org.jetbrains.amper.frontend.dr.resolver.flow.toRepository
 import org.jetbrains.amper.frontend.jdkSettings
+import org.jetbrains.amper.frontend.mavenRepositories
 import org.jetbrains.amper.incrementalcache.IncrementalCache
 import org.jetbrains.amper.jdk.provisioning.Jdk
 import org.jetbrains.amper.jdk.provisioning.JdkProvider
@@ -338,7 +340,10 @@ internal class JvmCompileTask(
         val compilationLogger = logger.asKotlinLogger() + errorsCollector
         sourceFiles.first().invariantSeparatorsPathString
 
-        val compilerPlugins = kotlinArtifactsDownloader.downloadCompilerPlugins(userSettings.kotlin.compilerPlugins)
+        val compilerPlugins = kotlinArtifactsDownloader.downloadCompilerPlugins(
+            plugins = userSettings.kotlin.compilerPlugins,
+            repositories = module.mavenRepositories.map { it.toRepository() },
+        )
 
         val compilerArgs = kotlinJvmCompilerArgs(
             isMultiplatform = isMultiplatform,
