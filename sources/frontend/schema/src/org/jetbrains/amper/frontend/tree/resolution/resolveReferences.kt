@@ -379,7 +379,7 @@ private class ReferenceResolutionSession(
             add(startingEdge)
             for (refPart in referencePath.drop(1)) {
                 this@buildList += when (val currentStep = last().step) {
-                    is ResolutionStep.Hole -> doResolveEdgeFromHole(currentStep, origin, refPart)
+                    is ResolutionStep.Hole -> doResolveEdgeFromHole(currentStep, refPart, origin)
                     is ResolutionStep.Value -> doResolveEdgeFromValue(currentStep, refPart, origin)
                 } ?: break
             }
@@ -431,6 +431,17 @@ private class ReferenceResolutionSession(
                 )
             }
         }
+        is ReferenceNode -> {
+            check(value in resolvedNodes) { "Not reached: value should already have been visited" }
+            val resolved = resolvedNodes[value]
+            if (resolved == null) {
+                // Transition to hole resolution
+                doResolveEdgeFromHole(ResolutionStep.Hole(value.expectedType), refPart, origin)
+            } else {
+                // Continue value resolution
+                doResolveEdgeFromValue(ResolutionStep.Value(resolved), refPart, origin)
+            }
+        }
         else -> {
             reporter.reportBundleError(
                 source = origin.trace.asBuildProblemSource(),
@@ -445,8 +456,8 @@ private class ReferenceResolutionSession(
     context(reporter: ProblemReporter)
     private fun doResolveEdgeFromHole(
         currentStep: ResolutionStep.Hole,
-        origin: ResolvableNode,
         refPart: String,
+        origin: ResolvableNode,
     ): ResolutionEdge? = when (val type = currentStep.type) {
         is SchemaType.ObjectType -> when {
             type.isMarkedNullable -> {

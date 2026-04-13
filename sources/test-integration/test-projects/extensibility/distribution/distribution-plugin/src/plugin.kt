@@ -10,10 +10,13 @@ import java.nio.file.Path
 interface DistributionSettings {
     val extraNamedClasspaths: Map<String, Classpath>
     val extraDependency: Dependency?
+    val someInt: Int
 }
 
 @TaskAction
 fun buildDistribution(
+    someInt: Int,
+    someInt2: Int,
     @Output distributionDir: Path,
     @Input baseJar: CompilationArtifact,
     @Input baseClasspath: Classpath,
@@ -22,6 +25,7 @@ fun buildDistribution(
 ) {
     distributionDir.createDirectories()
     println("Hello from distribution")
+    println("someInt: $someInt, someInt2: $someInt2")
     println("local.properties: ${localProperties}")
     printClasspathInfo("base", baseClasspath)
     settings.extraNamedClasspaths.forEach { (name, classpath) ->

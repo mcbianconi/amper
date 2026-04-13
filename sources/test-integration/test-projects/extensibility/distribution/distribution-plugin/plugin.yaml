@@ -8,3 +8,5 @@ tasks:
       baseJar:
         from: ${module.self}
       localProperties: ${project.rootDir}/local.properties
+      someInt: ${settings.someInt} # to test cascade ref resolution with holes
+      someInt2: ${build.action.someInt} # to test cascade ref resolution with holes even more
