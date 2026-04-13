@@ -23,7 +23,7 @@ class PublishingSettings : SchemaNode() {
     @SchemaDoc("Version of the published Maven artifact")
     val version by nullableValue<String>()
 
-    @Misnomers("artifact")
+    @Misnomers("artifact", "artifactId")
     @SchemaDoc("Artifact ID of the published Maven artifact")
     val name by nullableValue<String>()
 }
