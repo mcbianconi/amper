@@ -12,6 +12,7 @@ test-dependencies:
   - ../../libraries/system-info
   - ../../libraries/telemetry
   - ../../test-base
+  - $libs.bouncycastle.bcpg # for test key generation
   - $libs.junit.jupiter.params
   - $libs.kotlinx.coroutines.test
   - $libs.maven.artifact # just for ComparableVersion

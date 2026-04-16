@@ -5,6 +5,8 @@
 package org.jetbrains.amper.cli.test
 
 import com.sun.net.httpserver.BasicAuthenticator
+import org.bouncycastle.openpgp.api.OpenPGPCertificate
+import org.bouncycastle.openpgp.api.bc.BcOpenPGPApi
 import org.jetbrains.amper.cli.test.utils.assertContainsRelativeFiles
 import org.jetbrains.amper.cli.test.utils.runSlowTest
 import org.jetbrains.amper.frontend.schema.DefaultVersions
@@ -21,6 +23,7 @@ import kotlin.io.path.absolutePathString
 import kotlin.io.path.copyToRecursively
 import kotlin.io.path.createDirectories
 import kotlin.io.path.div
+import kotlin.io.path.inputStream
 import kotlin.io.path.listDirectoryEntries
 import kotlin.io.path.name
 import kotlin.io.path.readText
@@ -28,6 +31,7 @@ import kotlin.io.path.writeText
 import kotlin.test.Test
 import kotlin.test.assertEquals
 import kotlin.test.assertTrue
+import kotlin.test.fail
 
 // CONCURRENT is here to test that multiple concurrent amper processes work correctly.
 @Execution(ExecutionMode.CONCURRENT)
@@ -131,6 +135,64 @@ class AmperPublishTest : AmperCliTestBase() {
               </dependencies>
             </project>
         """.trimIndent(), pom.readText().trim())
+    }
+
+    @Test
+    fun `publish to maven local (with signing)`() = runSlowTest {
+        val mavenLocalForTest = createTempMavenLocalDir()
+        val groupDir = mavenLocalForTest.resolve("amper/test/jvm-publish-with-signing")
+
+        val openPgpApi = BcOpenPGPApi()
+        val testPgpKey = openPgpApi.generateKey().signOnlyKey().build()
+
+        runCli(
+            projectDir = testProject("jvm-publish-with-signing"),
+            "publish", "mavenLocal",
+            amperJvmArgs = listOf(mavenRepoLocalJvmArg(mavenLocalForTest)),
+            environment = mapOf("AMPER_SIGNING_KEY" to testPgpKey.toAsciiArmoredString()),
+        )
+
+        groupDir.assertContainsRelativeFiles(
+            "artifactName/2.2/_remote.repositories",
+            "artifactName/2.2/artifactName-2.2-sources.jar",
+            "artifactName/2.2/artifactName-2.2-sources.jar.asc",
+            "artifactName/2.2/artifactName-2.2.jar",
+            "artifactName/2.2/artifactName-2.2.jar.asc",
+            "artifactName/2.2/artifactName-2.2.pom",
+            "artifactName/2.2/artifactName-2.2.pom.asc",
+            "artifactName/maven-metadata-local.xml",
+        )
+
+        assertSignatureIsValid(
+            dataFile = groupDir.resolve("artifactName/2.2/artifactName-2.2.jar"),
+            signatureFile = groupDir.resolve("artifactName/2.2/artifactName-2.2.jar.asc"),
+            verificationCertificate = testPgpKey,
+        )
+        assertSignatureIsValid(
+            dataFile = groupDir.resolve("artifactName/2.2/artifactName-2.2-sources.jar"),
+            signatureFile = groupDir.resolve("artifactName/2.2/artifactName-2.2-sources.jar.asc"),
+            verificationCertificate = testPgpKey,
+        )
+        assertSignatureIsValid(
+            dataFile = groupDir.resolve("artifactName/2.2/artifactName-2.2.pom"),
+            signatureFile = groupDir.resolve("artifactName/2.2/artifactName-2.2.pom.asc"),
+            verificationCertificate = testPgpKey,
+        )
+    }
+
+    private fun assertSignatureIsValid(dataFile: Path, signatureFile: Path, verificationCertificate: OpenPGPCertificate) {
+        val signatureVerifier = signatureFile.inputStream().use { signatureStream ->
+            BcOpenPGPApi().verifyDetachedSignature()
+                .addSignatures(signatureStream)
+                .addVerificationCertificate(verificationCertificate)
+        }
+        val processedSignatures = dataFile.inputStream().use { jarStream ->
+            signatureVerifier.process(jarStream)
+        }
+        if (processedSignatures.isEmpty()) {
+            fail("Malformed signature for ${dataFile.name}, no processed signature returned")
+        }
+        assertTrue(processedSignatures.single().isValid, "Signature invalid for ${dataFile.name}")
     }
 
     @Test

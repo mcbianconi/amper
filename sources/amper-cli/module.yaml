@@ -11,6 +11,7 @@ repositories:
 
 dependencies:
   - ../amper-build-info
+  - ../amper-crypto
   - ../amper-jdk-provisioning
   - ../amper-maven-converter
   - ../amper-maven-publish

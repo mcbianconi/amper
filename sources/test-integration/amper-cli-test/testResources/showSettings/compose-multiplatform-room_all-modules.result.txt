@@ -109,6 +109,7 @@ settings@android:
         developerConnection: null  # default, based on ${url}: SCM developer connection URL from repo URL
         url: null  # default
       url: null  # default
+    signArtifacts: false  # default
     version: null  # default
 
 Module: jvm-app
@@ -206,6 +207,7 @@ settings@jvm:
         developerConnection: null  # default, based on ${url}: SCM developer connection URL from repo URL
         url: null  # default
       url: null  # default
+    signArtifacts: false  # default
     version: null  # default
   springBoot:
     applyBom: true  # default
@@ -316,6 +318,7 @@ settings@jvm+android:
         developerConnection: null  # default, based on ${url}: SCM developer connection URL from repo URL
         url: null  # default
       url: null  # default
+    signArtifacts: false  # default
     version: null  # default
   springBoot:
     applyBom: true  # default
@@ -416,6 +419,7 @@ settings@jvm:
         developerConnection: null  # default, based on ${url}: SCM developer connection URL from repo URL
         url: null  # default
       url: null  # default
+    signArtifacts: false  # default
     version: null  # default
   springBoot:
     applyBom: true  # default
@@ -523,4 +527,5 @@ settings@android:
         developerConnection: null  # default, based on ${url}: SCM developer connection URL from repo URL
         url: null  # default
       url: null  # default
+    signArtifacts: false  # default
     version: null  # default

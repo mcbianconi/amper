@@ -173,6 +173,7 @@ Fragments:
           }
           url: <default> null
         }
+        signArtifacts: <default> false
         version: <default> null
       }
       springBoot: <default> {
@@ -359,6 +360,7 @@ Fragments:
           }
           url: <default> null
         }
+        signArtifacts: <default> false
         version: <default> null
       }
       springBoot: <default> {
@@ -541,6 +543,7 @@ Fragments:
           }
           url: <default> null
         }
+        signArtifacts: <default> false
         version: <default> null
       }
       springBoot: <default> {
@@ -726,6 +729,7 @@ Fragments:
           }
           url: <default> null
         }
+        signArtifacts: <default> false
         version: <default> null
       }
       springBoot: <default> {
@@ -909,6 +913,7 @@ Fragments:
           }
           url: <default> null
         }
+        signArtifacts: <default> false
         version: <default> null
       }
       springBoot: <default> {
@@ -1092,6 +1097,7 @@ Fragments:
           }
           url: <default> null
         }
+        signArtifacts: <default> false
         version: <default> null
       }
       springBoot: <default> {
@@ -1278,6 +1284,7 @@ Fragments:
           }
           url: <default> null
         }
+        signArtifacts: <default> false
         version: <default> null
       }
       springBoot: <default> {
@@ -1464,6 +1471,7 @@ Fragments:
           }
           url: <default> null
         }
+        signArtifacts: <default> false
         version: <default> null
       }
       springBoot: <default> {
@@ -1647,6 +1655,7 @@ Fragments:
           }
           url: <default> null
         }
+        signArtifacts: <default> false
         version: <default> null
       }
       springBoot: <default> {
@@ -1833,6 +1842,7 @@ Fragments:
           }
           url: <default> null
         }
+        signArtifacts: <default> false
         version: <default> null
       }
       springBoot: <default> {
@@ -2016,6 +2026,7 @@ Fragments:
           }
           url: <default> null
         }
+        signArtifacts: <default> false
         version: <default> null
       }
       springBoot: <default> {
@@ -2202,6 +2213,7 @@ Fragments:
           }
           url: <default> null
         }
+        signArtifacts: <default> false
         version: <default> null
       }
       springBoot: <default> {

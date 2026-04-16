@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+ * Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
  */
 
 package org.jetbrains.amper.tasks
@@ -11,6 +11,11 @@ import org.eclipse.aether.repository.RemoteRepository
 import org.eclipse.aether.util.repository.AuthenticationBuilder
 import org.jetbrains.amper.cli.AmperProjectTempRoot
 import org.jetbrains.amper.cli.userReadableError
+import org.jetbrains.amper.compilation.singleLeafFragment
+import org.jetbrains.amper.crypto.pgp.AsciiArmoredPgpKey
+import org.jetbrains.amper.crypto.pgp.PgpSigner
+import org.jetbrains.amper.crypto.pgp.PgpKeyParsingException
+import org.jetbrains.amper.crypto.pgp.PgpSigningException
 import org.jetbrains.amper.dependency.resolution.MavenCoordinates
 import org.jetbrains.amper.dependency.resolution.MavenLocalRepository
 import org.jetbrains.amper.engine.Task
@@ -19,6 +24,8 @@ import org.jetbrains.amper.frontend.AmperModule
 import org.jetbrains.amper.frontend.Platform
 import org.jetbrains.amper.frontend.RepositoriesModulePart
 import org.jetbrains.amper.frontend.TaskName
+import org.jetbrains.amper.frontend.fragmentsTargeting
+import org.jetbrains.amper.incrementalcache.getDynamicInputs
 import org.jetbrains.amper.maven.publish.PublicationCoordinatesOverrides
 import org.jetbrains.amper.maven.publish.createPlexusContainer
 import org.jetbrains.amper.maven.publish.deployToRemoteRepo
@@ -97,7 +104,18 @@ class PublishTask(
         return Result()
     }
 
-    private fun createArtifactsToDeploy(dependenciesResult: List<TaskResult>): List<Artifact> {
+    private suspend fun createArtifactsToDeploy(dependenciesResult: List<TaskResult>): List<Artifact> {
+        val artifacts = createOrFindMeaningfulArtifacts(dependenciesResult)
+        val productionJvmFragment = module.fragmentsTargeting(Platform.JVM, includeTestFragments = false)
+            .singleLeafFragment()
+        if (productionJvmFragment.settings.publishing.signArtifacts) {
+            val artifactSigner = createSignerFromEnvConfig()
+            return artifacts + artifacts.map { artifactSigner.signArtifact(it) }
+        }
+        return artifacts
+    }
+
+    private fun createOrFindMeaningfulArtifacts(dependenciesResult: List<TaskResult>): List<Artifact> {
         val overrides = dependenciesResult
             .filterIsInstance<ResolveExternalDependenciesTask.Result>()
             .map { it.coordinateOverridesForPublishing }
@@ -117,9 +135,9 @@ class PublishTask(
         platform: Platform,
         overrides: PublicationCoordinatesOverrides,
     ): Path {
-        tempRoot.path.createDirectories()
         val tempPath = createTempFile(tempRoot.path, "maven-deploy", ".pom")
-        tempPath.toFile().deleteOnExit() // FIXME delete the file when done with upload instead of deleteOnExit
+        // TODO extract the extra artifacts generation (pom and signatures) as a separate task and cache this as output
+        tempPath.toFile().deleteOnExit()
 
         // TODO publish Gradle metadata
         tempPath.writePomFor(module, platform, overrides, gradleMetadataComment = false)
@@ -146,6 +164,41 @@ class PublishTask(
         extension,
         coords.version,
     ).setFile(toFile())
+
+    // We currently only support providing the signing key via environment variables.
+    // We will later add a mechanism that will allow defining custom properties or env vars, and thus specify the key
+    // on a per-module basis.
+    private suspend fun createSignerFromEnvConfig(): PgpSigner = try {
+        PgpSigner.bouncyCastle(
+            signingKey = getDynamicInputs().readEnv("AMPER_SIGNING_KEY")?.let(::AsciiArmoredPgpKey)
+                ?: userReadableError(
+                    "Artifact signing is enabled, but the AMPER_SIGNING_KEY environment variable is not provided. " +
+                            "Please set this variable to a valid PGP private key in ASCII-armored format."
+                ),
+            keyPassphrase = getDynamicInputs().readEnv("AMPER_SIGNING_KEY_PASSPHRASE")?.toCharArray(),
+        )
+    } catch (e: PgpKeyParsingException) {
+        userReadableError("Cannot sign artifacts, failed to parse signing key from the AMPER_SIGNING_KEY environment " +
+                "variable: ${e.message}")
+    }
+
+    private fun PgpSigner.signArtifact(artifact: Artifact): Artifact {
+        val signatureFilePath = tempRoot.path.resolve(artifact.file.name + ".asc")
+        // TODO extract the extra artifacts generation (pom and signatures) as a separate task and cache this as output
+        signatureFilePath.toFile().deleteOnExit()
+        try {
+            sign(artifact.file.toPath(), outputSignatureFile = signatureFilePath)
+        } catch (e: PgpSigningException) {
+            userReadableError("PGP signing failed for artifact '${artifact.file.name}': ${e.message}")
+        }
+        return DefaultArtifact(
+            artifact.groupId,
+            artifact.artifactId,
+            artifact.classifier,
+            artifact.extension + ".asc",
+            artifact.version,
+        ).setFile(signatureFilePath.toFile())
+    }
 
     private fun RepositoriesModulePart.Repository.toMavenRemoteRepository(): RemoteRepository {
         val builder = RemoteRepository.Builder(id, "default", url)
