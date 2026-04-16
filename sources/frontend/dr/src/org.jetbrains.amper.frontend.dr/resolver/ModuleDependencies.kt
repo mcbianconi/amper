@@ -291,6 +291,7 @@ class ModuleDependencies private constructor(
          * It might be useful to cache the result of the method [Model.moduleDependencies]
          * and call resoltion based on the cached List of [ModuleDependencies] instead of calling this method directly.
          */
+        @UsedInIdePlugin
         suspend fun Model.resolveProjectDependencies(
             resolutionSettings: AmperResolutionSettings,
             resolutionRunSettings: ResolutionRunSettings,
@@ -298,33 +299,38 @@ class ModuleDependencies private constructor(
         ) = resolveProjectDependencies(
             moduleDependenciesList =
                 moduleDependencies
-                    ?.checkModules(this@resolveProjectDependencies)
+                    ?.checkProjectModules(this@resolveProjectDependencies)
                     ?: moduleDependencies(resolutionSettings.copy(includeNonExportedNative = false)),
             resolutionRunSettings = resolutionRunSettings,
             projectRoot = projectRoot.root,
         )
 
         @UsedInIdePlugin
-        suspend fun buildProjectDependenciesGraph(
+        fun buildProjectDependenciesGraph(
             model: Model,
-            resolutionSettings: AmperResolutionSettings,
             moduleDependenciesList: List<ModuleDependencies>
         ): List<DependencyNodeHolderWithContext> {
-            moduleDependenciesList.checkModules(model)
-            return buildProjectDependenciesGraph(moduleDependenciesList, resolutionSettings.openTelemetry)
+            moduleDependenciesList.checkProjectModules(model)
+            return buildProjectDependenciesGraph(moduleDependenciesList)
         }
 
-        private suspend fun buildProjectDependenciesGraph(
-            moduleDependenciesList: List<ModuleDependencies>,
-            openTelemetry: OpenTelemetry?,
+        @UsedInIdePlugin
+        fun buildProjectDependenciesGraph(
+            model: Model,
+            moduleDependencies: ModuleDependencies
         ): List<DependencyNodeHolderWithContext> {
-            return openTelemetry.spanBuilder("DR: building project graph").use {
-                buildList {
-                    moduleDependenciesList.forEach {
-                        // test and main fragments are resolved separately
-                        add(it.allFragmentsGraph(isForTests = false, flattenGraph = true))
-                        add(it.allFragmentsGraph(isForTests = true, flattenGraph = true))
-                    }
+            moduleDependencies.checkProjectModule(model)
+            return buildProjectDependenciesGraph(listOf(moduleDependencies))
+        }
+
+        private fun buildProjectDependenciesGraph(
+            moduleDependenciesList: List<ModuleDependencies>
+        ): List<DependencyNodeHolderWithContext> {
+            return buildList {
+                moduleDependenciesList.forEach {
+                    // test and main fragments are resolved separately
+                    add(it.allFragmentsGraph(isForTests = false, flattenGraph = true))
+                    add(it.allFragmentsGraph(isForTests = true, flattenGraph = true))
                 }
             }
         }
@@ -363,7 +369,7 @@ class ModuleDependencies private constructor(
             //       one library from shared module is checked as an input as many times as many modules depend on it transitively
             return with (resolutionRunSettings) {
                 openTelemetry.spanBuilder("DR: Resolving project dependencies").use {
-                    val moduleGraphs = buildProjectDependenciesGraph(moduleDependenciesList, openTelemetry)
+                    val moduleGraphs = buildProjectDependenciesGraph(moduleDependenciesList)
 
                     val resolutionId = CacheEntryKey.CompositeCacheEntryKey(
                         listOf(
@@ -686,9 +692,18 @@ class ModuleDependencies private constructor(
          * The resulting list could be used as an entry point into module-wide dependency resoluion for the entire project
          * (represented by the given [Model])
          */
-        private fun List<ModuleDependencies>.checkModules(aom: Model): List<ModuleDependencies> = also {
+        private fun List<ModuleDependencies>.checkProjectModules(aom: Model): List<ModuleDependencies> = also {
             if (aom.modules.toSet() != this.map { it.module }.toSet())
                 error("Modules from the given list do not match modules from the Project Model")
+            forEach { it.checkProjectModule(aom) }
+            return this
+        }
+
+        private fun ModuleDependencies.checkProjectModule(aom: Model): ModuleDependencies = also {
+            if (!aom.modules.contains(this.module))
+                error("The given module ${this.module.userReadableName} does not belong to the given Project Model")
+            if (it.resolutionSettings.includeNonExportedNative)
+                error("Modules from the given list should be configured NOT to include non-exported native dependencies in COMPILE classpath")
         }
 
         internal fun AmperModule.getValidRepositories(): List<Repository> {
