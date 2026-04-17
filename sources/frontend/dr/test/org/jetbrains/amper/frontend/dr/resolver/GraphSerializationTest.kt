@@ -111,7 +111,7 @@ class GraphSerializationTest: BaseModuleDrTest() {
     /**
      * @return deserialized graph
      */
-    private fun assertRepetitiveGraphSerialization(root: DependencyNode, testInfo: TestInfo): DependencyNode {
+    private suspend fun assertRepetitiveGraphSerialization(root: DependencyNode, testInfo: TestInfo): DependencyNode {
         val nodeDeserialized = assertGraphSerialization(root, testInfo)
         val nodeDeserializedTwice = assertGraphSerialization(nodeDeserialized, testInfo)
         return nodeDeserializedTwice
@@ -120,7 +120,7 @@ class GraphSerializationTest: BaseModuleDrTest() {
     /**
      * @return deserialized graph
      */
-    private fun assertGraphSerialization(root: DependencyNode, testInfo: TestInfo): DependencyNode {
+    private suspend fun assertGraphSerialization(root: DependencyNode, testInfo: TestInfo): DependencyNode {
         val serializableGraph = root.toGraph()
         assertGraphStructure(testInfo, root, serializableGraph)
 
@@ -143,7 +143,7 @@ class GraphSerializationTest: BaseModuleDrTest() {
         return nodeDeserialized
     }
 
-    private fun assertGraphStructure(testInfo: TestInfo, root: DependencyNode, graph: DependencyGraph) {
+    private suspend fun assertGraphStructure(testInfo: TestInfo, root: DependencyNode, graph: DependencyGraph) {
         root.assertGraphStructure(testInfo, GraphType.ORIGINAL)
         graph.assertGraphStructure(testInfo)
 
@@ -154,11 +154,11 @@ class GraphSerializationTest: BaseModuleDrTest() {
 //        graph.assertNodePlainIndexes(testInfo)
     }
 
-    private fun DependencyGraph.assertGraphStructure(testInfo: TestInfo) {
+    private suspend fun DependencyGraph.assertGraphStructure(testInfo: TestInfo) {
         root.assertGraphStructure(testInfo, GraphType.DESERIALIZED)
     }
 
-    private fun DependencyNode.assertGraphStructure(testInfo: TestInfo, graphType: GraphType) {
+    private suspend fun DependencyNode.assertGraphStructure(testInfo: TestInfo, graphType: GraphType) {
         assertParentsInGraph(testInfo, graphType)
         // todo (AB) : This should be uncommented after fix of
         // todo (AB) : https://youtrack.jetbrains.com/issue/AMPER-4887.
@@ -166,7 +166,7 @@ class GraphSerializationTest: BaseModuleDrTest() {
         // assertOverriddenByInGraph(testInfo, graphType)
     }
 
-    private fun DependencyNode.assertParentsInGraph(testInfo: TestInfo, graphType: GraphType) {
+    private suspend fun DependencyNode.assertParentsInGraph(testInfo: TestInfo, graphType: GraphType) {
         val filterOrphans = (graphType == GraphType.ORIGINAL)
 
         fun DependencyNode.nodeName() = if (this is ModuleDependencyNode) "module:$moduleName" else graphEntryName
@@ -182,7 +182,7 @@ class GraphSerializationTest: BaseModuleDrTest() {
         val goldenFile = goldenFileOsAware(
             "${testInfo.testMethod.get().name.replace(" ", "_")}.parents.txt")
         val expected = getGoldenFileText(goldenFile, fileDescription = "Golden file for dependency graph parents")
-        withActualDump(goldenFile) {
+        withActualDumpAndDelayedAssertion(goldenFile) {
             assertEqualsWithDiff(
                 expected = expected.lines(),
                 actual = actual.lines(),
@@ -191,7 +191,7 @@ class GraphSerializationTest: BaseModuleDrTest() {
         }
     }
 
-    private fun DependencyNode.assertOverriddenByInGraph(testInfo: TestInfo, graphType: GraphType) {
+    private suspend fun DependencyNode.assertOverriddenByInGraph(testInfo: TestInfo, graphType: GraphType) {
         val filterOrphans = (graphType == GraphType.ORIGINAL)
 
         val allOverriddenBy = buildList {
@@ -215,7 +215,7 @@ class GraphSerializationTest: BaseModuleDrTest() {
             "${testInfo.testMethod.get().name.replace(" ", "_")}.overriddenBy.txt")
 
         val expected = getGoldenFileText(goldenFile, fileDescription = "Golden file for dependency graph overriddenBy entries")
-        withActualDump(goldenFile) {
+        withActualDumpAndDelayedAssertion(goldenFile) {
             assertEqualsWithDiff(
                 expected = expected.lines(),
                 actual = actual.lines(),
@@ -234,14 +234,14 @@ class GraphSerializationTest: BaseModuleDrTest() {
      * and it in turn depends on the order of both 'node.children' and 'node.overriddenBy' while the latter have no stable sort order
      * (and it is quite tricky to sort it since it depends not only on coordinates, but on resolution context as well)
      */
-    private fun DependencyGraph.assertNodePlainIndexes(testInfo: TestInfo) {
+    private suspend fun DependencyGraph.assertNodePlainIndexes(testInfo: TestInfo) {
         val actual = graphContext.allDependencyNodes
             .map { "${it.value}:  ${it.key.graphEntryName} (${(it.key as? MavenDependencyNode)?.dependency?.resolutionConfig?.platforms?.joinToString(",") { it.pretty } }"}
             .joinToString(System.lineSeparator())
 
         val goldenFile = goldenFileOsAware("${testInfo.testMethod.get().name.replace(" ", "_")}.indexes.txt")
         val expected = getGoldenFileText(goldenFile, fileDescription = "Golden file for serialized dependency graph indexes")
-        withActualDump(goldenFile) {
+        withActualDumpAndDelayedAssertion(goldenFile) {
             assertEqualsWithDiff(
                 expected = expected.lines(),
                 actual = actual.lines(),
@@ -253,10 +253,10 @@ class GraphSerializationTest: BaseModuleDrTest() {
     /**
      * This check is not applied since indexes of dependencies in serialized graph JSON are not stable from one execution to another.
      */
-    private fun assertSerializedGraphByGoldenFile(testInfo: TestInfo, encoded: String) {
+    private suspend fun assertSerializedGraphByGoldenFile(testInfo: TestInfo, encoded: String) {
         val goldenFile = goldenFileOsAware("${testInfo.testMethod.get().name.replace(" ", "_")}.graph.txt")
         val expected = getGoldenFileText(goldenFile, fileDescription = "Golden file for serialized dependency graph")
-        withActualDump(goldenFile) {
+        withActualDumpAndDelayedAssertion(goldenFile) {
             assertEqualsWithDiff(
                 expected = expected.lines(),
                 actual = encoded.lines(),

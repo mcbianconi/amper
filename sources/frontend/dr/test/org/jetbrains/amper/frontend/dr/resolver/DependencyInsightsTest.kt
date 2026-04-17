@@ -107,6 +107,13 @@ class DependencyInsightsTest : BaseModuleDrTest() {
             testInfo = testInfo,
         )
 
+        assertInsightByFile(
+            group = "org.jetbrains.kotlinx",
+            module = "kotlinx-coroutines-core",
+            graph = sharedModuleIosArm64Graph,
+            testInfo = testInfo,
+        )
+
         // Assert that all dependencies "org.jetbrains.kotlin:kotlin-stdlib-common" have correct overriddenBy
         sharedModuleIosArm64Graph
             .distinctBfsSequence()
@@ -134,13 +141,6 @@ class DependencyInsightsTest : BaseModuleDrTest() {
                     )
                 }
             }
-
-        assertInsightByFile(
-            group = "org.jetbrains.kotlinx",
-            module = "kotlinx-coroutines-core",
-            graph = sharedModuleIosArm64Graph,
-            testInfo = testInfo,
-        )
     }
 
     /**
@@ -357,24 +357,24 @@ class DependencyInsightsTest : BaseModuleDrTest() {
         )
     }
 
-    private fun assertInsightByFile(group: String, module: String, graph: DependencyNode, testInfo: TestInfo) {
+    private suspend fun assertInsightByFile(group: String, module: String, graph: DependencyNode, testInfo: TestInfo) {
         val insightFilePrefix = "${testInfo.testMethod.get().name}.$module".replace(" ", "_")
 
         val goldenFileResolvedInsights = goldenFileOsAware("$insightFilePrefix.insight.resolved.txt")
         val expectedResolved = getGoldenFileText(goldenFileResolvedInsights, fileDescription = "Golden file with insight for resolved version only")
-        withActualDump(expectedResultPath = goldenFileResolvedInsights) {
+        withActualDumpAndDelayedAssertion(expectedResultPath = goldenFileResolvedInsights) {
             assertInsight(group, module, graph, expectedResolved, resolvedVersionOnly = true)
         }
 
         val goldenFileFull = goldenFileOsAware("$insightFilePrefix.insight.full.txt")
         val expectedFull = getGoldenFileText(goldenFileFull, fileDescription = "Golden file with full insight")
-        withActualDump(expectedResultPath = goldenFileFull) {
+        withActualDumpAndDelayedAssertion(expectedResultPath = goldenFileFull) {
             assertInsight(group, module, graph, expectedFull, resolvedVersionOnly = false)
         }
 
         val goldenFileOriginalGraph = goldenFileOsAware("$insightFilePrefix.insight.originalGraph.txt")
         val expectedGraph = getGoldenFileText(goldenFileOriginalGraph, fileDescription = "Golden file with full dependency graph")
-        withActualDump(expectedResultPath = goldenFileOriginalGraph) {
+        withActualDumpAndDelayedAssertion(expectedResultPath = goldenFileOriginalGraph) {
             assertEquals(expectedGraph, graph, null)
         }
     }

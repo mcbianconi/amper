@@ -7,6 +7,7 @@ package org.jetbrains.amper.frontend.dr.resolver
 import io.opentelemetry.api.OpenTelemetry
 import kotlinx.coroutines.currentCoroutineContext
 import kotlinx.coroutines.test.TestScope
+import kotlinx.coroutines.withContext
 import org.intellij.lang.annotations.Language
 import org.jetbrains.amper.dependency.resolution.Context
 import org.jetbrains.amper.dependency.resolution.DependencyNode
@@ -17,7 +18,6 @@ import org.jetbrains.amper.dependency.resolution.MavenDependencyNode
 import org.jetbrains.amper.dependency.resolution.ResolutionPlatform
 import org.jetbrains.amper.dependency.resolution.ResolutionScope
 import org.jetbrains.amper.dependency.resolution.ResolvedGraph
-import org.jetbrains.amper.dependency.resolution.Resolver
 import org.jetbrains.amper.dependency.resolution.RootDependencyNodeStub
 import org.jetbrains.amper.dependency.resolution.diagnostics.Message
 import org.jetbrains.amper.dependency.resolution.diagnostics.Severity
@@ -25,6 +25,7 @@ import org.jetbrains.amper.dependency.resolution.diagnostics.SimpleDiagnosticDes
 import org.jetbrains.amper.dependency.resolution.diagnostics.detailedMessage
 import org.jetbrains.amper.dependency.resolution.getDefaultFileCacheBuilder
 import org.jetbrains.amper.frontend.Model
+import org.jetbrains.amper.frontend.dr.resolver.BaseModuleDrTest.Companion.DelayedAssertion.Companion.withDelayedAssertion
 import org.jetbrains.amper.frontend.schema.DefaultVersions
 import org.jetbrains.amper.incrementalcache.IncrementalCache
 import org.jetbrains.amper.test.Dirs
@@ -71,9 +72,13 @@ abstract class BaseModuleDrTest {
         val goldenFile = goldenFileOsAware(
             "${goldenFileName.replace(" ", "_")}.tree.txt")
         val expected = getGoldenFileText(goldenFile, fileDescription = "Golden file for resolved tree")
-        return withActualDump(goldenFile) {
-            doTest(aom, resolutionInput, verifyMessages, expected, module, fragment, filter, messagesCheck)
-        }
+        return doTest(
+            aom, resolutionInput, verifyMessages, expected, module, fragment, filter,
+            expectedCheckWrapper = { block ->
+                withActualDumpAndDelayedAssertion(goldenFile) { block() }
+            },
+            messagesCheck
+        )
     }
 
     protected suspend fun doTest(
@@ -84,6 +89,7 @@ abstract class BaseModuleDrTest {
         module: String? = null,
         fragment: String? = null,
         filter: ModuleResolutionFilter = ModuleResolutionFilter(),
+        expectedCheckWrapper: suspend (block:() -> Unit) -> Unit = { it() },
         messagesCheck: (DependencyNode) -> Unit = defaultMessagesCheck
     ): DependencyNode {
         val resolutionSettings = resolutionInput.resolutionSettings
@@ -134,7 +140,9 @@ abstract class BaseModuleDrTest {
                 "Unexpected dependency type is among root children: " +
                         (graph.children - moduleDeps.toSet()).joinToString { it::class.java.simpleName }
             )
-            assertModuleDepsEquals(expected, moduleDeps)
+            expectedCheckWrapper {
+                assertModuleDepsEquals(expected, moduleDeps)
+            }
         }
 
         return graph
@@ -164,7 +172,7 @@ abstract class BaseModuleDrTest {
         assertEquals(expected, listOf(root), forMavenNode)
     }
 
-    protected fun assertFiles(
+    protected suspend fun assertFiles(
         testInfo: TestInfo,
         root: DependencyNode,
         withSources: Boolean = false,
@@ -175,7 +183,7 @@ abstract class BaseModuleDrTest {
         val goldenFile = goldenFileOsAware(
             "${testInfo.testMethod.get().name.replace(" ", "_")}.files.txt")
         val expected = getGoldenFileText(goldenFile, fileDescription = "Golden file for files")
-        withActualDump(goldenFile) {
+        withActualDumpAndDelayedAssertion(goldenFile) {
             assertFiles(expected.trim().lines(), root, withSources, checkExistence, checkAutoAddedDocumentation, scope)
         }
     }
@@ -240,6 +248,13 @@ abstract class BaseModuleDrTest {
             timeout: Duration = 1.minutes,
             testBody: suspend TestScope.() -> Unit
         ) {
+            val testBodyWithDelayedAssertions: (suspend TestScope.() -> Unit) =
+                {
+                    withDelayedAssertion {
+                        testBody()
+                    }
+                }
+
             if (checkIncrementalCache) {
                 val incrementalCacheUsageContext =
                     IncrementalCacheUsageContextElement(IncrementalCacheUsage.REFRESH_AND_USE)
@@ -247,11 +262,11 @@ abstract class BaseModuleDrTest {
                     context = incrementalCacheUsageContext,
                     timeout = timeout,
                     testBody = {
-                        executeWithAndWithoutCache(incrementalCacheUsageContext, testBody)
+                        executeWithAndWithoutCache(incrementalCacheUsageContext, testBodyWithDelayedAssertions)
                     }
                 )
             } else {
-                runTestRespectingDelays(testBody = testBody, timeout = timeout)
+                runTestRespectingDelays(testBody = testBodyWithDelayedAssertions, timeout = timeout)
             }
         }
 
@@ -297,7 +312,7 @@ abstract class BaseModuleDrTest {
             )
         }
 
-        internal inline fun <T> withActualDump(expectedResultPath: Path? = null, block: () -> T): T {
+        private inline fun <T> withActualDump(expectedResultPath: Path? = null, block: () -> T): T {
             return try {
                 block()
             } catch (e: AssertionFailedError) {
@@ -312,6 +327,78 @@ abstract class BaseModuleDrTest {
                 throw e
             }.also {
                 expectedResultPath?.parent?.resolve(expectedResultPath.fileName.name + ".tmp")?.deleteIfExists()
+            }
+        }
+
+        internal suspend fun withActualDumpAndDelayedAssertion(expectedResultPath: Path? = null, block: () -> Unit) =
+            withDelayedAssertion {
+                withActualDump(expectedResultPath, block)
+            }
+
+        internal class DelayedAssertion {
+            private val assertions: MutableList<AssertionFailedError> = mutableListOf()
+            fun add(e: AssertionFailedError) { assertions.add(e) }
+
+            fun assert() {
+                when (assertions.size) {
+                    0 -> return
+                    1 -> throw assertions[0]
+                    else -> throw assertions.subList(1, assertions.size).fold(assertions[0]) { acc, e -> acc.also { acc.addSuppressed(e) } }
+                }
+            }
+
+            companion object {
+                private suspend fun getCurrentDelayedAssertionElement(): DelayedAssertionContextElement? =
+                    currentCoroutineContext()[DelayedAssertionKey]
+
+                private object DelayedAssertionKey: CoroutineContext.Key<DelayedAssertionContextElement>
+
+                private class DelayedAssertionContextElement(
+                    var delayedAssertion: DelayedAssertion
+                ) : CoroutineContext.Key<DelayedAssertionContextElement>, CoroutineContext.Element {
+                    override val key: CoroutineContext.Key<*> get() = DelayedAssertionKey
+                    override fun toString(): String = "DelayedAssertionContextElement"
+                }
+
+                /**
+                 * Run given [block].
+                 * [AssertionFailedError] occurred inside the block is either caught there and registered by nested
+                 * [withDelayedAssertion] or thrown directly from the [block] and is registered by this method.
+                 *
+                 * Registered [AssertionFailedError]s are immediately thrown at the end of this method if either
+                 * - [Exception] occurred inside the [block] (i.e., something is wrong and there is no need to proceed with accumulating assertions)
+                 * - or if the block finished successfully, and delayed assertion context didn't exist before this method started executing.
+                 *
+                 * Note: If several [AssertionFailedError]s were caught, the first one is thrown with all the rest being added as suppressed ones.
+                 *
+                 * If block finished successfully, and delayed assertion context was set up before entering this method,
+                 * then registered [AssertionFailedError] are not thrown.
+                 * It is the responsibility of a caller to handle them in that case.
+                 *
+                 * This way top-most call of [withDelayedAssertion] raise all accumulated assertions.
+                 */
+                internal suspend fun withDelayedAssertion(block: suspend () -> Unit) {
+                    val upstreamDelayedAssertion = getCurrentDelayedAssertionElement()
+                    val delayedAssertionContextElement = upstreamDelayedAssertion ?: DelayedAssertionContextElement(DelayedAssertion())
+                    val delayedAssertion = delayedAssertionContextElement.delayedAssertion
+
+                    try {
+                        withContext(delayedAssertionContextElement) {
+                            block()
+                        }
+                    } catch (e: AssertionFailedError) {
+                        delayedAssertion.add(e)
+                    } catch (t: Exception) {
+                        delayedAssertion.assert() // raise assertion if it was registered before exception was thrown
+                        throw t // re-throw exception if there is no assertion registered yet
+                    }
+
+                    if (upstreamDelayedAssertion == null) {
+                        // raise assertions registered inside the given block.
+                        // (delayed assertion context didn't exist before entering this method)
+                        delayedAssertion.assert()
+                    }
+                }
             }
         }
 
