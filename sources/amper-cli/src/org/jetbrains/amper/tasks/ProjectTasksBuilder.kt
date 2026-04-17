@@ -95,6 +95,7 @@ class ProjectTasksBuilder(
         setupKspTasks()
         setupJavaAnnotationProcessingTasks()
         setupComposeTasks()
+        setupAmperPluginTasks()
         setupCustomTaskDependencies()
         setupTasksFromPlugins()
         return tasks.build()

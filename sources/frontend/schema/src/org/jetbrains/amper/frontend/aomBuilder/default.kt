@@ -27,7 +27,7 @@ import org.jetbrains.amper.frontend.plugins.CheckFromPlugin
 import org.jetbrains.amper.frontend.plugins.CustomCommandFromPlugin
 import org.jetbrains.amper.frontend.plugins.TaskFromPluginDescription
 import org.jetbrains.amper.frontend.schema.MavenPluginSettings
-import org.jetbrains.amper.frontend.schema.PluginSettings
+import org.jetbrains.amper.frontend.schema.Module
 import org.jetbrains.amper.frontend.schema.ProductType
 import java.nio.file.Path
 import kotlin.io.path.pathString
@@ -41,16 +41,13 @@ data class DefaultModel(
 
 internal open class DefaultModule(
     override val userReadableName: @NlsSafe String,
-    override val description: @NlsSafe String?,
-    override val type: ProductType,
     override val source: AmperModuleFileSource,
     override val aliases: Map<@NlsSafe String, Set<Platform>>,
     override val usedCatalog: VersionCatalog,
     override val usedTemplates: List<VirtualFile>,
     override var parts: ClassBasedSet<ModulePart<*>> = classBasedSet(),
-    override val layout: Layout = Layout.AMPER,
+    override val commonModuleNode: Module,
 ) : AmperModule {
-    override var pluginSettings = PluginSettings()
     override var mavenPluginSettings = MavenPluginSettings()
     override var fragments = emptyList<Fragment>()
     override var artifacts = emptyList<Artifact>()
@@ -58,6 +55,15 @@ internal open class DefaultModule(
     override var checksFromPlugins = emptyList<CheckFromPlugin>()
     override var customCommandsFromPlugins = emptyList<CustomCommandFromPlugin>()
     override var amperMavenPluginsDescriptions = emptyList<AmperMavenPluginDescription>()
+
+    override val type: ProductType
+        get() = commonModuleNode.product.type
+
+    override val layout: Layout
+        get() = Layout.valueOf(commonModuleNode.layout.name)
+
+    override val description: @NlsSafe String?
+        get() = commonModuleNode.description
 }
 
 class DefaultArtifact(

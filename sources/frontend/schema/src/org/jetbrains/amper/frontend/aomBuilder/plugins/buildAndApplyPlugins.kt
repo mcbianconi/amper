@@ -5,7 +5,6 @@
 package org.jetbrains.amper.frontend.aomBuilder.plugins
 
 import org.jetbrains.amper.frontend.AmperPlugin
-import org.jetbrains.amper.frontend.FrontendPathResolver
 import org.jetbrains.amper.frontend.aomBuilder.ModuleBuildCtx
 import org.jetbrains.amper.frontend.aomBuilder.plugins.taskGraph.TaskGraphBuildContext
 import org.jetbrains.amper.frontend.aomBuilder.plugins.taskGraph.buildTaskGraph
@@ -24,13 +23,12 @@ import org.jetbrains.amper.problems.reporting.ProblemReporter
  *
  * @return all the project's amper plugins.
  */
-context(_: ProblemReporter, _: SchemaTypingContext, _: FrontendPathResolver)
+context(_: ProblemReporter, _: SchemaTypingContext, projectContext: AmperProjectContext)
 internal fun buildAndApplyPlugins(
     pluginData: List<PluginData>,
-    projectContext: AmperProjectContext,
     modules: List<ModuleBuildCtx>,
 ): List<AmperPlugin> {
-    val pluginReaders = readPlugins(projectContext, modules, pluginData)
+    val pluginReaders = readPlugins(modules, pluginData)
 
     for (moduleBuildCtx in modules) {
         applyPlugins(pluginReaders, moduleBuildCtx, modules)

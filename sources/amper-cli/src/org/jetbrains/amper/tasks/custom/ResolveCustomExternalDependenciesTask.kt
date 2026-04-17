@@ -40,7 +40,6 @@ import org.jetbrains.amper.frontend.dr.resolver.toDrMavenCoordinates
 import org.jetbrains.amper.frontend.mavenRepositories
 import org.jetbrains.amper.frontend.plugins.AmperMavenPluginDescription
 import org.jetbrains.amper.frontend.plugins.TaskFromPluginDescription
-import org.jetbrains.amper.frontend.schema.PluginSettings
 import org.jetbrains.amper.frontend.schema.ProductType
 import org.jetbrains.amper.frontend.schema.Settings
 import org.jetbrains.amper.incrementalcache.IncrementalCache
@@ -242,7 +241,7 @@ internal class ResolveCustomExternalDependenciesTask(
             override val tasksFromPlugins: List<TaskFromPluginDescription> = emptyList()
             override val layout: Layout = hostModule.layout
             override val amperMavenPluginsDescriptions: List<AmperMavenPluginDescription> = emptyList()
-            override val pluginSettings: PluginSettings = PluginSettings()
+            override val commonModuleNode get() = throw UnsupportedOperationException("Synthetic module")
         }
 
         val fragment = object : LeafFragment {

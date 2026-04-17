@@ -4,18 +4,19 @@
 
 package org.jetbrains.amper.frontend.aomBuilder.plugins
 
-import com.intellij.openapi.vfs.VirtualFile
 import org.jetbrains.amper.frontend.AmperModule
 import org.jetbrains.amper.frontend.AmperPlugin
-import org.jetbrains.amper.frontend.FrontendPathResolver
 import org.jetbrains.amper.frontend.SchemaBundle
 import org.jetbrains.amper.frontend.TaskName
 import org.jetbrains.amper.frontend.aomBuilder.ModuleBuildCtx
 import org.jetbrains.amper.frontend.aomBuilder.plugins.diagnostics.IsolatedPluginYamlDiagnosticsFactories
+import org.jetbrains.amper.frontend.aomBuilder.plugins.diagnostics.PluginYamlMissing
+import org.jetbrains.amper.frontend.aomBuilder.plugins.diagnostics.diagnosePluginSettingsClass
 import org.jetbrains.amper.frontend.api.isDefault
 import org.jetbrains.amper.frontend.asBuildProblemSource
 import org.jetbrains.amper.frontend.catalogs.substituteCatalogDependencies
 import org.jetbrains.amper.frontend.contexts.EmptyContexts
+import org.jetbrains.amper.frontend.messages.extractKeyValuePsiElement
 import org.jetbrains.amper.frontend.plugins.PluginYamlRoot
 import org.jetbrains.amper.frontend.plugins.generated.ShadowCompilationArtifactKind
 import org.jetbrains.amper.frontend.plugins.generated.ShadowResolutionScope
@@ -38,6 +39,7 @@ import org.jetbrains.amper.frontend.tree.mergeTrees
 import org.jetbrains.amper.frontend.tree.put
 import org.jetbrains.amper.frontend.tree.reading.ReferencesParsingMode
 import org.jetbrains.amper.frontend.tree.reading.readTree
+import org.jetbrains.amper.frontend.types.SchemaObjectDeclaration
 import org.jetbrains.amper.frontend.types.SchemaTypingContext
 import org.jetbrains.amper.frontend.types.generated.*
 import org.jetbrains.amper.plugins.schema.model.PluginData
@@ -47,47 +49,30 @@ import org.jetbrains.amper.problems.reporting.Level
 import org.jetbrains.amper.problems.reporting.MultipleLocationsBuildProblemSource
 import org.jetbrains.amper.problems.reporting.ProblemReporter
 import org.jetbrains.amper.problems.reporting.replayProblemsTo
+import kotlin.io.path.div
+import kotlin.io.path.isRegularFile
 
-internal class AmperPluginImpl(
+class AmperPluginImpl(
     private val projectContext: AmperProjectContext,
     override val pluginModule: AmperModule,
-    override val id: PluginData.Id,
-    pluginFile: VirtualFile,
+    pluginData: PluginData,
     types: SchemaTypingContext,
     problemReporter: ProblemReporter,
-    pathResolver: FrontendPathResolver,
 ) : AmperPlugin {
-    private val treeRefiner = TreeRefiner()
+    override val id = pluginData.id
     private val pluginYamlDeclaration = types.pluginYamlDeclaration(id)
 
     // If this tree is null (due to errors), then the plugin will be NOP
-    private val pluginTree: RefinedMappingNode? = run {
-        val tree = context(problemReporter, pathResolver) {
-            readTree(
-                file = pluginFile,
-                declaration = pluginYamlDeclaration,
-                reportUnknowns = true,
-                referenceParsingMode = ReferencesParsingMode.Parse,
-                parseContexts = false,
-            )
-        }
-
-        val proxyReporter = CollectingProblemReporter()
-        context(proxyReporter) {
-            val refinedTree = treeRefiner.refineTree(tree, EmptyContexts)
-
-            for (diagnosticsFactory in IsolatedPluginYamlDiagnosticsFactories) {
-                diagnosticsFactory.analyze(refinedTree)
-            }
-
-            proxyReporter.replayProblemsTo(problemReporter)
-            // If errors are detected, don't save the tree. No point in applying the plugin with errors.
-            refinedTree.takeUnless { proxyReporter.problems.any { it.level == Level.Error } }
-        }
+    private val pluginTree: RefinedMappingNode? = context(problemReporter, projectContext) {
+        parseAndDiagnosePluginTree(
+            pluginModule = pluginModule,
+            pluginYamlDeclaration = pluginYamlDeclaration,
+            pluginData = pluginData,
+        )
     }
 
     context(problemReporter: ProblemReporter)
-    fun asAppliedTo(
+    internal fun asAppliedTo(
         module: ModuleBuildCtx,
     ): PluginYamlRoot? = context(problemReporter) {
         if (pluginTree == null) return null
@@ -157,7 +142,7 @@ internal class AmperPluginImpl(
 
         val mergedTree = mergeTrees(pluginTree, referenceValuesTree)
             .substituteCatalogDependencies(pluginModule.usedCatalog)
-        treeRefiner.refineTree(mergedTree, EmptyContexts)
+        TreeRefiner().refineTree(mergedTree, EmptyContexts)
             .completeTree(MissingPropertiesHandler.Noop)?.instance<PluginYamlRoot>()
     }
 
@@ -180,5 +165,53 @@ internal class AmperPluginImpl(
                 level = Level.Warning,
             )
         }
+    }
+}
+
+context(problemReporter: ProblemReporter, projectContext: AmperProjectContext)
+private fun parseAndDiagnosePluginTree(
+    pluginModule: AmperModule,
+    pluginYamlDeclaration: SchemaObjectDeclaration,
+    pluginData: PluginData,
+): RefinedMappingNode? {
+    diagnosePluginSettingsClass(pluginData, pluginModule.commonModuleNode.pluginInfo!!)
+
+    val pluginFile = run { // Locate plugin.yaml
+        val pluginFilepath = pluginModule.source.moduleDir / "plugin.yaml"
+        if (!pluginFilepath.isRegularFile()) {
+            problemReporter.reportMessage(
+                PluginYamlMissing(
+                    element = pluginModule.commonModuleNode.product.typeDelegate.extractKeyValuePsiElement(),
+                    expectedPluginYamlPath = pluginFilepath,
+                )
+            )
+            return null
+        }
+        projectContext.frontendPathResolver.loadVirtualFile(pluginFilepath)
+    }
+
+    val proxyReporter = CollectingProblemReporter()
+    context(proxyReporter, projectContext.frontendPathResolver) {
+        val tree = readTree(
+            file = pluginFile,
+            declaration = pluginYamlDeclaration,
+            reportUnknowns = true,
+            referenceParsingMode = ReferencesParsingMode.Parse,
+            parseContexts = false,
+        )
+
+        val refinedTree = TreeRefiner().refineTree(tree, EmptyContexts)
+
+        for (diagnosticsFactory in IsolatedPluginYamlDiagnosticsFactories) {
+            diagnosticsFactory.analyze(refinedTree)
+        }
+
+        proxyReporter.replayProblemsTo(problemReporter)
+        if (proxyReporter.problems.any { it.level == Level.Error }) {
+            // If errors are detected, don't save the tree. No point in applying the plugin with errors.
+            return null
+        }
+
+        return refinedTree
     }
 }

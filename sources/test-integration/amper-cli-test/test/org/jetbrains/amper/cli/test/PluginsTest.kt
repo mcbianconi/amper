@@ -707,4 +707,39 @@ class PluginsTest : AmperCliTestBase() {
             other = output,
         )
     }
+    @Test
+    fun `unapplied plugins diagnostics`() = runSlowTest {
+        // 1. Assert that no error messages associated with the unapplied plugin are issued just by parsing it.
+        val r1 = runCli(
+            projectDir = testProject("extensibility/unapplied-plugin-error"),
+            "show", "checks",
+        )
+
+        // 2.1 Assert that the build triggers plugin analysis.
+        val r2 = runCli(
+            projectDir = r1.projectDir,
+            "build", "-m", "unapplied-plugin",
+            assertEmptyStdErr = false,
+            expectedExitCode = 1,
+        )
+        val pluginKt = r1.projectDir / "unapplied-plugin" / "src" / "plugin.kt"
+        r2.assertErrors(
+            "$pluginKt:12:5: [Amper] Illegal overload for `org.example.myAction`: `@TaskAction` functions can't be overloaded",
+            "$pluginKt:9:5: [Amper] Illegal overload for `org.example.myAction`: `@TaskAction` functions can't be overloaded",
+        )
+        r2.assertStderrContains("Task ':unapplied-plugin:buildAmperPluginInfo' failed: Plugin Kotlin schema processing failed, see the errors above.")
+
+        // 2.2
+        val r3 = runCli(
+            projectDir = r1.projectDir,
+            "build", "-m", "unapplied-plugin-2",
+            assertEmptyStdErr = false,
+            expectedExitCode = 1,
+        )
+        val plugin2Yaml = r1.projectDir / "unapplied-plugin-2" / "plugin.yaml"
+        r3.assertErrors(
+            "$plugin2Yaml:3:13: The task action function specifier 'nonExistedType' doesn't correspond to any available `@TaskAction`-annotated top-level functions. Available task action functions: <none>",
+        )
+        r3.assertStderrContains("Task ':unapplied-plugin-2:buildAmperPluginInfo' failed: `plugin.yaml` processing failed, see the errors above.")
+    }
 }

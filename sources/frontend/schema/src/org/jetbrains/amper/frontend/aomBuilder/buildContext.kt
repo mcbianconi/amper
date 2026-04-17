@@ -8,7 +8,6 @@ import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.psi.PsiFile
 import org.jetbrains.amper.frontend.AmperModuleFileSource
 import org.jetbrains.amper.frontend.FrontendPathResolver
-import org.jetbrains.amper.frontend.Layout
 import org.jetbrains.amper.frontend.VersionCatalog
 import org.jetbrains.amper.frontend.api.TraceablePath
 import org.jetbrains.amper.frontend.diagnostics.UnresolvedTemplate
@@ -44,8 +43,6 @@ internal class ModuleBuildCtx(
         context(problemReporter, pathResolver) {
             DefaultModule(
                 userReadableName = moduleFile.parent.name,
-                description = moduleCtxModule.description,
-                type = moduleCtxModule.product.type,
                 aliases = moduleCtxModule.aliases.orEmpty().entries.associate { alias ->
                     alias.key.value to alias.value.map { platform -> platform.value }.toSet()
                 },
@@ -53,7 +50,7 @@ internal class ModuleBuildCtx(
                 usedCatalog = catalog,
                 usedTemplates = moduleCtxModule.apply?.mapNotNull { readTemplateFromPath(it) }.orEmpty(),
                 parts = moduleCtxModule.convertModuleParts(),
-                layout = Layout.valueOf(moduleCtxModule.layout.name),
+                commonModuleNode = moduleCtxModule,
             )
         }
     }

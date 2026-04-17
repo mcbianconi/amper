@@ -4,14 +4,10 @@
 
 package org.jetbrains.amper.frontend.aomBuilder.plugins
 
-import org.jetbrains.amper.frontend.FrontendPathResolver
 import org.jetbrains.amper.frontend.SchemaBundle
 import org.jetbrains.amper.frontend.aomBuilder.ModuleBuildCtx
-import org.jetbrains.amper.frontend.aomBuilder.plugins.diagnostics.PluginYamlMissing
-import org.jetbrains.amper.frontend.aomBuilder.plugins.diagnostics.diagnosePluginSettingsClass
-import org.jetbrains.amper.frontend.api.TraceableString
+import org.jetbrains.amper.frontend.api.Traceable
 import org.jetbrains.amper.frontend.asBuildProblemSource
-import org.jetbrains.amper.frontend.messages.extractKeyValuePsiElement
 import org.jetbrains.amper.frontend.project.AmperProjectContext
 import org.jetbrains.amper.frontend.reportBundleError
 import org.jetbrains.amper.frontend.schema.ProductType
@@ -21,16 +17,13 @@ import org.jetbrains.amper.plugins.schema.model.PluginData
 import org.jetbrains.amper.problems.reporting.FileBuildProblemSource
 import org.jetbrains.amper.problems.reporting.MultipleLocationsBuildProblemSource
 import org.jetbrains.amper.problems.reporting.ProblemReporter
-import kotlin.io.path.div
-import kotlin.io.path.isRegularFile
 
-context(problemReporter: ProblemReporter, types: SchemaTypingContext, pathResolver: FrontendPathResolver)
+context(problemReporter: ProblemReporter, types: SchemaTypingContext, projectContext: AmperProjectContext)
 internal fun readPlugins(
-    projectContext: AmperProjectContext,
     modules: List<ModuleBuildCtx>,
     pluginData: List<PluginData>,
 ): List<AmperPluginImpl> {
-    val seenPluginIds = hashMapOf<String, MutableList<TraceableString>>()
+    val seenPluginIds = hashMapOf<String, MutableList<Traceable>>()
     val pluginReaders = projectContext.enabledLocalAmperPluginModuleFiles.mapNotNull mapPlugins@{ pluginModuleFile ->
         val pluginModule = modules.find { it.moduleFile == pluginModuleFile }
             ?: return@mapPlugins null
@@ -48,8 +41,8 @@ internal fun readPlugins(
             return@mapPlugins null
         }
 
-        val pluginInfo = pluginModule.moduleCtxModule.pluginInfo!!
-        val pluginId = pluginInfo.id // safe - default is always set
+        val pluginInfo = pluginModule.moduleCtxModule.pluginInfo!! // safe - default is always set for plugins
+        val pluginId = pluginInfo.idDelegate
         if (pluginId.value in seenPluginIds) {
             seenPluginIds[pluginId.value]!!.add(pluginId)
             return@mapPlugins null // Skip the duplicate
@@ -60,31 +53,12 @@ internal fun readPlugins(
         val pluginData = pluginData.find { it.id.value == pluginId.value }
             ?: return@mapPlugins null
 
-        diagnosePluginSettingsClass(pluginData, pluginInfo)
-
-        val pluginFile = run { // Locate plugin.yaml
-            val pluginModuleRoot = pluginModule.moduleFile.parent
-            val pluginFile = pluginModuleRoot.toNioPath() / "plugin.yaml"
-            if (!pluginFile.isRegularFile()) {
-                problemReporter.reportMessage(
-                    PluginYamlMissing(
-                        element = product.typeDelegate.extractKeyValuePsiElement(),
-                        expectedPluginYamlPath = pluginFile,
-                    )
-                )
-                return@mapPlugins null
-            }
-            pluginFile
-        }
-
         AmperPluginImpl(
             projectContext = projectContext,
-            id = pluginData.id,
-            pluginFile = projectContext.frontendPathResolver.loadVirtualFile(pluginFile),
+            pluginData = pluginData,
             pluginModule = pluginModule.module,
             problemReporter = problemReporter,
             types = types,
-            pathResolver = pathResolver,
         )
     }
 

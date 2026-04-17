@@ -117,7 +117,7 @@ internal fun AmperProjectContext.doReadProjectModel(
     modules.forEach { it.module.addImplicitDependencies() }
 
     // Load plugins that exist in the project
-    val amperPlugins = buildAndApplyPlugins(pluginData, projectContext = this@doReadProjectModel, modules)
+    val amperPlugins = buildAndApplyPlugins(pluginData, modules)
     
     // Add read maven plugin xmls.
     modules.forEach { 
@@ -228,7 +228,6 @@ private fun buildAmperModules(
         val (leaves, testLeaves) = moduleFragments.filterIsInstance<DefaultLeafFragment>().partition { !it.isTest }
 
         module.module.apply {
-            pluginSettings = module.moduleCtxModule.plugins
             mavenPluginSettings = module.moduleCtxModule.mavenPlugins
             fragments = moduleFragments
             artifacts = createArtifacts(false, module.module.type, leaves) +

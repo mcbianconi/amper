@@ -13,7 +13,7 @@ import org.jetbrains.amper.frontend.plugins.CustomCommandFromPlugin
 import org.jetbrains.amper.frontend.plugins.TaskFromPluginDescription
 import org.jetbrains.amper.frontend.schema.JdkSettings
 import org.jetbrains.amper.frontend.schema.MavenPluginSettings
-import org.jetbrains.amper.frontend.schema.PluginSettings
+import org.jetbrains.amper.frontend.schema.Module
 import org.jetbrains.amper.frontend.schema.ProductType
 import org.jetbrains.amper.frontend.schema.Repository.Companion.SpecialMavenLocalUrl
 import java.nio.file.Path
@@ -137,9 +137,16 @@ interface AmperModule {
 
     val amperMavenPluginsDescriptions: List<AmperMavenPluginDescription>
 
-    val pluginSettings: PluginSettings
-    
     val mavenPluginSettings: MavenPluginSettings
+
+    /**
+     * [Module] instance for the "common" module tree.
+     * Can be used to get traces for various global module properties.
+     *
+     * Be careful not to rely on anything non-context-agnostic through this value.
+     * Use [fragments] to access context-specific [Module.settings] and [Module.dependencies].
+     */
+    val commonModuleNode: Module
 }
 
 /**

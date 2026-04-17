@@ -6,7 +6,6 @@ package org.jetbrains.amper.frontend.plugins
 
 import com.intellij.openapi.vfs.VirtualFile
 import org.jetbrains.amper.frontend.FrontendPathResolver
-import org.jetbrains.amper.frontend.api.toStableJsonLikeString
 import org.jetbrains.amper.frontend.contexts.EmptyContexts
 import org.jetbrains.amper.frontend.schema.ProductType
 import org.jetbrains.amper.frontend.tree.TreeRefiner
@@ -17,11 +16,11 @@ import org.jetbrains.amper.frontend.types.SchemaTypingContext
 import org.jetbrains.amper.frontend.types.generated.*
 import org.jetbrains.amper.problems.reporting.NoopProblemReporter
 
-interface PluginManifest {
-    val id: String
-    val description: String?
-    val settingsClass: String?
-}
+data class PluginManifest(
+    val id: String,
+    val description: String?,
+    val settingsClass: String?,
+)
 
 /**
  * Parses [PluginManifest] from the `module.yaml` file that is allegedly a plugin.
@@ -47,15 +46,11 @@ fun parsePluginManifestFromModuleFile(
         if (moduleHeader.product.type != ProductType.JVM_AMPER_PLUGIN)
             return null
 
-        return object : PluginManifest {
-            override val id: String = moduleHeader.pluginInfo.id?.value ?: moduleFile.parent.name
-            @Suppress("DEPRECATION") // we fall back to the deprecated location for a transition period
-            override val description: String? = moduleHeader.description ?: moduleHeader.pluginInfo.description
-            override val settingsClass: String? = moduleHeader.pluginInfo.settingsClass
-
-            override fun toString(): String {
-                return "{schema='${moduleHeader.pluginInfo.toStableJsonLikeString()}', moduleFile='${moduleFile.path}'}"
-            }
-        }
+        @Suppress("DEPRECATION") // we fall back to the deprecated description for a transition period
+        return PluginManifest(
+            id = moduleHeader.pluginInfo.id?.value ?: moduleFile.parent.name,
+            description = moduleHeader.description ?: moduleHeader.pluginInfo.description,
+            settingsClass = moduleHeader.pluginInfo.settingsClass
+        )
     }
 }

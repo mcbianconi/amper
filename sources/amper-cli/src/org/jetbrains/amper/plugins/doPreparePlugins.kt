@@ -6,39 +6,19 @@ package org.jetbrains.amper.plugins
 
 import com.github.ajalt.mordant.terminal.Terminal
 import kotlinx.coroutines.coroutineScope
-import kotlinx.serialization.SerializationException
-import kotlinx.serialization.json.Json
 import org.jetbrains.amper.ProcessRunner
 import org.jetbrains.amper.cli.AmperProjectRoot
 import org.jetbrains.amper.cli.CliProblemReporter
-import org.jetbrains.amper.cli.lazyload.ExtraClasspath
 import org.jetbrains.amper.cli.logging.withoutConsoleLogging
 import org.jetbrains.amper.cli.userReadableError
 import org.jetbrains.amper.cli.widgets.simpleSpinnerProgressIndicator
-import org.jetbrains.amper.frontend.messages.FileWithRangesBuildProblemSource
 import org.jetbrains.amper.frontend.plugins.PluginManifest
 import org.jetbrains.amper.incrementalcache.IncrementalCache
 import org.jetbrains.amper.incrementalcache.executeForSerializable
-import org.jetbrains.amper.jdk.provisioning.Jdk
 import org.jetbrains.amper.plugins.schema.model.PluginData
-import org.jetbrains.amper.plugins.schema.model.PluginDataResponse
-import org.jetbrains.amper.plugins.schema.model.PluginDataResponse.DiagnosticKind
-import org.jetbrains.amper.plugins.schema.model.PluginDeclarationsRequest
-import org.jetbrains.amper.problems.reporting.BuildProblem
-import org.jetbrains.amper.problems.reporting.BuildProblemType
-import org.jetbrains.amper.problems.reporting.CollectingProblemReporter
-import org.jetbrains.amper.problems.reporting.DiagnosticId
 import org.jetbrains.amper.problems.reporting.Level
-import org.jetbrains.amper.problems.reporting.replayProblemsTo
-import org.jetbrains.amper.processes.ArgsMode
-import org.jetbrains.amper.processes.ProcessInput
-import org.jetbrains.amper.processes.ProcessOutputListener
-import org.jetbrains.amper.processes.runJava
 import org.slf4j.LoggerFactory
 import java.nio.file.Path
-import kotlin.io.path.Path
-import kotlin.io.path.div
-import kotlin.io.path.relativeTo
 
 internal suspend fun doPreparePlugins(
     terminal: Terminal,
@@ -49,116 +29,35 @@ internal suspend fun doPreparePlugins(
 ): List<PluginData> = coroutineScope {
     require(plugins.isNotEmpty())
 
-    incrementalCache.executeForSerializable(
+    val pluginDataWithDiagnostics = incrementalCache.executeForSerializable(
         key = "prepare-plugins",
         inputValues = mapOf(
             "plugins" to plugins.values.joinToString()
         ),
         inputFiles = plugins.keys.toList(),
     ) {
-        val toolClasspath = ExtraClasspath.PLUGINS_PROCESSOR.findJarsInDistribution()
-        val apiClasspath = ExtraClasspath.EXTENSIBILITY_API.findJarsInDistribution()
-        val outputCaptor = ProcessOutputListener.InMemoryCapture()
-        val request = PluginDeclarationsRequest(
-            librariesPaths = apiClasspath,
-            requests = plugins.map { (pluginRootPath, pluginInfo) ->
-                PluginDeclarationsRequest.Request(
-                    moduleName = pluginRootPath.relativeTo(projectRoot.path).joinToString(":"),
-                    sourceDir = pluginRootPath / "src",
-                    pluginSettingsClassName = pluginInfo.settingsClass,
-                )
-            }
-        )
-
         withoutConsoleLogging {
             logger.info("Processing local plugin schema for [${plugins.values.joinToString { it.id }}]...")
         }
         val widgetJob = simpleSpinnerProgressIndicator(terminal, "Pre-processing local plugins (will be cached)")
-
-        val result = try {
-            processRunner.runJava(
-                jdk = AmperJre,
-                workingDir = Path("."),
-                mainClass = "org.jetbrains.amper.schema.processing.MainKt",
-                programArgs = emptyList(),
-                argsMode = ArgsMode.CommandLine,
-                classpath = toolClasspath,
-                outputListener = outputCaptor,
-                // Input request is passed via STDIN
-                input = ProcessInput.Text(Json.encodeToString(request))
+        try {
+            runAmperSchemaProcessor(
+                projectRoot = projectRoot,
+                plugins = plugins,
+                processRunner = processRunner,
             )
         } finally {
             widgetJob.cancel()
         }
-        if (result.exitCode != 0) {
-            logger.error(outputCaptor.stderr)
-            error("Failed to process local plugin schema")
-        }
-        // Results are parsed from the process' STDOUT
-        val results = try {
-            Json.decodeFromString<PluginDataResponse>(outputCaptor.stdout).results
-        } catch (e: SerializationException) {
-            logger.error(outputCaptor.stderr)
-            throw e
-        }
-
-        val reporter = CollectingProblemReporter()
-        results.flatMap { it.diagnostics }.forEach { diagnostic ->
-            reporter.reportMessage(
-                SchemaDiagnostic(diagnostic = diagnostic)
-            )
-        }
-
-        val allPluginData = results.map { result ->
-            val pluginRootDir = result.sourcePath.parent
-            val plugin = checkNotNull(plugins[pluginRootDir]) {
-                "Processing of ${result.sourcePath} requested, but no corresponding result is found"
-            }
-            PluginData(
-                id = PluginData.Id(plugin.id),
-                pluginSettingsSearchResult = result.pluginSettingsSearchResult,
-                description = plugin.description,
-                source = PluginData.Source.Local(pluginRootDir),
-                declarations = result.declarations,
-            )
-        }
-
-        reporter.replayProblemsTo(CliProblemReporter)
-        if (reporter.problems.any { it.level.atLeastAsSevereAs(Level.Error) }) {
-            userReadableError("Local plugins pre-processing failed, see the errors above.")
-        }
-
-        allPluginData
     }
-}
 
-private class SchemaDiagnostic(
-    diagnostic: PluginDataResponse.Diagnostic,
-) : BuildProblem, DiagnosticId {
-    override val diagnosticId: DiagnosticId = this
-    override val source = FileWithRangesBuildProblemSource(diagnostic.location.path, diagnostic.location.textRange)
-    override val message = diagnostic.message
-    override val level = when(diagnostic.kind) {
-        DiagnosticKind.ErrorGeneric,
-        DiagnosticKind.ErrorUnresolvedLikeConstruct -> Level.Error
-        DiagnosticKind.WarningRedundant -> Level.WeakWarning
+    val allProblems = pluginDataWithDiagnostics.flatMap { it.problems }
+    allProblems.forEach(CliProblemReporter::reportMessage)
+    if (allProblems.any { it.level.atLeastAsSevereAs(Level.Error) }) {
+        userReadableError("Local plugins pre-processing failed, see the errors above.")
     }
-    override val type = when(diagnostic.kind) {
-        DiagnosticKind.ErrorGeneric -> BuildProblemType.Generic
-        DiagnosticKind.ErrorUnresolvedLikeConstruct -> BuildProblemType.UnknownSymbol
-        DiagnosticKind.WarningRedundant -> BuildProblemType.RedundantDeclaration
-    }
+
+    pluginDataWithDiagnostics.map { it.pluginData }
 }
 
 private val logger = LoggerFactory.getLogger("preparePlugins")
-
-/**
- * A current JRE that Amper process runs on.
- * Guaranteed only to have a `java` executable and to be able to run other Amper worker processes.
- */
-private val AmperJre = Jdk(
-    homeDir = Path(System.getProperty("java.home")!!),
-    version = System.getProperty("java.version")!!,
-    distribution = null,
-    source = "Amper runtime",
-)

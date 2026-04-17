@@ -7,7 +7,6 @@ package org.jetbrains.amper.frontend.plugins
 import org.jetbrains.amper.frontend.api.SchemaDoc
 import org.jetbrains.amper.frontend.api.SchemaNode
 import org.jetbrains.amper.frontend.api.StringSemantics
-import org.jetbrains.amper.frontend.api.TraceableString
 import org.jetbrains.amper.frontend.types.SchemaType.StringType.Semantics
 
 /**
@@ -17,7 +16,7 @@ import org.jetbrains.amper.frontend.types.SchemaType.StringType.Semantics
 class PluginDeclarationSchema : SchemaNode() {
     @SchemaDoc("Plugin id that is going to be used to refer to the plugin in the configuration files. " +
             "Module name is used by default.")
-    val id by value<TraceableString>() // Defaults to the module name, is set on the tree level later.
+    val id by value<String>() // Defaults to the module name, is set on the tree level later.
 
     @Deprecated("Use the plugin module's description instead.")
     @SchemaDoc("Plugin description. " +
