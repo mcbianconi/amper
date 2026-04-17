@@ -5,7 +5,7 @@ layout: maven-like
 settings:
   publishing:
     enabled: true
-    name: demo
+    artifactId: demo
     group: com.example
     version: 0.0.1-SNAPSHOT
   jvm:

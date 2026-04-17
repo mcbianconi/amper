@@ -94,7 +94,7 @@ fun DefaultMavenArtifact(
 
 fun AmperModule.asMavenArtifact(scope: String, artifactIdSuffix: String = "") = DefaultMavenArtifact(
     groupId = rootFragment.settings.publishing.group ?: "unspecified",
-    artifactId = (rootFragment.settings.publishing.name ?: userReadableName) + artifactIdSuffix,
+    artifactId = (rootFragment.settings.publishing.artifactId ?: userReadableName) + artifactIdSuffix,
     version = rootFragment.settings.publishing.version ?: "unspecified",
     scope = scope,
     type = "jar",

@@ -156,6 +156,7 @@ Fragments:
       }
       native: <default> null
       publishing: <default> {
+        artifactId: <default> null
         enabled: <default> false
         group: <default> null
         name: <default> null
@@ -344,6 +345,7 @@ Fragments:
       }
       native: <default> null
       publishing: <default> {
+        artifactId: <default> null
         enabled: <default> false
         group: <default> null
         name: <default> null
@@ -528,6 +530,7 @@ Fragments:
       }
       native: <default> null
       publishing: <default> {
+        artifactId: <default> null
         enabled: <default> false
         group: <default> null
         name: <default> null
@@ -715,6 +718,7 @@ Fragments:
       }
       native: <default> null
       publishing: <default> {
+        artifactId: <default> null
         enabled: <default> false
         group: <default> null
         name: <default> null
@@ -900,6 +904,7 @@ Fragments:
       }
       native: <default> null
       publishing: <default> {
+        artifactId: <default> null
         enabled: <default> false
         group: <default> null
         name: <default> null
@@ -1085,6 +1090,7 @@ Fragments:
       }
       native: <default> null
       publishing: <default> {
+        artifactId: <default> null
         enabled: <default> false
         group: <default> null
         name: <default> null
@@ -1273,6 +1279,7 @@ Fragments:
       }
       native: <default> null
       publishing: <default> {
+        artifactId: <default> null
         enabled: <default> false
         group: <default> null
         name: <default> null
@@ -1461,6 +1468,7 @@ Fragments:
       }
       native: <default> null
       publishing: <default> {
+        artifactId: <default> null
         enabled: <default> false
         group: <default> null
         name: <default> null
@@ -1646,6 +1654,7 @@ Fragments:
       }
       native: <default> null
       publishing: <default> {
+        artifactId: <default> null
         enabled: <default> false
         group: <default> null
         name: <default> null
@@ -1834,6 +1843,7 @@ Fragments:
       }
       native: <default> null
       publishing: <default> {
+        artifactId: <default> null
         enabled: <default> false
         group: <default> null
         name: <default> null
@@ -2019,6 +2029,7 @@ Fragments:
       }
       native: <default> null
       publishing: <default> {
+        artifactId: <default> null
         enabled: <default> false
         group: <default> null
         name: <default> null
@@ -2207,6 +2218,7 @@ Fragments:
       }
       native: <default> null
       publishing: <default> {
+        artifactId: <default> null
         enabled: <default> false
         group: <default> null
         name: <default> null

@@ -46,7 +46,7 @@ class MavenConvertTest : AmperCliTestBase() {
             settings:
               publishing:
                 enabled: true
-                name: demo
+                artifactId: demo
                 group: com.example
                 version: 0.0.1-SNAPSHOT
               jvm:
@@ -126,7 +126,7 @@ class MavenConvertTest : AmperCliTestBase() {
             settings:
               publishing:
                 enabled: true
-                name: demo
+                artifactId: demo
                 group: com.example
                 version: 0.0.1-SNAPSHOT
               jvm:
@@ -215,7 +215,7 @@ class MavenConvertTest : AmperCliTestBase() {
             settings:
               publishing:
                 enabled: true
-                name: demo18
+                artifactId: demo18
                 group: org.example
                 version: 0.0.1-SNAPSHOT
               java:
@@ -278,7 +278,7 @@ class MavenConvertTest : AmperCliTestBase() {
             settings:
               publishing:
                 enabled: true
-                name: app
+                artifactId: app
                 group: com.example
                 version: 1.0.0
               jvm:
@@ -305,7 +305,7 @@ class MavenConvertTest : AmperCliTestBase() {
             settings:
               publishing:
                 enabled: true
-                name: lib
+                artifactId: lib
                 group: com.example
                 version: 1.0.0
               jvm:
@@ -386,7 +386,7 @@ class MavenConvertTest : AmperCliTestBase() {
             settings:
               publishing:
                 enabled: true
-                name: app
+                artifactId: app
                 group: com.example
                 version: 1.0.0
 
@@ -406,7 +406,7 @@ class MavenConvertTest : AmperCliTestBase() {
             settings:
               publishing:
                 enabled: true
-                name: deps-pom
+                artifactId: deps-pom
                 group: com.example
                 version: 1.0.0
 
@@ -438,7 +438,7 @@ class MavenConvertTest : AmperCliTestBase() {
             settings:
               publishing:
                 enabled: true
-                name: pom-dependency-type-external-test
+                artifactId: pom-dependency-type-external-test
                 group: com.example
                 version: 1.0.0
 
@@ -477,7 +477,7 @@ class MavenConvertTest : AmperCliTestBase() {
             settings:
               publishing:
                 enabled: true
-                name: surefire-demo
+                artifactId: surefire-demo
                 group: com.example
                 version: 0.0.1-SNAPSHOT
               jvm:
@@ -536,7 +536,7 @@ class MavenConvertTest : AmperCliTestBase() {
             settings:
               publishing:
                 enabled: true
-                name: app
+                artifactId: app
                 group: com.example
                 version: 1.0.0
 
@@ -593,7 +593,7 @@ class MavenConvertTest : AmperCliTestBase() {
             settings:
               publishing:
                 enabled: true
-                name: core
+                artifactId: core
                 group: com.example
                 version: 1.0-SNAPSHOT
 
@@ -612,7 +612,7 @@ class MavenConvertTest : AmperCliTestBase() {
             settings:
               publishing:
                 enabled: true
-                name: app
+                artifactId: app
                 group: com.example
                 version: 1.0-SNAPSHOT
 
@@ -657,7 +657,7 @@ class MavenConvertTest : AmperCliTestBase() {
         assertTrue((buildResult.projectDir / "module.yaml").exists())
         val moduleYaml = (buildResult.projectDir / "module.yaml").readText()
         assertTrue(moduleYaml.contains("layout: maven-like"))
-        assertTrue(moduleYaml.contains("name: commons-lang3"))
+        assertTrue(moduleYaml.contains("artifactId: commons-lang3"))
         assertTrue(moduleYaml.contains("group: org.apache.commons"))
     }
 

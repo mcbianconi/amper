@@ -96,6 +96,7 @@ settings@android:
     enabled: false  # default
     version: 1.18.38  # default
   publishing:
+    artifactId: null  # default, from ${name}
     enabled: false  # default
     group: null  # default
     name: null  # default
@@ -195,6 +196,7 @@ settings@jvm:
     enabled: false  # default
     version: 1.18.38  # default
   publishing:
+    artifactId: null  # default, from ${name}
     enabled: false  # default
     group: null  # default
     name: null  # default
@@ -307,6 +309,7 @@ settings@jvm+android:
     enabled: false  # default
     version: 1.18.38  # default
   publishing:
+    artifactId: null  # default, from ${name}
     enabled: false  # default
     group: null  # default
     name: null  # default
@@ -409,6 +412,7 @@ settings@jvm:
     enabled: false  # default
     version: 1.18.38  # default
   publishing:
+    artifactId: null  # default, from ${name}
     enabled: false  # default
     group: null  # default
     name: null  # default
@@ -518,6 +522,7 @@ settings@android:
     enabled: false  # default
     version: 1.18.38  # default
   publishing:
+    artifactId: null  # default, from ${name}
     enabled: false  # default
     group: null  # default
     name: null  # default

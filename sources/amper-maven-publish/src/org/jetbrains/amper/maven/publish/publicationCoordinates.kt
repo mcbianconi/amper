@@ -40,7 +40,7 @@ private fun AmperModule.kmpLeafPlatformPublicationCoordinates(platform: Platform
 private fun Fragment.mavenCoordinates(artifactIdSuffix: String): MavenCoordinates = mavenCoordinatesTrimmed(
     groupId = settings.publishing.group
         ?: error("Missing 'group' in publishing settings of fragment '${name}' of module '${module.userReadableName}'"),
-    artifactId = (settings.publishing.name ?: module.userReadableName.lowercase()) + artifactIdSuffix,
+    artifactId = (settings.publishing.artifactId ?: module.userReadableName.lowercase()) + artifactIdSuffix,
     version = settings.publishing.version
         ?: error("Missing 'version' in publishing settings of fragment '${name}' of module '${module.userReadableName}'")
 )

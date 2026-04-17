@@ -5,7 +5,7 @@ layout: maven-like
 settings:
   publishing:
     enabled: true
-    name: spring-petclinic
+    artifactId: spring-petclinic
     group: org.springframework.samples
     version: 4.0.0-SNAPSHOT
   jvm:

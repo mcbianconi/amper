@@ -28,8 +28,15 @@ class PublishingSettings : SchemaNode() {
     @SchemaDoc("Version of the published Maven artifact")
     val version by nullableValue<String>()
 
-    @Misnomers("artifact", "artifactId")
-    @SchemaDoc("Artifact ID of the published Maven artifact")
+    @Misnomers("name")
+    @PlatformAgnostic
+    @SchemaDoc("Base artifact ID of the published Maven artifacts (for multiplatform libraries, a suffix may be " +
+            "appended to distinguish artifacts from different platforms)")
+    val artifactId by referenceValue(::name)
+
+    @PlatformAgnostic
+    @SchemaDoc("Obsolete, use 'artifactId' instead.")
+    @Deprecated("Use 'artifactId' instead.")
     val name by nullableValue<String>()
 
     @PlatformAgnostic

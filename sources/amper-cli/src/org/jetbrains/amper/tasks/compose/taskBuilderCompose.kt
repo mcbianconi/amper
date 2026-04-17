@@ -130,7 +130,7 @@ private fun ComposeResourcesSettings.getResourcesPackageName(module: AmperModule
 }
 
 private fun Fragment.inferPackageNameFromPublishing(): List<String>? =
-    listOfNotNull(settings.publishing.group, settings.publishing.name).takeIf(List<*>::isNotEmpty)
+    listOfNotNull(settings.publishing.group, settings.publishing.artifactId).takeIf(List<*>::isNotEmpty)
 
 private fun AmperModule.inferPackageNameFromModule(): List<String> {
     return listOf(userReadableName)

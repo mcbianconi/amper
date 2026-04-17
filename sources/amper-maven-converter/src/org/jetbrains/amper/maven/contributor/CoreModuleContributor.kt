@@ -22,7 +22,7 @@ internal fun ProjectTreeBuilder.contributeCoreModule(reactorProjects: Set<MavenP
                 settings {
                     publishing {
                         enabled(true)
-                        name(project.model.artifactId)
+                        artifactId(project.model.artifactId)
                         group(project.model.groupId)
                         version(project.model.version)
                     }
