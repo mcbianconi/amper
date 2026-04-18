@@ -38,7 +38,7 @@ interface PgpSigner {
         fun bouncyCastle(signingKey: AsciiArmoredPgpKey, keyPassphrase: CharArray?): PgpSigner {
             val key = try {
                 OpenPGPKeyReader().parseKey(signingKey.text)
-            } catch(e: IOException) {
+            } catch (e: IOException) {
                 throw PgpKeyParsingException(e)
             }
 
@@ -87,25 +87,23 @@ private class BouncyCastlePgpSigner(
      */
     private val pgpKeyPassphrase: CharArray?,
 ) : PgpSigner {
-    private val openPgpApi: OpenPGPApi = BcOpenPGPApi()
+
+    private val openPgpApi = BcOpenPGPApi()
 
     override fun sign(inputFile: Path, outputSignatureFile: Path) {
-        outputSignatureFile.writeText(sign(inputFile).toAsciiArmoredString())
+        val signature = sign(inputFile)
+        outputSignatureFile.writeText(signature.toAsciiArmoredString())
     }
 
-    private fun sign(file: Path): OpenPGPSignature {
+    private fun sign(file: Path): OpenPGPSignature = try {
         // sign() mutates the generator, so we must create a new one every time, unfortunately
-        val signingGenerator = openPgpApi
-            .createDetachedSignature()
-            .addSigningKey(signingKey) { pgpKeyPassphrase }
+        val signingGenerator = openPgpApi.createDetachedSignature().addSigningKey(signingKey) { pgpKeyPassphrase }
 
-        return try {
-            file.inputStream().use { fileStream ->
-                // we are guaranteed to have a single signature because we provided a single signing key
-                signingGenerator.sign(fileStream).single()
-            }
-        } catch (e: Exception) {
-            throw PgpSigningException(e)
+        file.inputStream().use { fileStream ->
+            // we are guaranteed to have a single signature because we provided a single signing key
+            signingGenerator.sign(fileStream).single()
         }
+    } catch (e: Exception) {
+        throw PgpSigningException(e)
     }
 }
