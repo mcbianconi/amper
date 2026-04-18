@@ -6,7 +6,7 @@ package org.jetbrains.amper.schema.processing
 
 import com.intellij.psi.PsiElement
 import org.jetbrains.amper.plugins.schema.model.PluginData
-import org.jetbrains.amper.plugins.schema.model.PluginDataResponse.DiagnosticKind.ErrorUnresolvedLikeConstruct
+import org.jetbrains.amper.plugins.schema.model.diagnostics.KotlinSchemaBuildProblem
 import org.jetbrains.kotlin.analysis.api.KaSession
 import org.jetbrains.kotlin.analysis.api.symbols.KaClassKind
 import org.jetbrains.kotlin.analysis.api.symbols.KaSymbolModality
@@ -40,9 +40,9 @@ internal fun KaType.parseSchemaType(origin: () -> PsiElement): PluginData.Type? 
         StandardClassIds.Map -> {
             val keyType = typeArguments.getOrNull(0) ?: /*invalid Kotlin*/ return null
             if (keyType !is KaTypeArgumentWithVariance || with(session) { !keyType.type.isStringType }) {
-                reportError(
+                report(
                     origin().let { it.findDescendantOfType<KtTypeProjection>() ?: it },
-                    "schema.type.map.key.unexpected",
+                    KotlinSchemaBuildProblem::TypeMapKeyUnexpected,
                 )
             }
             val mapValueOrigin = {
@@ -89,11 +89,11 @@ context(_: KaSession, _: DiagnosticsReporter, _: SymbolsCollector, _: ParsingOpt
 private fun KaTypeProjection.parseSchemaType(origin: () -> PsiElement): PluginData.Type? {
     return when (this) {
         is KaStarTypeProjection -> run {
-            reportError(origin(), "schema.type.forbidden.projection"); null
+            report(origin(), KotlinSchemaBuildProblem::TypeForbiddenProjection); null
         }
         is KaTypeArgumentWithVariance -> {
             if (variance != Variance.INVARIANT)
-                reportError(origin(), "schema.type.forbidden.projection")
+                report(origin(), KotlinSchemaBuildProblem::TypeForbiddenProjection)
             type.parseSchemaType(origin)
         }
     }
@@ -101,5 +101,5 @@ private fun KaTypeProjection.parseSchemaType(origin: () -> PsiElement): PluginDa
 
 context(_: KaSession, _: DiagnosticsReporter)
 private fun KaType.reportUnexpectedType(origin: () -> PsiElement) {
-    report(origin(), "schema.type.unexpected", renderToString(), kind = ErrorUnresolvedLikeConstruct)
+    report(origin()) { source -> KotlinSchemaBuildProblem.TypeUnexpected(source, renderToString()) }
 }

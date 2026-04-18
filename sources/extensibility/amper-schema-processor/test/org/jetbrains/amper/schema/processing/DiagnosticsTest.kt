@@ -161,7 +161,7 @@ Supported types are:
 
 // Main schema
 @Configurable interface MySettings {
-   val /*{{*/enabled/*}} [Amper] `enabled` property name is reserved in the plugin's settings (`{0}` is specified as the `settingsClass` in `module.yaml`) */: String
+   val /*{{*/enabled/*}} [Amper] `enabled` property name is reserved in the plugin's settings (`com.example.MySettings` is specified as the `settingsClass` in `module.yaml`) */: String
    
    val booleanProperty: Boolean
    val stringProperty: String

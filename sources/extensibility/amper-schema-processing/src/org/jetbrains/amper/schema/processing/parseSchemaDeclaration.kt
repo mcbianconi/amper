@@ -5,6 +5,7 @@
 package org.jetbrains.amper.schema.processing
 
 import org.jetbrains.amper.plugins.schema.model.PluginData
+import org.jetbrains.amper.plugins.schema.model.diagnostics.KotlinSchemaBuildProblem
 import org.jetbrains.kotlin.analysis.api.KaSession
 import org.jetbrains.kotlin.analysis.api.symbols.KaSymbolVisibility
 import org.jetbrains.kotlin.psi.KtClassOrObject
@@ -36,22 +37,21 @@ context(session: KaSession, _: DiagnosticsReporter, _: SymbolsCollector, options
 internal fun parseSchemaDeclaration(
     schemaDeclaration: KtClassOrObject,
     name: PluginData.SchemaName,
-    primaryConfigurableFqnString: String?,
 ): PluginData.ClassData? {
     if (!schemaDeclaration.isInterface()) {
-        reportError(schemaDeclaration.getDeclarationKeyword() ?: schemaDeclaration, "schema.not.interface")
+        report(schemaDeclaration.getDeclarationKeyword() ?: schemaDeclaration, KotlinSchemaBuildProblem::NotInterface)
         return null  // fatal - no need to parse further
     }
     val nameIdentifier = schemaDeclaration.nameIdentifier ?: return null // invalid Kotlin
     when (with(session) { schemaDeclaration.symbol }.visibility) {
         KaSymbolVisibility.PUBLIC, KaSymbolVisibility.UNKNOWN -> Unit // okay/ignore
         KaSymbolVisibility.LOCAL -> {
-            reportError(schemaDeclaration.visibilityModifier() ?: nameIdentifier, "schema.forbidden.local")
+            report(schemaDeclaration.visibilityModifier() ?: nameIdentifier, KotlinSchemaBuildProblem::ForbiddenLocal)
             return null  // ignore local declarations
         }
-        else -> reportError(schemaDeclaration.visibilityModifier() ?: nameIdentifier, "schema.must.be.public")
+        else -> report(schemaDeclaration.visibilityModifier() ?: nameIdentifier, KotlinSchemaBuildProblem::MustBePublic)
     }
-    val isPrimarySchema = name.qualifiedName == primaryConfigurableFqnString
+    val isPrimarySchema = name.qualifiedName == options.pluginSettingsClassName
     val properties = buildList {
         val visitor = object : KtTreeVisitor<Nothing?>() {
             override fun visitClassOrObject(classOrObject: KtClassOrObject, data: Nothing?): Void? {
@@ -59,28 +59,33 @@ internal fun parseSchemaDeclaration(
             }
 
             override fun visitNamedFunction(function: KtNamedFunction, data: Nothing?) = null.also {
-                reportError(function, "schema.forbidden.function")
+                report(function, KotlinSchemaBuildProblem::ForbiddenFunction)
             }
 
             override fun visitSuperTypeListEntry(specifier: KtSuperTypeListEntry, data: Nothing?): Void? {
                 if (!options.isParsingAmperApi) { // Ignore for unreleased - may be part of the variant
-                    reportError(specifier, "schema.forbidden.mixins")
+                    report(specifier, KotlinSchemaBuildProblem::ForbiddenMixins)
                 }
                 return super.visitSuperTypeListEntry(specifier, data)
             }
 
             override fun visitTypeParameterList(list: KtTypeParameterList, data: Nothing?) = null.also {
-                reportError(list, "schema.forbidden.generics")
+                report(list, KotlinSchemaBuildProblem::ForbiddenGenerics)
             }
 
             override fun visitContextReceiverList(contextReceiverList: KtContextReceiverList, data: Nothing?) =
                 null.also {
-                    reportError(contextReceiverList, "schema.forbidden.context.receivers")
+                    report(contextReceiverList, KotlinSchemaBuildProblem::ForbiddenContextReceivers)
                 }
 
             override fun visitProperty(property: KtProperty, data: Nothing?): Void? {
                 if (isPrimarySchema && property.name == "enabled") {
-                    reportError(property.nameIdentifier ?: property, "schema.forbidden.property.enabled")
+                    report(property.nameIdentifier ?: property) { source ->
+                        KotlinSchemaBuildProblem.ForbiddenPropertyEnabled(
+                            source,
+                            options.pluginSettingsClassName,
+                        )
+                    }
                 } else {
                     parseProperty(property)?.let(::add)
                 }

@@ -7,8 +7,8 @@ package org.jetbrains.amper.schema.processing
 import kotlinx.serialization.ExperimentalSerializationApi
 import kotlinx.serialization.json.Json
 import org.intellij.lang.annotations.Language
-import org.jetbrains.amper.plugins.schema.model.PluginDataResponse
 import org.jetbrains.amper.plugins.schema.model.PluginDeclarationsRequest
+import org.jetbrains.amper.plugins.schema.model.diagnostics.KotlinSchemaBuildProblem
 import org.jetbrains.amper.plugins.schema.model.withoutOrigin
 import org.jetbrains.amper.test.TempDirExtension
 import org.jetbrains.amper.test.assertEqualsWithDiff
@@ -80,14 +80,14 @@ abstract class SchemaProcessorTestBase {
         )
 
         val result = runSchemaProcessor(PluginDeclarationsRequest(listOf(request))).single()
-        val groupedDiagnostics: Map<Path, List<PluginDataResponse.Diagnostic>> =
-            result.diagnostics.groupBy { it.location.path }
+        val groupedDiagnostics: Map<Path, List<KotlinSchemaBuildProblem>> =
+            result.diagnostics.groupBy { it.source.file }
         for (source in sources) {
             val relevantErrors = groupedDiagnostics[source.path].orEmpty()
             val markers = mutableListOf<Pair<String, Int>>()
             for (error in relevantErrors) {
-                markers += "/*{{*/" to error.location.textRange.first
-                markers += "/*}} ${error.message} */" to error.location.textRange.last
+                markers += "/*{{*/" to error.source.offsetRange.first
+                markers += "/*}} ${error.message} */" to error.source.offsetRange.last
             }
             // Sorting all the markers to insert them one-by-one from the end to avoid offsets recalculation
             markers.sortByDescending { (_, position) -> position }

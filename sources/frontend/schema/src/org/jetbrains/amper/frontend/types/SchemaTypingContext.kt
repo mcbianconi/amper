@@ -272,7 +272,7 @@ private fun SourceLocation?.toPluginOrigin(pluginSource: PluginData.Source): Sch
     return when (pluginSource) {
         is PluginData.Source.Local -> SchemaOrigin.LocalPlugin(
             pluginSource.path,
-            sourceCodeLocation = SchemaOrigin.LocalPlugin.SourceCodeLocation(path, textRange),
+            sourceCodeLocation = SchemaOrigin.LocalPlugin.SourceCodeLocation(file, offsetRange),
         )
     }
 }

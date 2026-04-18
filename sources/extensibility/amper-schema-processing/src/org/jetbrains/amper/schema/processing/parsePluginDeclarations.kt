@@ -6,9 +6,8 @@ package org.jetbrains.amper.schema.processing
 
 import com.intellij.psi.util.elementType
 import kotlinx.serialization.json.Json
+import org.jetbrains.amper.plugins.schema.model.diagnostics.KotlinSchemaBuildProblem
 import org.jetbrains.amper.plugins.schema.model.PluginData
-import org.jetbrains.amper.plugins.schema.model.PluginDataResponse
-import org.jetbrains.amper.plugins.schema.model.PluginDataResponse.DiagnosticKind.ErrorGeneric
 import org.jetbrains.amper.plugins.schema.model.PluginSettingsSearchResult
 import org.jetbrains.amper.stdlib.collections.distinctBy
 import org.jetbrains.kotlin.analysis.api.KaSession
@@ -37,18 +36,19 @@ internal fun loadBuiltinDeclarations(): PluginData.Declarations =
  */
 fun KaSession.parsePluginDeclarations(
     files: Collection<KtFile>,
-    diagnostics: MutableList<in PluginDataResponse.Diagnostic>,
+    diagnostics: MutableList<in KotlinSchemaBuildProblem>,
     pluginSettingsClassName: String? = null,
     isParsingAmperApi: Boolean = false,
 ): Pair<PluginData.Declarations, PluginSettingsSearchResult?> {
     val options = ParsingOptions(
         isParsingAmperApi = isParsingAmperApi,
+        pluginSettingsClassName = pluginSettingsClassName,
     )
     val builtinDeclarations = if (!options.isParsingAmperApi) {
         loadBuiltinDeclarations()
     } else PluginData.Declarations()
     val diagnosticCollector = object : DiagnosticsReporter {
-        override fun report(diagnostic: PluginDataResponse.Diagnostic) {
+        override fun report(diagnostic: KotlinSchemaBuildProblem) {
             diagnostics += diagnostic
         }
     }
@@ -95,7 +95,7 @@ fun KaSession.parsePluginDeclarations(
                     if (options.isParsingAmperApi) {
                         variants[name] = parseVariantDeclaration(declaration)
                     } else {
-                        reportError(modalityType, "schema.forbidden.sealed")
+                        report(modalityType, KotlinSchemaBuildProblem::ForbiddenSealed)
                     }
                 } else {
                     if (name in classes) return
@@ -103,7 +103,6 @@ fun KaSession.parsePluginDeclarations(
                     classes[name] = parseSchemaDeclaration(
                         schemaDeclaration = declaration,
                         name = name,
-                        primaryConfigurableFqnString = pluginSettingsClassName,
                     ) ?: PluginData.ClassData(name) // Empty stub for invalid
                 }
             }
@@ -139,10 +138,7 @@ fun KaSession.parsePluginDeclarations(
             selector = { it.syntheticType.name.qualifiedName },
             onDuplicates = { name, taskInfos ->
                 taskInfos.forEach {
-                    report(
-                        it.syntheticType.origin!!, "schema.forbidden.task.action.overloads", name,
-                        kind = ErrorGeneric,
-                    )
+                    report(KotlinSchemaBuildProblem.ForbiddenTaskActionOverloads(it.syntheticType.origin!!, name))
                 }
             }
         )

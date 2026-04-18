@@ -6,6 +6,7 @@ package org.jetbrains.amper.schema.processing
 
 import org.jetbrains.amper.plugins.schema.model.InputOutputMark
 import org.jetbrains.amper.plugins.schema.model.PluginData
+import org.jetbrains.amper.plugins.schema.model.diagnostics.KotlinSchemaBuildProblem
 import org.jetbrains.kotlin.analysis.api.KaSession
 import org.jetbrains.kotlin.analysis.api.symbols.KaPropertySymbol
 import org.jetbrains.kotlin.analysis.api.symbols.psi
@@ -21,13 +22,13 @@ internal fun parseProperty(
     val nameIdentifier = property.nameIdentifier ?: return null // invalid Kotlin
 
     property.overrideModifier()?.let {
-        reportError(it, "schema.forbidden.property.override")
+        report(it, KotlinSchemaBuildProblem::ForbiddenPropertyOverride)
     }
     property.extensionReceiver()?.let {
-        reportError(it, "schema.forbidden.property.extension")
+        report(it, KotlinSchemaBuildProblem::ForbiddenPropertyExtension)
     }
     if (property.isVar) {
-        reportError(property.valOrVarKeyword, "schema.forbidden.property.mutable")
+        report(property.valOrVarKeyword, KotlinSchemaBuildProblem::ForbiddenPropertyMutable)
     }
 
     val type = with(session) {
@@ -37,7 +38,7 @@ internal fun parseProperty(
     val default = with(session) { property.symbol as KaPropertySymbol }.getter?.let { getter ->
         getter.psiSafe<KtPropertyAccessor>()?.let { psi ->
             if (psi.bodyBlockExpression != null) {
-                reportError(getter.psi(), "schema.defaults.invalid.getter.block"); null
+                report(getter.psi(), KotlinSchemaBuildProblem::DefaultsInvalidGetterBlock); null
             } else if (type != null) psi.bodyExpression?.let { expression ->
                 parseDefaultExpression(expression, type)
             } else null

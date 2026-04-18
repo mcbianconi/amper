@@ -5,6 +5,7 @@
 package org.jetbrains.amper.plugins.schema.model
 
 import kotlinx.serialization.Serializable
+import org.jetbrains.amper.plugins.schema.model.diagnostics.KotlinSchemaBuildProblem
 import org.jetbrains.amper.serialization.paths.SerializablePath
 
 /**
@@ -19,22 +20,7 @@ data class PluginDataResponse(
     data class PluginDataWithDiagnostics(
         val sourcePath: SerializablePath,
         val declarations: PluginData.Declarations,
-        val diagnostics: List<Diagnostic> = emptyList(),
+        val diagnostics: List<KotlinSchemaBuildProblem> = emptyList(),
         val pluginSettingsSearchResult: PluginSettingsSearchResult? = null,
     )
-
-    @Serializable
-    data class Diagnostic(
-        val diagnosticId: String,
-        val message: String,
-        val kind: DiagnosticKind,
-        val location: SourceLocation,
-    )
-
-    @Serializable
-    enum class DiagnosticKind {
-        ErrorGeneric,
-        ErrorUnresolvedLikeConstruct,
-        WarningRedundant,
-    }
 }

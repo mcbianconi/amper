@@ -6,6 +6,7 @@ package org.jetbrains.amper.schema.processing
 
 import org.jetbrains.amper.plugins.schema.model.InputOutputMark
 import org.jetbrains.amper.plugins.schema.model.PluginData
+import org.jetbrains.amper.plugins.schema.model.diagnostics.KotlinSchemaBuildProblem
 import org.jetbrains.kotlin.analysis.api.KaExperimentalApi
 import org.jetbrains.kotlin.analysis.api.KaSession
 import org.jetbrains.kotlin.analysis.api.annotations.KaAnnotation
@@ -20,28 +21,28 @@ import org.jetbrains.kotlin.psi.psiUtil.visibilityModifier
 
 context(session: KaSession, _: DiagnosticsReporter, _: SymbolsCollector, _: DeclarationsProvider, _: ParsingOptions)
 internal fun parseTaskAction(function: KtNamedFunction): PluginData.TaskInfo? {
-    if (!function.isTopLevel) return null.also { reportError(function, "schema.task.action.not.toplevel") }
+    if (!function.isTopLevel) return null.also { report(function, KotlinSchemaBuildProblem::TaskActionNotToplevel) }
     val nameIdentifier = function.nameIdentifier ?: return null // invalid Kotlin (top-level functions are named)
     val name = function.fqName ?: return null  // invalid Kotlin (top-level functions are named)
     when (with(session) { function.symbol }.visibility) {
         KaSymbolVisibility.PUBLIC, KaSymbolVisibility.UNKNOWN -> Unit // okay/ignore
-        else -> reportError(function.visibilityModifier() ?: nameIdentifier, "schema.task.action.must.be.public")
+        else -> report(function.visibilityModifier() ?: nameIdentifier, KotlinSchemaBuildProblem::TaskActionMustBePublic)
     }
-    function.extensionReceiver()?.let { reportError(it, "schema.forbidden.task.action.extension") }
+    function.extensionReceiver()?.let { report(it, KotlinSchemaBuildProblem::ForbiddenTaskActionExtension) }
     function.modifierList?.let { modifiers ->
         modifiers.getModifier(KtTokens.SUSPEND_KEYWORD)?.let {
-            reportError(it, "schema.forbidden.task.action.suspend")
+            report(it, KotlinSchemaBuildProblem::ForbiddenTaskActionSuspend)
         }
         modifiers.getModifier(KtTokens.INLINE_KEYWORD)?.let {
-            reportError(it, "schema.forbidden.task.action.inline")
+            report(it, KotlinSchemaBuildProblem::ForbiddenTaskActionInline)
         }
     }
-    function.typeParameterList?.let { reportError(it, "schema.forbidden.task.action.generic") }
-    function.contextReceiverList?.let { reportError(it, "schema.forbidden.task.action.context.receivers") }
+    function.typeParameterList?.let { report(it, KotlinSchemaBuildProblem::ForbiddenTaskActionGeneric) }
+    function.contextReceiverList?.let { report(it, KotlinSchemaBuildProblem::ForbiddenTaskActionContextReceivers) }
 
     val returnType = with(session) { function.returnType }
     if (with(session) { !returnType.isUnitType }) {
-        reportError(function.typeReference ?: function, "schema.forbidden.task.action.return")
+        report(function.typeReference ?: function, KotlinSchemaBuildProblem::ForbiddenTaskActionReturn)
     }
 
     val properties = function.valueParameters.mapNotNull {
@@ -93,7 +94,7 @@ private fun parseTaskParameter(
     val inputOutputMark: InputOutputMark? = if (type.mustBeInputOutputMarked()) {
         when {
             inputMark != null && outputMark != null -> {  // both
-                reportError(parameter, "schema.task.action.parameter.path.conflicting")
+                report(parameter, KotlinSchemaBuildProblem::TaskActionParameterPathConflicting)
                 null
             }
             inputMark != null -> {
@@ -109,13 +110,13 @@ private fun parseTaskParameter(
             }
             outputMark != null -> InputOutputMark.Output  // output only
             else -> {  // none
-                reportError(parameter, "schema.task.action.parameter.path.unmarked")
+                report(parameter, KotlinSchemaBuildProblem::TaskActionParameterPathUnmarked)
                 null
             }
         }
     } else {
-        if (outputMark != null) reportError(outputMark.psi(), "schema.task.action.parameter.not.path")
-        if (inputMark != null) reportError(inputMark.psi(), "schema.task.action.parameter.not.path")
+        if (outputMark != null) report(outputMark.psi(), KotlinSchemaBuildProblem::TaskActionParameterNotPath)
+        if (inputMark != null) report(inputMark.psi(), KotlinSchemaBuildProblem::TaskActionParameterNotPath)
         null
     }
 

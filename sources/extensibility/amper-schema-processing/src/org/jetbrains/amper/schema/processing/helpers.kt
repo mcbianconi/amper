@@ -23,6 +23,10 @@ class ParsingOptions(
      * True if we are currently parsing our own Extensibility API declarations as part of the Amper tool build.
      */
     val isParsingAmperApi: Boolean,
+    /**
+     * The FQN of the settings class for the plugin being parsed.
+     */
+    val pluginSettingsClassName: String? = null,
 )
 
 context(resolver: DeclarationsProvider)

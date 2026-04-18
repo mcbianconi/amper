@@ -51,7 +51,7 @@ internal suspend fun doPreparePlugins(
         }
     }
 
-    val allProblems = pluginDataWithDiagnostics.flatMap { it.problems }
+    val allProblems = pluginDataWithDiagnostics.flatMap { it.diagnostics }
     allProblems.forEach(CliProblemReporter::reportMessage)
     if (allProblems.any { it.level.atLeastAsSevereAs(Level.Error) }) {
         userReadableError("Local plugins pre-processing failed, see the errors above.")

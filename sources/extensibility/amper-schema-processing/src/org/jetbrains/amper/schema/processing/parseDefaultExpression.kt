@@ -6,7 +6,7 @@ package org.jetbrains.amper.schema.processing
 
 import org.jetbrains.amper.plugins.schema.model.Defaults
 import org.jetbrains.amper.plugins.schema.model.PluginData
-import org.jetbrains.amper.plugins.schema.model.PluginDataResponse.DiagnosticKind.WarningRedundant
+import org.jetbrains.amper.plugins.schema.model.diagnostics.KotlinSchemaBuildProblem
 import org.jetbrains.kotlin.analysis.api.KaSession
 import org.jetbrains.kotlin.analysis.api.base.KaConstantValue
 import org.jetbrains.kotlin.analysis.api.resolution.KaErrorCallInfo
@@ -44,24 +44,24 @@ internal fun parseDefaultExpression(
 
     if (type.isNullable && constant is KaConstantValue.NullValue) {
         if (!nestedExpression) {
-            report(expression, "schema.defaults.redundant.null", kind = WarningRedundant)
+            report(expression, KotlinSchemaBuildProblem::DefaultsRedundantNull)
         }
         return Defaults.Null
     }
     return when (type) {
         is PluginData.Type.BooleanType -> (constant as? KaConstantValue.BooleanValue)
             ?.let { Defaults.BooleanDefault(it.value) }
-            ?: run { reportError(expression, "schema.defaults.invalid.constant"); null }
+            ?: run { report(expression, KotlinSchemaBuildProblem::DefaultsInvalidConstant); null }
         is PluginData.Type.IntType -> (constant as? KaConstantValue.IntValue)
             ?.let { Defaults.IntDefault(it.value) }
-            ?: run { reportError(expression, "schema.defaults.invalid.constant"); null }
+            ?: run { report(expression, KotlinSchemaBuildProblem::DefaultsInvalidConstant); null }
         is PluginData.Type.StringType -> (constant as? KaConstantValue.StringValue)
             ?.let { Defaults.StringDefault(it.value) }
-            ?: run { reportError(expression, "schema.defaults.invalid.constant"); null }
+            ?: run { report(expression, KotlinSchemaBuildProblem::DefaultsInvalidConstant); null }
         is PluginData.Type.EnumType -> when (val symbol = (call as? KaVariableAccessCall)?.symbol) {
             is KaEnumEntrySymbol -> Defaults.EnumDefault(symbol.name.identifier)
             else -> {
-                reportError(expression, "schema.defaults.invalid.enum"); null
+                report(expression, KotlinSchemaBuildProblem::DefaultsInvalidEnum); null
             }
         }
         is PluginData.Type.ListType -> (call as? KaFunctionCall<*>)?.let { call ->
@@ -72,20 +72,20 @@ internal fun parseDefaultExpression(
                 })
                 else -> null
             }
-        } ?: run{ reportError(expression, "schema.defaults.invalid.list"); null }
+        } ?: run{ report(expression, KotlinSchemaBuildProblem::DefaultsInvalidList); null }
         is PluginData.Type.MapType -> (call as? KaFunctionCall<*>)?.let { call ->
             when (call.symbol.callableId) {
                 EMPTY_MAP -> Defaults.MapDefault(emptyMap())
                 // TODO: MAP_OF
                 else -> null
             }
-        } ?: run { reportError(expression, "schema.defaults.invalid.map"); null }
+        } ?: run { report(expression, KotlinSchemaBuildProblem::DefaultsInvalidMap); null }
         is PluginData.Type.ObjectType,
         is PluginData.Type.VariantType -> {
-            reportError(expression, "schema.defaults.invalid.object"); null
+            report(expression, KotlinSchemaBuildProblem::DefaultsInvalidObject); null
         }
         is PluginData.Type.PathType -> {
-            reportError(expression, "schema.defaults.invalid.path"); null
+            report(expression, KotlinSchemaBuildProblem::DefaultsInvalidPath); null
         }
     }
 }

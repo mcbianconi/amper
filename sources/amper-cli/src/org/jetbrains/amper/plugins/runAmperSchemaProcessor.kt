@@ -15,6 +15,7 @@ import org.jetbrains.amper.jdk.provisioning.Jdk
 import org.jetbrains.amper.plugins.schema.model.PluginData
 import org.jetbrains.amper.plugins.schema.model.PluginDataResponse
 import org.jetbrains.amper.plugins.schema.model.PluginDeclarationsRequest
+import org.jetbrains.amper.plugins.schema.model.diagnostics.KotlinSchemaBuildProblem
 import org.jetbrains.amper.processes.ArgsMode
 import org.jetbrains.amper.processes.ProcessInput
 import org.jetbrains.amper.processes.ProcessOutputListener
@@ -30,7 +31,7 @@ import kotlin.io.path.relativeTo
 data class PluginDataWithDiagnostics(
     val pluginData: PluginData,
     val pluginRootDir: SerializablePath,
-    val problems: List<PluginSchemaBuildProblem>,
+    val diagnostics: List<KotlinSchemaBuildProblem>,
 )
 
 suspend fun runAmperSchemaProcessor(
@@ -90,7 +91,7 @@ suspend fun runAmperSchemaProcessor(
                 source = PluginData.Source.Local(pluginRootDir),
                 declarations = result.declarations,
             ),
-            problems = result.diagnostics.map(::PluginSchemaBuildProblem),
+            diagnostics = result.diagnostics,
             pluginRootDir = pluginRootDir,
         )
     }

@@ -9,6 +9,7 @@ apply:
 
 dependencies:
   - ../../libraries/serialization-extended
+  - ../../amper-problem-reporting: exported
 
 settings:
   kotlin:

@@ -12,6 +12,7 @@ import kotlinx.serialization.json.decodeFromStream
 import kotlinx.serialization.json.encodeToStream
 import org.jetbrains.amper.plugins.schema.model.PluginDataResponse
 import org.jetbrains.amper.plugins.schema.model.PluginDeclarationsRequest
+import org.jetbrains.amper.plugins.schema.model.diagnostics.KotlinSchemaBuildProblem
 import org.jetbrains.amper.telemetry.ChildProcessTelemetry.withChildProcessTelemetrySpan
 import org.jetbrains.kotlin.analysis.api.analyze
 import org.jetbrains.kotlin.analysis.api.projectStructure.KaSourceModule
@@ -90,7 +91,7 @@ internal fun runSchemaProcessor(
     val results = modules.map { (sourceDir, module) ->
         analyze(module) {
             val request = request.requests.first { it.sourceDir == sourceDir }
-            val diagnostics = mutableListOf<PluginDataResponse.Diagnostic>()
+            val diagnostics = mutableListOf<KotlinSchemaBuildProblem>()
             val (declarations, parsedPluginSettingsName) = parsePluginDeclarations(
                 files = session.modulesWithFiles[module]?.filterIsInstance<KtFile>().orEmpty(),
                 diagnostics = diagnostics,
