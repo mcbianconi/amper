@@ -5,22 +5,21 @@
 package org.jetbrains.amper.tasks.jvm
 
 import org.jetbrains.amper.dependency.resolution.ResolutionScope
-import org.jetbrains.amper.frontend.LocalModuleDependency
 import org.jetbrains.amper.frontend.Platform
 import org.jetbrains.amper.frontend.doCapitalize
 import org.jetbrains.amper.frontend.isPublishingEnabled
 import org.jetbrains.amper.frontend.mavenRepositories
 import org.jetbrains.amper.frontend.schema.DependencyMode
 import org.jetbrains.amper.frontend.schema.enabled
-import org.jetbrains.amper.frontend.shouldPublishSourcesJars
 import org.jetbrains.amper.tasks.CommonTaskType
 import org.jetbrains.amper.tasks.FragmentTaskType
+import org.jetbrains.amper.tasks.NoopTask
 import org.jetbrains.amper.tasks.PlatformTaskType
 import org.jetbrains.amper.tasks.ProjectTasksBuilder
 import org.jetbrains.amper.tasks.ProjectTasksBuilder.Companion.getTaskOutputPath
-import org.jetbrains.amper.tasks.PublishTask
 import org.jetbrains.amper.tasks.compose.isComposeEnabledFor
 import org.jetbrains.amper.tasks.getModuleDependencies
+import org.jetbrains.amper.tasks.publishTaskNameFor
 
 fun ProjectTasksBuilder.setupJvmTasks() {
     allModules()
@@ -246,43 +245,17 @@ fun ProjectTasksBuilder.setupJvmTasks() {
                 )
             }
 
+            // TODO This is only kept for a transition period while we replace 'publishJvmToX' with module-wide
+            //  'publishToX'. Remove after transitioning.
             if (module.isPublishingEnabled()) {
                 val publishRepositories = module.mavenRepositories.filter { it.publish }
                 for (repository in publishRepositories) {
                     val publishTaskSuffix = "To${repository.id.doCapitalize()}"
                     val publishTaskName = CommonTaskType.Publish.getTaskName(module, platform, suffix = publishTaskSuffix)
                     tasks.registerTask(
-                        PublishTask(
-                            taskName = publishTaskName,
-                            module = module,
-                            targetRepository = repository,
-                            tempRoot = context.projectTempRoot,
-                        ),
-                        dependsOn = buildList {
-                            add(CommonTaskType.Jar.getTaskName(module, platform, isTest = false))
-                            if (module.shouldPublishSourcesJars()) {
-                                add(CommonTaskType.SourcesJar.getTaskName(module, platform))
-                            }
-                            // we need dependencies to get publication coordinate overrides (e.g. -jvm variant)
-                            add(CommonTaskType.Dependencies.getTaskName(module, platform, isTest = false))
-                        }
+                        task = NoopTask(taskName = publishTaskName),
+                        dependsOn = listOf(publishTaskNameFor(module, repository))
                     )
-
-                    // Publish task should depend on publishing of modules which this module depends on
-                    // TODO It could be optional in the future by, e.g., introducing an option to `publish` command
-                    val thisModuleFragments = module.fragments.filter { it.platforms.contains(platform) && !it.isTest }
-                    val thisModuleDependencies = thisModuleFragments
-                        .flatMap { it.externalDependencies }
-                        .filterIsInstance<LocalModuleDependency>()
-                    for (moduleDependency in thisModuleDependencies) {
-                        val dependencyPublishTaskName =
-                            CommonTaskType.Publish.getTaskName(
-                                moduleDependency.module,
-                                platform,
-                                suffix = publishTaskSuffix
-                            )
-                        tasks.registerDependency(publishTaskName, dependencyPublishTaskName)
-                    }
                 }
             }
         }
