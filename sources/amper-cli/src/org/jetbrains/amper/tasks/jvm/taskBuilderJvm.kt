@@ -259,6 +259,8 @@ fun ProjectTasksBuilder.setupJvmTasks() {
                         ),
                         dependsOn = listOf(
                             CommonTaskType.Jar.getTaskName(module, platform, isTest = false),
+                            // TODO make it configurable to publish sources or not
+                            CommonTaskType.SourcesJar.getTaskName(module, platform),
                             // we need dependencies to get publication coordinate overrides (e.g. -jvm variant)
                             CommonTaskType.Dependencies.getTaskName(module, platform, isTest = false),
                         )
@@ -279,10 +281,6 @@ fun ProjectTasksBuilder.setupJvmTasks() {
                             )
                         tasks.registerDependency(publishTaskName, dependencyPublishTaskName)
                     }
-
-                    // TODO It should be optional to publish or not to publish sources
-                    val sourcesJarTaskName = CommonTaskType.SourcesJar.getTaskName(module, platform)
-                    tasks.registerDependency(publishTaskName, sourcesJarTaskName)
                 }
             }
         }
