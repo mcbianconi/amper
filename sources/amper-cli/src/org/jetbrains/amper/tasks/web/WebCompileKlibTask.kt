@@ -181,7 +181,7 @@ internal abstract class WebCompileKlibTask(
         }.outputFiles.singleOrNull()
 
         return Result(
-            compiledKlib = artifact,
+            compiledKlib = artifact?.resolve(module.kotlinModuleName(isTest) + ".klib"),
             module = module,
             isTest = isTest,
             taskName = taskName,

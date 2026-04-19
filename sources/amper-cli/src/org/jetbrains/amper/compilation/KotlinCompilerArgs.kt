@@ -390,7 +390,7 @@ private fun kotlinWebCompilerArgs(
     if (compilationType == KotlinCompilationType.BINARY) {
         add("-Xir-produce-js")
     } else {
-        add("-Xir-produce-klib-dir")
+        add("-Xir-produce-klib-file")
     }
 
     add("-libraries")
