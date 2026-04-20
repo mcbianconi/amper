@@ -1,4 +1,4 @@
 product {
-  type = "lib"
+  type = "kmp/lib"
   <![Fatal] Product platforms list should not be empty.!>platforms = {}<!>
 }

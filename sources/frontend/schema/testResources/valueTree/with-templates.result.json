@@ -1,6 +1,6 @@
 {
   "product(with-templates.yaml)" : {
-    "type(with-templates.yaml)" : "lib(with-templates.yaml)",
+    "type(with-templates.yaml)" : "kmp/lib(with-templates.yaml)",
     "platforms(with-templates.yaml)" : [
       "JVM(with-templates.yaml)",
       "ANDROID(with-templates.yaml)",

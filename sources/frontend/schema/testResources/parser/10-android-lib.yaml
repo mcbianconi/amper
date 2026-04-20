@@ -1,3 +1,3 @@
 product:
-  type: lib
+  type: kmp/lib
   platforms: [ android ]

@@ -243,7 +243,7 @@ private fun createArtifacts(
     productType: ProductType,
     fragments: List<DefaultLeafFragment>,
 ): List<DefaultArtifact> = when (productType) {
-    ProductType.LIB -> listOf(DefaultArtifact(if (!isTest) "lib" else "testLib", fragments, isTest))
+    ProductType.KMP_LIB -> listOf(DefaultArtifact(if (!isTest) "lib" else "testLib", fragments, isTest))
     else -> fragments.map { DefaultArtifact(it.name, listOf(it), isTest) }
 }
 

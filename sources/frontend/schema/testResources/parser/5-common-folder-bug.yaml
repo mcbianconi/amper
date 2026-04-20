@@ -5,7 +5,7 @@ test-dependencies:
   - org.jetbrains.kotlin:kotlin-test:1.8.20
 
 product:
-  type: lib
+  type: kmp/lib
   platforms:
     - jvm
     - iosSimulatorArm64

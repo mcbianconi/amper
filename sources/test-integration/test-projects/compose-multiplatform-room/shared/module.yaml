@@ -1,5 +1,5 @@
 product:
-  type: lib
+  type: kmp/lib
   platforms: [ jvm, android ] # TODO [KSP2_ISSUE] put iosSimulatorArm64 back here
 
 dependencies:

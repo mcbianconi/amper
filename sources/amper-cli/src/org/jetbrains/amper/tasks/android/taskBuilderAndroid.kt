@@ -51,7 +51,7 @@ fun ProjectTasksBuilder.setupAndroidTasks() {
         }
 
     allModules().alsoPlatforms(Platform.ANDROID)
-        .filterModuleType { it != ProductType.LIB }
+        .filterModuleType { it != ProductType.KMP_LIB }
         .alsoTests()
         .withEach {
             tasks.setupDownloadBuildToolsTask(module, androidSdkPath, context.userCacheRoot, isTest)
@@ -71,7 +71,7 @@ fun ProjectTasksBuilder.setupAndroidTasks() {
         }
 
     allModules().alsoPlatforms(Platform.ANDROID)
-        .filterModuleType { it != ProductType.LIB }
+        .filterModuleType { it != ProductType.KMP_LIB }
         // No `alsoTests()` here - Android doesn't support unitTest-specific android res.
         .alsoBuildTypes()
         .withEach {
@@ -103,7 +103,7 @@ fun ProjectTasksBuilder.setupAndroidTasks() {
         }
 
     allModules().alsoPlatforms(Platform.ANDROID)
-        .filterModuleType { it != ProductType.LIB }
+        .filterModuleType { it != ProductType.KMP_LIB }
         // no `alsoTests()` here - we do the unit testing ourselves, no need to build anything with Gradle for that.
         .alsoBuildTypes()
         .withEach {
@@ -192,7 +192,7 @@ fun ProjectTasksBuilder.setupAndroidTasks() {
                     add(AndroidTaskType.InstallPlatform.getTaskName(module, platform, isTest))
                     add(CommonTaskType.TransformDependencies.getTaskName(module, platform))
                     add(CommonTaskType.Dependencies.getTaskName(module, Platform.ANDROID, isTest))
-                    if (module.type != ProductType.LIB && !isTest) {
+                    if (module.type != ProductType.KMP_LIB && !isTest) {
                         add(AndroidTaskType.Prepare.getTaskName(module, platform, isTest, buildType))
                     }
                 }
@@ -315,7 +315,7 @@ fun ProjectTasksBuilder.setupAndroidTasks() {
 
     allModules()
         .alsoPlatforms(Platform.ANDROID)
-        .filterModuleType { it != ProductType.LIB }
+        .filterModuleType { it != ProductType.KMP_LIB }
         .alsoBuildTypes()
         .withEach {
             // run

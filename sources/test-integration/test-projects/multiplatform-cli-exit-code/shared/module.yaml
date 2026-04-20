@@ -1,5 +1,5 @@
 product:
-  type: lib
+  type: kmp/lib
   platforms: [ linuxArm64, linuxX64, macosArm64, mingwX64 ]
 
 dependencies:

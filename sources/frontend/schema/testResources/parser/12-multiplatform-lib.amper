@@ -1,4 +1,4 @@
 product {
-  type = "lib"
+  type = "kmp/lib"
   platforms = { "jvm", "android", "iosArm64", "js", "wasmJs", "wasmWasi" }
 }

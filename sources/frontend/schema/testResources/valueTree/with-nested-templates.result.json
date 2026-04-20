@@ -1,6 +1,6 @@
 {
   "product(with-nested-templates.yaml)" : {
-    "type(with-nested-templates.yaml)" : "lib(with-nested-templates.yaml)",
+    "type(with-nested-templates.yaml)" : "kmp/lib(with-nested-templates.yaml)",
     "platforms(with-nested-templates.yaml)" : [
       "JVM(with-nested-templates.yaml)"
     ]

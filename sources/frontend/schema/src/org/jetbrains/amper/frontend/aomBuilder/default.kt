@@ -56,8 +56,12 @@ internal open class DefaultModule(
     override var customCommandsFromPlugins = emptyList<CustomCommandFromPlugin>()
     override var amperMavenPluginsDescriptions = emptyList<AmperMavenPluginDescription>()
 
-    override val type: ProductType
-        get() = commonModuleNode.product.type
+    @Suppress("DEPRECATION")
+    override val type: ProductType = if (commonModuleNode.product.type == ProductType.LIB) {
+        ProductType.KMP_LIB
+    } else {
+        commonModuleNode.product.type
+    }
 
     override val layout: Layout
         get() = Layout.valueOf(commonModuleNode.layout.name)

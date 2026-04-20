@@ -305,7 +305,7 @@ class AmperAndroidIntegrationSettingsPlugin @Inject constructor(private val tool
             .modules
             .filter {
                 val productTypeIsAndroidApp = it.type == ProductType.ANDROID_APP
-                val productTypeIsLib = it.type == ProductType.LIB
+                val productTypeIsLib = it.type == ProductType.KMP_LIB
                 val platformsContainAndroid = it.artifacts.any { artifact -> artifact.platforms.contains(Platform.ANDROID) }
                 productTypeIsAndroidApp || productTypeIsLib && platformsContainAndroid
             }

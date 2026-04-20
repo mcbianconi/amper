@@ -39,6 +39,7 @@ enum class FrontendDiagnosticId : DiagnosticId {
     ModuleDependencyLoopProblem,
     ModuleDependencySelfProblem,
     NoCatalogValue,
+    ObsoleteLibProductType,
     ProductNotDefined,
     ProductTypeDoesNotSupportPlatform,
     ProductTypeHasNoDefaultPlatforms,

@@ -1,0 +1,3 @@
+product {
+  <![Fatal] Product type kmp/lib should have its platforms declared explicitly like that: product {   type = "kmp/lib"   platforms = {"jvm", "iosArm64"} }!>type = "kmp/lib"<!>
+}

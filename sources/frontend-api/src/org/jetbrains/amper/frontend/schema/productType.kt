@@ -34,6 +34,13 @@ enum class ProductType(
     override val outdated: Boolean = false,
 ): SchemaEnum {
 
+    @Deprecated(
+        message = "Renamed to KMP_LIB (kmp/lib)",
+        replaceWith = ReplaceWith(
+            expression = "ProductType.KMP_LIB",
+            imports = ["org.jetbrains.amper.frontend.schema.ProductType"],
+        )
+    )
     @SchemaDoc("A reusable multiplatform library which could be used as dependency by other modules in the codebase")
     LIB(
         "lib",
@@ -55,6 +62,13 @@ enum class ProductType(
         supportedPlatforms = setOf(Platform.JVM),
         defaultPlatforms = setOf(Platform.JVM),
         supportsFragmentBamboos = false,
+    ),
+
+    @SchemaDoc("A reusable Kotlin multiplatform library, which can be used as dependency by other modules in the codebase")
+    KMP_LIB(
+        "kmp/lib",
+        supportedPlatforms = Platform.leafPlatforms,
+        defaultPlatforms = null,
     ),
 
     @SchemaDoc("An Amper plugin")
@@ -122,7 +136,7 @@ enum class ProductType(
         defaultPlatforms = setOf(Platform.JS),
     ),;
 
-    fun isLibrary() = this == LIB || this == JVM_AMPER_PLUGIN || this == JVM_LIB
+    fun isLibrary() = this == KMP_LIB || this == JVM_AMPER_PLUGIN || this == JVM_LIB
     fun isApplication() = !isLibrary()
     override fun toString() = value
     override val schemaValue: String = value

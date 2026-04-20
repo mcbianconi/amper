@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+ * Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
  */
 
 package org.jetbrains.amper.frontend.schema.diagnostics
@@ -18,17 +18,17 @@ class ProductDiagnosticsTest : FrontendTestCaseBase(Path("testResources") / "dia
 
     @Test
     fun `product lib without platforms full`() {
-        diagnosticsTest("product-lib-without-platforms-full")
+        diagnosticsTest("product-kmp-lib-without-platforms-full")
     }
 
     @Test
     fun `product lib without platforms inline`() {
-        diagnosticsTest("product-lib-without-platforms-inline")
+        diagnosticsTest("product-kmp-lib-without-platforms-inline")
     }
 
     @Test
     fun `product lib with empty platforms inline`() {
-        diagnosticsTest("product-lib-with-empty-platforms")
+        diagnosticsTest("product-kmp-lib-with-empty-platforms")
     }
 
     @Test

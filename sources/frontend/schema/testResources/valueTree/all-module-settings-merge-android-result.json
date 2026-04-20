@@ -1,6 +1,6 @@
 {
   "product" : {
-    "type" : "lib",
+    "type" : "kmp/lib",
     "platforms" : [
       "JVM",
       "ANDROID",

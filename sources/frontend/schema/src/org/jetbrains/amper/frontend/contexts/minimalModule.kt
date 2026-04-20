@@ -64,7 +64,10 @@ internal fun tryReadMinimalModule(moduleFilePath: VirtualFile): MinimalModuleHol
         return null
     }
 
-    if (minimalModule.product.type == ProductType.LIB && !minimalModule.product.platformsDelegate.isExplicitlySet) {
+    @Suppress("DEPRECATION")
+    if (minimalModule.product.type in setOf(ProductType.KMP_LIB, ProductType.LIB)
+        && !minimalModule.product.platformsDelegate.isExplicitlySet
+    ) {
         problemReporter.reportMissingExplicitPlatforms(minimalModule.product)
         return null
     }
@@ -113,7 +116,7 @@ private fun ProblemReporter.reportMissingExplicitPlatforms(product: ModuleProduc
         } else {
             "product.type.does.not.have.default.platforms.amperlang"
         },
-        ProductType.LIB.schemaValue,
+        product.type.schemaValue,
     )
 }
 
