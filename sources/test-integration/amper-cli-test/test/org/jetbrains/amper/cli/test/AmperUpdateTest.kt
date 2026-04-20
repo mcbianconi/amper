@@ -12,8 +12,6 @@ import org.jetbrains.amper.processes.ProcessInput
 import org.jetbrains.amper.system.info.OsFamily
 import org.jetbrains.amper.test.AmperCliResult
 import org.jetbrains.amper.test.LocalAmperPublication
-import org.junit.jupiter.api.parallel.Execution
-import org.junit.jupiter.api.parallel.ExecutionMode
 import java.nio.file.FileSystemException
 import java.nio.file.Path
 import kotlin.io.path.listDirectoryEntries
@@ -29,8 +27,6 @@ import kotlin.test.assertTrue
 import kotlin.test.fail
 import kotlin.time.Duration.Companion.milliseconds
 
-// CONCURRENT is here to test that multiple concurrent amper processes work correctly.
-@Execution(ExecutionMode.CONCURRENT)
 class AmperUpdateTest : AmperCliTestBase() {
 
     @Test

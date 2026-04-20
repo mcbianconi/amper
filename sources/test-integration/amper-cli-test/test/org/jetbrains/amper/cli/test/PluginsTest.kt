@@ -16,6 +16,8 @@ import org.jetbrains.amper.frontend.schema.DefaultVersions
 import org.jetbrains.amper.test.AmperCliResult
 import org.jetbrains.amper.test.Dirs
 import org.jetbrains.amper.test.normalizeLineSeparators
+import org.junit.jupiter.api.parallel.Execution
+import org.junit.jupiter.api.parallel.ExecutionMode
 import org.slf4j.event.Level
 import java.io.File
 import kotlin.io.path.div

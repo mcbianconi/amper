@@ -27,6 +27,10 @@ settings:
       systemProperties:
         junit.jupiter.execution.parallel.config.strategy: fixed
         junit.jupiter.execution.parallel.config.fixed.parallelism: 4
+        # 2 reasons for running most tests concurrently:
+        #   1. it increases the likelihood of detecting concurrency issues between Amper CLI processes
+        #   2. it can speed up the overall test suite execution time, especially locally
+        junit.jupiter.execution.parallel.mode.default: concurrent
 
 test-settings:
   kotlin:

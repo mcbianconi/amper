@@ -8,13 +8,9 @@ import org.jetbrains.amper.cli.test.utils.assertStderrContains
 import org.jetbrains.amper.cli.test.utils.runSlowTest
 import org.jetbrains.amper.test.AmperCliResult
 import org.jetbrains.amper.test.golden.GoldFileTest
-import org.junit.jupiter.api.parallel.Execution
-import org.junit.jupiter.api.parallel.ExecutionMode
 import kotlin.io.path.Path
 import kotlin.test.Test
 
-// CONCURRENT is here to test that multiple concurrent amper processes work correctly.
-@Execution(ExecutionMode.CONCURRENT)
 class ShowDependenciesCommandTest : AmperCliTestBase() {
 
     private fun AmperCliResult.checkGold(caseName: String) = GoldFileTest(

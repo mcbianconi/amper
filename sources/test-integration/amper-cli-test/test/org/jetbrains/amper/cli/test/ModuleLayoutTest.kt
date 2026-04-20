@@ -6,11 +6,8 @@ package org.jetbrains.amper.cli.test
 
 import org.jetbrains.amper.cli.test.utils.assertStderrContains
 import org.jetbrains.amper.cli.test.utils.runSlowTest
-import org.junit.jupiter.api.parallel.Execution
-import org.junit.jupiter.api.parallel.ExecutionMode
 import kotlin.test.Test
 
-@Execution(ExecutionMode.CONCURRENT)
 class ModuleLayoutTest : AmperCliTestBase() {
 
     @Test

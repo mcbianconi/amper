@@ -10,8 +10,6 @@ import org.jetbrains.amper.cli.test.utils.buildServiceMessages
 import org.jetbrains.amper.cli.test.utils.runSlowTest
 import org.jetbrains.amper.test.assertEqualsWithDiff
 import org.junit.jupiter.api.condition.OS
-import org.junit.jupiter.api.parallel.Execution
-import org.junit.jupiter.api.parallel.ExecutionMode
 import kotlin.test.Test
 
 /**
@@ -24,8 +22,6 @@ private val NL = System.lineSeparator()
  */
 private val ENL = if (OS.current() == OS.WINDOWS) "|r|n" else "|n"
 
-// CONCURRENT is here to test that multiple concurrent amper processes work correctly.
-@Execution(ExecutionMode.CONCURRENT)
 class AmperTestFormatTest : AmperCliTestBase() {
 
     @Test

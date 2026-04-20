@@ -13,13 +13,9 @@ import org.jetbrains.amper.test.WindowsOnly
 import org.jetbrains.amper.test.spans.assertEachKotlinJvmCompilationSpan
 import org.jetbrains.amper.test.spans.assertEachKotlinNativeCompilationSpan
 import org.jetbrains.amper.test.spans.assertKotlinJvmCompilationSpan
-import org.junit.jupiter.api.parallel.Execution
-import org.junit.jupiter.api.parallel.ExecutionMode
 import org.slf4j.event.Level
 import kotlin.test.Test
 
-// CONCURRENT is here to test that multiple concurrent amper processes work correctly.
-@Execution(ExecutionMode.CONCURRENT)
 class KotlinVersionTest : AmperCliTestBase() {
 
     @Test

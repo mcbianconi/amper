@@ -12,8 +12,6 @@ import org.jetbrains.amper.cli.test.utils.readTelemetrySpans
 import org.jetbrains.amper.cli.test.utils.runSlowTest
 import org.jetbrains.amper.test.AmperCliResult
 import org.jetbrains.amper.test.spans.assertEachKotlinNativeCompilationSpan
-import org.junit.jupiter.api.parallel.Execution
-import org.junit.jupiter.api.parallel.ExecutionMode
 import org.junit.jupiter.params.ParameterizedTest
 import org.junit.jupiter.params.provider.ValueSource
 import java.nio.file.Path
@@ -36,8 +34,6 @@ import kotlin.test.fail
 @Target(AnnotationTarget.FUNCTION)
 private annotation class RunWithAndWithoutJic
 
-// CONCURRENT is here to test that multiple concurrent amper processes work correctly.
-@Execution(ExecutionMode.CONCURRENT)
 class AmperBuildTest : AmperCliTestBase() {
 
     @RunWithAndWithoutJic

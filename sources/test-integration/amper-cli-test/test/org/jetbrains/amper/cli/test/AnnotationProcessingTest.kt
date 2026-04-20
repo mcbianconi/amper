@@ -8,8 +8,6 @@ import org.jetbrains.amper.cli.test.utils.assertStderrContains
 import org.jetbrains.amper.cli.test.utils.assertStderrDoesNotContain
 import org.jetbrains.amper.cli.test.utils.assertStdoutContains
 import org.jetbrains.amper.cli.test.utils.runSlowTest
-import org.junit.jupiter.api.parallel.Execution
-import org.junit.jupiter.api.parallel.ExecutionMode
 import kotlin.io.path.Path
 import kotlin.io.path.deleteExisting
 import kotlin.io.path.div
@@ -19,7 +17,6 @@ import kotlin.io.path.writeText
 import kotlin.test.Test
 import kotlin.test.assertTrue
 
-@Execution(ExecutionMode.CONCURRENT)
 class AnnotationProcessingTest : AmperCliTestBase() {
 
     @Test

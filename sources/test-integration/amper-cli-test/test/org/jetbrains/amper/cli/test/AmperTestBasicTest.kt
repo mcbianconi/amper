@@ -13,19 +13,13 @@ import org.jetbrains.amper.telemetry.getListAttribute
 import org.jetbrains.amper.test.MacOnly
 import org.jetbrains.amper.test.WindowsOnly
 import org.jetbrains.amper.test.spans.spansNamed
-import org.junit.jupiter.api.parallel.Execution
-import org.junit.jupiter.api.parallel.ExecutionMode
 import org.slf4j.event.Level
 import kotlin.io.path.readText
 import kotlin.test.Ignore
 import kotlin.test.Test
 import kotlin.test.assertContains
 import kotlin.test.assertEquals
-import kotlin.test.assertNotNull
-import kotlin.test.assertTrue
 
-// CONCURRENT is here to test that multiple concurrent amper processes work correctly.
-@Execution(ExecutionMode.CONCURRENT)
 class AmperTestBasicTest : AmperCliTestBase() {
 
     @Test

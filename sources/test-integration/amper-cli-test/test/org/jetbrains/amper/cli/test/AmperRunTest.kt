@@ -17,15 +17,11 @@ import org.jetbrains.amper.test.LinuxOnly
 import org.jetbrains.amper.test.MacOnly
 import org.jetbrains.amper.test.WindowsOnly
 import org.jetbrains.amper.test.spans.kotlinJvmCompilationSpans
-import org.junit.jupiter.api.parallel.Execution
-import org.junit.jupiter.api.parallel.ExecutionMode
 import org.slf4j.event.Level
 import kotlin.test.Test
 import kotlin.test.assertContains
 import kotlin.test.assertTrue
 
-// CONCURRENT is here to test that multiple concurrent amper processes work correctly.
-@Execution(ExecutionMode.CONCURRENT)
 class AmperRunTest : AmperCliTestBase() {
 
     private val specialCmdChars = "&()[]{}^=;!'+,`~"

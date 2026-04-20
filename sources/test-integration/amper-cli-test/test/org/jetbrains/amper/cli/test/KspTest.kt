@@ -15,8 +15,6 @@ import org.jetbrains.amper.system.info.OsFamily
 import org.jetbrains.amper.system.info.SystemInfo
 import org.jetbrains.amper.test.AmperCliResult
 import org.junit.jupiter.api.Disabled
-import org.junit.jupiter.api.parallel.Execution
-import org.junit.jupiter.api.parallel.ExecutionMode
 import java.nio.file.Path
 import kotlin.io.path.deleteRecursively
 import kotlin.io.path.div
@@ -28,8 +26,6 @@ import kotlin.test.Test
 import kotlin.test.assertEquals
 import kotlin.test.assertTrue
 
-// CONCURRENT is here to test that multiple concurrent amper processes work correctly.
-@Execution(ExecutionMode.CONCURRENT)
 class KspTest: AmperCliTestBase() {
 
     @Test

@@ -18,8 +18,6 @@ import org.jetbrains.amper.test.AmperCliResult
 import org.jetbrains.amper.test.Dirs
 import org.jf.dexlib2.DexFileFactory
 import org.jf.dexlib2.Opcodes
-import org.junit.jupiter.api.parallel.Execution
-import org.junit.jupiter.api.parallel.ExecutionMode
 import java.nio.file.Path
 import kotlin.io.path.PathWalkOption
 import kotlin.io.path.absolutePathString
@@ -37,8 +35,6 @@ import kotlin.test.assertEquals
 import kotlin.test.assertTrue
 import kotlin.test.fail
 
-// CONCURRENT is here to test that multiple concurrent amper processes work correctly.
-@Execution(ExecutionMode.CONCURRENT)
 class AndroidExampleProjectsTest : AmperCliTestBase() {
 
     @Test

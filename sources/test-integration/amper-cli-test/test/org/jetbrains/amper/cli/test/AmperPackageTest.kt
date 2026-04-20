@@ -6,15 +6,11 @@ package org.jetbrains.amper.cli.test
 
 import org.jetbrains.amper.cli.test.utils.getTaskOutputPath
 import org.jetbrains.amper.cli.test.utils.runSlowTest
-import org.junit.jupiter.api.parallel.Execution
-import org.junit.jupiter.api.parallel.ExecutionMode
 import kotlin.io.path.div
 import kotlin.io.path.exists
 import kotlin.test.Test
 import kotlin.test.assertTrue
 
-// CONCURRENT is here to test that multiple concurrent amper processes work correctly.
-@Execution(ExecutionMode.CONCURRENT)
 class AmperPackageTest : AmperCliTestBase() {
 
     @Test

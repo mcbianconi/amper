@@ -6,12 +6,8 @@ package org.jetbrains.amper.cli.test
 
 import org.jetbrains.amper.cli.test.utils.runSlowTest
 import org.jetbrains.amper.test.MacOnly
-import org.junit.jupiter.api.parallel.Execution
-import org.junit.jupiter.api.parallel.ExecutionMode
 import kotlin.test.Test
 
-// CONCURRENT is here to test that multiple concurrent amper processes work correctly.
-@Execution(ExecutionMode.CONCURRENT)
 class ComposeResourcesTest : AmperCliTestBase() {
 
     @Test

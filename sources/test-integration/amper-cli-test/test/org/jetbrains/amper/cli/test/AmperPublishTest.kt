@@ -15,8 +15,6 @@ import org.jetbrains.amper.test.server.Request
 import org.jetbrains.amper.test.server.RequestHistory
 import org.jetbrains.amper.test.server.withFileServer
 import org.junit.jupiter.api.TestReporter
-import org.junit.jupiter.api.parallel.Execution
-import org.junit.jupiter.api.parallel.ExecutionMode
 import java.nio.file.Path
 import java.util.*
 import kotlin.io.path.absolutePathString
@@ -33,8 +31,6 @@ import kotlin.test.assertEquals
 import kotlin.test.assertTrue
 import kotlin.test.fail
 
-// CONCURRENT is here to test that multiple concurrent amper processes work correctly.
-@Execution(ExecutionMode.CONCURRENT)
 class AmperPublishTest : AmperCliTestBase() {
 
     private fun createTempMavenLocalDir(): Path = tempRoot.resolve(".m2.test").also { it.createDirectories() }

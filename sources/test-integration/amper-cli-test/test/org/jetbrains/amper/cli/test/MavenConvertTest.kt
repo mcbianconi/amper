@@ -10,8 +10,6 @@ import org.jetbrains.amper.cli.test.utils.runSlowTest
 import org.jetbrains.amper.processes.runProcessAndCaptureOutput
 import org.jetbrains.amper.test.assertEqualsIgnoreLineSeparator
 import org.jetbrains.amper.test.processes.checkExitCodeIsZero
-import org.junit.jupiter.api.parallel.Execution
-import org.junit.jupiter.api.parallel.ExecutionMode
 import kotlin.io.path.absolutePathString
 import kotlin.io.path.div
 import kotlin.io.path.exists
@@ -19,14 +17,12 @@ import kotlin.io.path.notExists
 import kotlin.io.path.pathString
 import kotlin.io.path.readText
 import kotlin.io.path.writeText
-import kotlin.test.Ignore
 import kotlin.test.Test
 import kotlin.test.assertEquals
 import kotlin.test.assertFalse
 import kotlin.test.assertNotEquals
 import kotlin.test.assertTrue
 
-@Execution(ExecutionMode.CONCURRENT)
 class MavenConvertTest : AmperCliTestBase() {
     @Test
     fun `spring-boot`() = runSlowTest {

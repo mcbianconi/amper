@@ -8,8 +8,6 @@ import org.jetbrains.amper.cli.test.utils.runSlowTest
 import org.jetbrains.amper.frontend.schema.DefaultVersions
 import org.jetbrains.amper.test.MacOnly
 import org.junit.jupiter.api.Test
-import org.junit.jupiter.api.parallel.Execution
-import org.junit.jupiter.api.parallel.ExecutionMode
 import java.nio.file.Path
 import java.util.*
 import kotlin.io.path.createDirectories
@@ -20,8 +18,6 @@ import kotlin.io.path.name
 import kotlin.test.assertEquals
 import kotlin.test.assertTrue
 
-// CONCURRENT is here to test that multiple concurrent amper processes work correctly.
-@Execution(ExecutionMode.CONCURRENT)
 class CommonizerTaskTest: AmperCliTestBase() {
 
     @Test

@@ -14,12 +14,8 @@ import org.jetbrains.amper.test.spans.assertHasAttribute
 import org.jetbrains.amper.test.spans.spansNamed
 import org.jetbrains.amper.test.spans.withAttribute
 import org.junit.jupiter.api.Test
-import org.junit.jupiter.api.parallel.Execution
-import org.junit.jupiter.api.parallel.ExecutionMode
 import org.slf4j.event.Level
 
-// CONCURRENT is here to test that multiple concurrent amper processes work correctly.
-@Execution(ExecutionMode.CONCURRENT)
 class SerializationTest: AmperCliTestBase() {
 
     @Test
