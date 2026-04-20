@@ -32,6 +32,7 @@ settings:
   publishing:
     group: org.jetbrains.amper
     version: 1.0-SNAPSHOT
+    publishSources: true
 
   kotlin:
     version: 2.3.10
