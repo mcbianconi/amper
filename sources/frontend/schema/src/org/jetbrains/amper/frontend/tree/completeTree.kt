@@ -73,10 +73,6 @@ private fun ensureCompleteTreeNode(
                 CompleteMapNode(completeKeyValues, node.trace, node.contexts)
             }
             else -> {  // Object
-                for (mapLikePropertyValue in node.refinedChildren.values) {
-                    propertyCheckTypeLevelIntegrity(declaration, mapLikePropertyValue)
-                }
-
                 val completeKeyValues = mutableMapOf<String, CompletePropertyKeyValue>()
                 var hasMissingRequiredProps = false
                 val missingProperties = mutableListOf<MissingPropertyInfo>()
@@ -196,20 +192,5 @@ private fun propertyCheckDefaultIntegrity(
                 "but the value is missing nevertheless. " +
                 "This is a sign that the default was not properly added on the tree level. " +
                 "Please check that defaults are correctly appended for this tree."
-    }
-}
-
-private fun propertyCheckTypeLevelIntegrity(
-    declaration: SchemaObjectDeclaration,
-    pValue: KeyValue,
-) {
-    val typeProperty = checkNotNull(pValue.propertyDeclaration) {
-        "Property `${pValue.key}` is present on the tree value level, " +
-                "but it's not present in the type declaration for $declaration. " +
-                "This is a sign that the property was not properly filtered out on the tree level. " +
-                "Please check that extra properties are correctly filtered for this tree."
-    }
-    check(typeProperty.name == pValue.key) {
-        "Property name mismatch: expected `${typeProperty.name}`, got `${pValue.key}`"
     }
 }

@@ -9,7 +9,6 @@ import org.jetbrains.amper.frontend.contexts.Contexts
 import org.jetbrains.amper.frontend.contexts.EmptyContexts
 import org.jetbrains.amper.frontend.contexts.PlatformCtx
 import org.jetbrains.amper.frontend.contexts.TestCtx
-import org.jetbrains.amper.frontend.diagnostics.UnknownProperty
 import org.jetbrains.amper.frontend.tree.KeyValue
 import org.jetbrains.amper.frontend.tree.MappingNode
 import org.jetbrains.amper.frontend.tree.StringNode
@@ -118,18 +117,21 @@ private fun parseObjectFromMap(value: YamlValue.Mapping, type: SchemaType.Object
         val property = type.declaration.getProperty(propertyName)
             ?.takeUnless { it.isFromKeyAndTheRestNested }
         if (property == null) {
-            return if (!config.skipUnknownProperties) {
-                reporter.reportMessage(
-                    UnknownProperty(
-                        invalidName = propertyName,
-                        possibleIntendedNames = type.declaration.properties
-                            .filter { propertyName in it.misnomers }
-                            .map { it.name },
-                        element = key.psi,
-                    )
-                )
-                null
-            } else null
+            if (config.skipUnknownProperties) {
+                return null
+            }
+
+            // Try to parse as much as possible on the best-effort basis
+            return KeyValue(
+                keyTrace = key.asTrace(),
+                trace = keyValue.asTrace(),
+                key = propertyName,
+                value = parseNodeFromKeyValue(
+                    keyValue = keyValue,
+                    type = SchemaType.UndefinedType,
+                    explicitContexts = propertyContexts,
+                ),
+            )
         }
         if (!property.isUserSettable) {
             reportParsing(key, TreeDiagnosticId.PropertyIsNotSettable, "validation.property.not.settable", property.name)

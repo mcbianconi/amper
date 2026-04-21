@@ -30,6 +30,18 @@ class TypeCheckTest {
     private val booleanType = SchemaType.BooleanType()
     private val pathType = SchemaType.PathType()
 
+    private val allWellDefinedTypes = listOf(
+        stringType,
+        intType,
+        booleanType,
+        pathType,
+        SchemaType.EnumType(DeclarationOfEnumAllOpenPreset),
+        SchemaType.ListType(stringType),
+        SchemaType.MapType(stringType),
+        SchemaType.ObjectType(DeclarationOfSettings),
+        SchemaType.VariantType(DeclarationOfVariantDependency),
+    )
+
     @Test
     fun `isAssignableFrom - same simple type`() {
         assertTrue(stringType.isAssignableFrom(stringType))
@@ -361,5 +373,57 @@ class TypeCheckTest {
         // "Covariance" in resolvable node
         val pathRefNode = ReferenceNode(listOf("foo"), pathType, null, DefaultTrace, EmptyContexts)
         assertSame(pathRefNode, stringType.cast(pathRefNode))
+    }
+
+    @Test
+    fun `isAssignableFrom - undefined type accepts all types`() {
+        val undefinedType = SchemaType.UndefinedType
+
+        // UndefinedType accepts all types
+        allWellDefinedTypes.forEach { assertTrue(undefinedType.isAssignableFrom(it)) }
+        assertTrue(undefinedType.isAssignableFrom(undefinedType))
+
+        // UndefinedType is NOT assignable to other types (except itself)
+        allWellDefinedTypes.forEach { assertFalse(it.isAssignableFrom(undefinedType)) }
+    }
+
+    @Test
+    fun `cast - undefined type accepts all nodes`() {
+        val stringNode = StringNode("hello", null, DefaultTrace, EmptyContexts)
+        assertSame(stringNode, SchemaType.UndefinedType.cast(stringNode))
+
+        val intNode = IntNode(42, DefaultTrace, EmptyContexts)
+        assertSame(intNode, SchemaType.UndefinedType.cast(intNode))
+
+        val booleanNode = BooleanNode(true, DefaultTrace, EmptyContexts)
+        assertSame(booleanNode, SchemaType.UndefinedType.cast(booleanNode))
+
+        val pathNode = PathNode(Path("/some/path"), DefaultTrace, EmptyContexts)
+        assertSame(pathNode, SchemaType.UndefinedType.cast(pathNode))
+
+        val enumNode = EnumNode("Spring", DeclarationOfEnumAllOpenPreset, DefaultTrace, EmptyContexts)
+        assertSame(enumNode, SchemaType.UndefinedType.cast(enumNode))
+
+        val listNode = RefinedListNode(listOf(stringNode), DefaultTrace, EmptyContexts)
+        assertSame(listNode, SchemaType.UndefinedType.cast(listNode))
+
+        val mapNode = RefinedMappingNode(emptyMap(), declaration = null, DefaultTrace, EmptyContexts)
+        assertSame(mapNode, SchemaType.UndefinedType.cast(mapNode))
+
+        val objectNode = RefinedMappingNode(emptyMap(), DeclarationOfSettings, DefaultTrace, EmptyContexts)
+        assertSame(objectNode, SchemaType.UndefinedType.cast(objectNode))
+
+        val nullNode = NullLiteralNode(DefaultTrace, EmptyContexts)
+        assertSame(nullNode, SchemaType.UndefinedType.cast(nullNode))
+
+        val errorNode = ErrorNode(stringType, DefaultTrace, EmptyContexts)
+        assertSame(errorNode, SchemaType.UndefinedType.cast(errorNode))
+
+        val refNode = ReferenceNode(listOf("foo"), stringType, null, DefaultTrace, EmptyContexts)
+        assertSame(refNode, SchemaType.UndefinedType.cast(refNode))
+
+        // UndefinedType nodes cannot be cast to other types
+        val undefinedNode = ReferenceNode(listOf("foo"), SchemaType.UndefinedType, null, DefaultTrace, EmptyContexts)
+        allWellDefinedTypes.forEach { assertNull(it.cast(undefinedNode)) }
     }
 }

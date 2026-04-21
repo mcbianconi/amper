@@ -172,3 +172,13 @@ internal val ParsingConfig.diagnoseReferences: Boolean get() = when (referencePa
     ReferencesParsingMode.Parse, ReferencesParsingMode.IgnoreButWarn -> true
     ReferencesParsingMode.Ignore -> false
 }
+
+internal val ParsingConfig.skipUnknownProperties: Boolean get() = when (unknownPropertiesMode) {
+    UnknownPropertiesParsingMode.SkipSilently -> true
+    UnknownPropertiesParsingMode.BestEffortSilently, UnknownPropertiesParsingMode.BestEffortAndReport -> false
+}
+
+internal val ParsingConfig.reportUnknownProperties: Boolean get() = when (unknownPropertiesMode) {
+    UnknownPropertiesParsingMode.SkipSilently, UnknownPropertiesParsingMode.BestEffortSilently -> false
+    UnknownPropertiesParsingMode.BestEffortAndReport -> true
+}

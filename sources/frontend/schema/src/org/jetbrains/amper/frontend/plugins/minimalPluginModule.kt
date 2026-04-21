@@ -11,6 +11,7 @@ import org.jetbrains.amper.frontend.schema.ProductType
 import org.jetbrains.amper.frontend.tree.TreeRefiner
 import org.jetbrains.amper.frontend.tree.completeTree
 import org.jetbrains.amper.frontend.tree.instance
+import org.jetbrains.amper.frontend.tree.reading.UnknownPropertiesParsingMode
 import org.jetbrains.amper.frontend.tree.reading.readTree
 import org.jetbrains.amper.frontend.types.SchemaTypingContext
 import org.jetbrains.amper.frontend.types.generated.*
@@ -36,7 +37,7 @@ fun parsePluginManifestFromModuleFile(
         val pluginModuleTree = readTree(
             file = moduleFile,
             declaration = DeclarationOfMinimalPluginModule,
-            reportUnknowns = false,
+            unknownPropertiesMode = UnknownPropertiesParsingMode.SkipSilently,
             parseContexts = false,
         )
         val moduleHeader = TreeRefiner().refineTree(pluginModuleTree, EmptyContexts)

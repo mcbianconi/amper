@@ -125,8 +125,9 @@ fun SchemaType.render(
                 ) { it.declaration.displayName }
             }
         }
+        SchemaType.UndefinedType -> append("<undefined-type>")
     }
-    if (isMarkedNullable) append(" | null")
+    if (isMarkedNullable && this@render != SchemaType.UndefinedType) append(" | null")
 }
 
 fun SchemaType.StringType.Semantics?.render(): String = when (this) {
@@ -136,6 +137,16 @@ fun SchemaType.StringType.Semantics?.render(): String = when (this) {
     SchemaType.StringType.Semantics.MavenPlexusConfigXml -> "valid-xml"
     SchemaType.StringType.Semantics.TaskName -> "task-name"
     null -> "string"
+}
+
+val SchemaType.isDenotableInPlugins: Boolean get() = when (this) {
+    is SchemaType.TypeWithDeclaration -> declaration.publicInterfaceReflectionName != null
+    is SchemaType.ListType -> elementType.isDenotableInPlugins
+    is SchemaType.MapType -> valueType.isDenotableInPlugins
+    is SchemaType.BooleanType, is SchemaType.IntType,
+    is SchemaType.PathType, is SchemaType.StringType,
+        -> true
+    SchemaType.UndefinedType -> false
 }
 
 private fun String.quote() = '"' + this + '"'

@@ -55,6 +55,9 @@ internal fun parseReferenceOrInterpolation(
     require(parts.isNotEmpty())
 
     return if (parts.size > 1) {
+        // Coerce the UndefinedType into a plain string automatically
+        val type = if (type is SchemaType.UndefinedType) SchemaType.StringType else type
+
         if (type !is SchemaType.StringInterpolatableType || (type is SchemaType.StringType && type.semantics != null)) {
             // TODO: more granular range reporting
             reportParsing(

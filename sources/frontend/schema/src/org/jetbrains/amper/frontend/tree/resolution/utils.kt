@@ -13,6 +13,8 @@ import org.jetbrains.amper.frontend.tree.BooleanNode
 import org.jetbrains.amper.frontend.tree.EnumNode
 import org.jetbrains.amper.frontend.tree.ErrorNode
 import org.jetbrains.amper.frontend.tree.IntNode
+import org.jetbrains.amper.frontend.tree.ListNode
+import org.jetbrains.amper.frontend.tree.MappingNode
 import org.jetbrains.amper.frontend.tree.NullLiteralNode
 import org.jetbrains.amper.frontend.tree.PathNode
 import org.jetbrains.amper.frontend.tree.ReferenceNode
@@ -21,21 +23,26 @@ import org.jetbrains.amper.frontend.tree.RefinedMappingNode
 import org.jetbrains.amper.frontend.tree.RefinedTreeNode
 import org.jetbrains.amper.frontend.tree.ResolvableNode
 import org.jetbrains.amper.frontend.tree.StringNode
+import org.jetbrains.amper.frontend.tree.TreeNode
 import org.jetbrains.amper.frontend.types.render
 import org.jetbrains.amper.stdlib.collections.joinToString
 
-internal fun renderTypeOf(value: RefinedTreeNode): String = when(value) {
+/**
+ * Renders a human-readable representation of the "runtime type" of a given [tree node][value].
+ *
+ * NOTE: Collections' (map, list) type is erased,
+ * so their effective runtime type is rendered as a sum-type of all the element types.
+ *
+ * @see org.jetbrains.amper.frontend.types.SchemaType.render
+ */
+fun renderTypeOf(value: TreeNode): String = when(value) {
     is NullLiteralNode -> "null"
-    is RefinedListNode -> {
+    is ListNode -> {
         val allElementTypes = value.children.map(::renderTypeOf).distinct()
-        when (allElementTypes.size) {
-            0 -> "list []"
-            1 -> "list [${allElementTypes.single()}]"
-            else -> "list [${allElementTypes.joinToString(" | ")}]"
-        }
+        "list [${allElementTypes.joinToString(" | ")}]"
     }
-    is RefinedMappingNode -> {
-        val allValueTypes = value.refinedChildren.values.map { renderTypeOf(it.value) }.distinct()
+    is MappingNode -> value.declaration?.displayName ?: run {
+        val allValueTypes = value.children.map { renderTypeOf(it.value) }.distinct()
         when (allValueTypes.size) {
             0 -> "map {}"
             1 -> "map {string : ${allValueTypes.single()}}"

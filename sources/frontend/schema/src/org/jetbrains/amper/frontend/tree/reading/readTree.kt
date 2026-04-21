@@ -19,6 +19,7 @@ import org.jetbrains.amper.frontend.messages.originalFilePath
 import org.jetbrains.amper.frontend.reportBundleError
 import org.jetbrains.amper.frontend.tree.MappingNode
 import org.jetbrains.amper.frontend.tree.TreeDiagnosticId
+import org.jetbrains.amper.frontend.tree.diagnoseUnknownProperties
 import org.jetbrains.amper.frontend.types.SchemaObjectDeclaration
 import org.jetbrains.amper.frontend.types.SchemaType
 import org.jetbrains.amper.problems.reporting.ProblemReporter
@@ -43,7 +44,7 @@ fun readTree(
     file: YAMLFile,
     type: SchemaType.ObjectType,
     vararg contexts: Context,
-    reportUnknowns: Boolean = true,
+    unknownPropertiesMode: UnknownPropertiesParsingMode = UnknownPropertiesParsingMode.BestEffortAndReport,
     referenceParsingMode: ReferencesParsingMode = ReferencesParsingMode.IgnoreButWarn,
     parseContexts: Boolean = true,
 ): MappingNode {
@@ -51,7 +52,7 @@ fun readTree(
     return file.childrenOfType<YAMLDocument>().firstOrNull()?.topLevelValue?.let {
         val config = ParsingConfig(
             basePath = checkNotNull(file.originalFilePath).parent.absolute(),
-            skipUnknownProperties = !reportUnknowns,
+            unknownPropertiesMode = unknownPropertiesMode,
             supportContexts = parseContexts,
             referenceParsingMode = referenceParsingMode,
         )
@@ -69,7 +70,7 @@ internal fun readTree(
     file: VirtualFile,
     declaration: SchemaObjectDeclaration,
     vararg contexts: Context,
-    reportUnknowns: Boolean = true,
+    unknownPropertiesMode: UnknownPropertiesParsingMode = UnknownPropertiesParsingMode.BestEffortAndReport,
     referenceParsingMode: ReferencesParsingMode = ReferencesParsingMode.IgnoreButWarn,
     parseContexts: Boolean = true,
 ): MappingNode {
@@ -80,7 +81,7 @@ internal fun readTree(
                 file = psiFile as YAMLFile,
                 type = declaration.toType(),
                 contexts = contexts,
-                reportUnknowns = reportUnknowns,
+                unknownPropertiesMode = unknownPropertiesMode,
                 referenceParsingMode = referenceParsingMode,
                 parseContexts = parseContexts,
             )
@@ -91,12 +92,12 @@ internal fun readTree(
 
 internal class ParsingConfig(
     val basePath: Path,
-    val skipUnknownProperties: Boolean,
+    val unknownPropertiesMode: UnknownPropertiesParsingMode,
     val referenceParsingMode: ReferencesParsingMode,
     val supportContexts: Boolean,
 )
 
-context(_: Contexts, _: ParsingConfig, reporter: ProblemReporter)
+context(_: Contexts, config: ParsingConfig, reporter: ProblemReporter)
 private fun parseFile(
     file: YAMLFile,
     type: SchemaType.ObjectType,
@@ -111,7 +112,11 @@ private fun parseFile(
     }
     val value = documents.first() // Safe - at least one document is always present
         .topLevelValue ?: return null
-    return parseNode(YamlValue(value), type) as? MappingNode?
+    val resultNode = parseNode(YamlValue(value), type)
+    if (config.reportUnknownProperties) {
+        diagnoseUnknownProperties(resultNode)
+    }
+    return resultNode as? MappingNode?
 }
 
 enum class ReferencesParsingMode {
@@ -130,4 +135,21 @@ enum class ReferencesParsingMode {
      * Suited for files where references are not yet supported but planned.
      */
     IgnoreButWarn,
+}
+
+enum class UnknownPropertiesParsingMode {
+    /**
+     * Do not include unknown properties in the tree and do not report them.
+     */
+    SkipSilently,
+
+    /**
+     * Parse unknown properties on the best effort basis but do not report them.
+     */
+    BestEffortSilently,
+
+    /**
+     * Parse unknown properties on the best effort basis and report them.
+     */
+    BestEffortAndReport,
 }

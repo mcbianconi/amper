@@ -17,6 +17,13 @@ tasks:
         - ${markOutputsAs}
         - []
       requiredString2: ${pluginSettings.requiredString.missing}-${pluginSettings.unknown}-${unknownRoot.a}"
+      unknownProperty1: hello
+      unknownProperty2: -128
+      unknownProperty3: ${unknownProperty2}
+      unknownProperty4: ${dependencies}
+      unknownProperty5: ${module.name}
+      unknownProperty6: ${module.settings}
+      unknownProperty7: ${module.settings.kotlin.languageVersion}
     taskOutputDir: ./hack/ed
 
 module: {}

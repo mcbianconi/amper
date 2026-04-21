@@ -37,6 +37,7 @@ import org.jetbrains.amper.frontend.tree.invoke
 import org.jetbrains.amper.frontend.tree.mergeTrees
 import org.jetbrains.amper.frontend.tree.put
 import org.jetbrains.amper.frontend.tree.reading.ReferencesParsingMode
+import org.jetbrains.amper.frontend.tree.reading.UnknownPropertiesParsingMode
 import org.jetbrains.amper.frontend.tree.reading.readTree
 import org.jetbrains.amper.frontend.types.SchemaObjectDeclaration
 import org.jetbrains.amper.frontend.types.SchemaTypingContext
@@ -194,7 +195,8 @@ private fun parseAndDiagnosePluginTree(
         val tree = readTree(
             file = pluginFile,
             declaration = pluginYamlDeclaration,
-            reportUnknowns = true,
+            // Silently, because we report them later after refine and reference resolution
+            unknownPropertiesMode = UnknownPropertiesParsingMode.BestEffortSilently,
             referenceParsingMode = ReferencesParsingMode.Parse,
             parseContexts = false,
         )

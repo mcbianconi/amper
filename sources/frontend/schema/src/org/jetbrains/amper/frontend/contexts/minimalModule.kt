@@ -20,6 +20,7 @@ import org.jetbrains.amper.frontend.schema.ProductType
 import org.jetbrains.amper.frontend.tree.TreeRefiner
 import org.jetbrains.amper.frontend.tree.completeTree
 import org.jetbrains.amper.frontend.tree.instance
+import org.jetbrains.amper.frontend.tree.reading.UnknownPropertiesParsingMode
 import org.jetbrains.amper.frontend.tree.reading.readTree
 import org.jetbrains.amper.frontend.types.SchemaTypingContext
 import org.jetbrains.amper.frontend.types.generated.*
@@ -44,7 +45,7 @@ internal fun tryReadMinimalModule(moduleFilePath: VirtualFile): MinimalModuleHol
         val moduleTree = readTree(
             moduleFilePath,
             declaration = DeclarationOfMinimalModule,
-            reportUnknowns = false,
+            unknownPropertiesMode = UnknownPropertiesParsingMode.SkipSilently,
         )
 
         TreeRefiner().refineTree(moduleTree, EmptyContexts).completeTree()?.instance<MinimalModule>()

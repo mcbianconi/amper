@@ -41,11 +41,6 @@ sealed interface SchemaType {
         val knownValues: Set<String>? = null,
         val semantics: Semantics? = null,
     ) : ScalarType, StringInterpolatableType {
-
-        // TODO remove after the Amper libraries bump in the IDE (this is just to help bump smoothly)
-        @Deprecated("Renamed to 'knownValues'", ReplaceWith("knownValues"), level = DeprecationLevel.ERROR)
-        val knownStringValues: Set<String>? get() = knownValues
-
         enum class Semantics {
             /**
              * String has maven coordinates format: <groupId>:<artifactId>(:<version>)?(:<qualifier>)?
@@ -108,11 +103,19 @@ sealed interface SchemaType {
         override val isMarkedNullable: Boolean = false,
     ) : SchemaType, MapLikeType
 
+    /**
+     * A special **non-denotable** type that would accept any value.
+     * Used internally in places where the concrete type can't be known due to an invalid user input,
+     * but where we still want to proceed "normally" on the best effort basis/to not issue induced errors.
+     */
+    data object UndefinedType : SchemaType {
+        override val isMarkedNullable: Boolean get() = true
+    }
+
     companion object {
         val StringType = StringType()
-        val TraceableStringType = StringType(isTraceableWrapped = true)
-        val TraceablePathType = PathType(isTraceableWrapped = true)
         val PathType = PathType()
         val BooleanType = BooleanType()
+        val IntType = IntType()
     }
 }

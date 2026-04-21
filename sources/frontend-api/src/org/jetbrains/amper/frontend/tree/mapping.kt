@@ -18,6 +18,8 @@ import kotlin.reflect.KProperty1
  * When [declaration] is `null`, this node represents a map. When non-null, it represents an object.
  *
  * This node can have more than one [KeyValue] with different contexts but with the same [key][KeyValue.key].
+ * If the node is an object ([declaration] is not null) it can still contain "unknown" key-values that are not present in
+ * the schema. Such key-values have [KeyValue.propertyDeclaration] as `null`.
  *
  * @see RefinedMappingNode
  */
@@ -31,6 +33,7 @@ sealed interface MappingNode : TreeNode {
 /**
  * Same as [MappingNode], but guarantess key string uniqueness in [children].
  * Also provides access to the [key-values][RefinedKeyValue] as a map - [refinedChildren].
+ * Unknown properties are still permitted.
  */
 interface RefinedMappingNode : MappingNode, RefinedTreeNode {
     override val children : List<RefinedKeyValue>
@@ -38,7 +41,7 @@ interface RefinedMappingNode : MappingNode, RefinedTreeNode {
 }
 
 /**
- * Same as [RefinedMappingNode], but guarantees *completeness* of its [refinedChildren].
+ * Same as [RefinedMappingNode], but guarantees [completeness][CompleteTreeNode] of its [refinedChildren].
  * Has two distinct variants:
  * - [CompleteMapNode] (map)
  * - [CompleteObjectNode] (object)
@@ -60,7 +63,8 @@ interface CompleteMapNode : CompleteMappingNode {
 /**
  * A complete tree node of a [SchemaType.ObjectType] type.
  * Every [keyValue][CompletePropertyKeyValue] ([children]/[refinedChildren]) is guaranteed to have a
- * [property declaration][CompletePropertyKeyValue.propertyDeclaration].
+ * [property declaration][CompletePropertyKeyValue.propertyDeclaration], so no unknown properties are permitted,
+ * and for every property in [declaration] there is a key-value in [children]/[refinedChildren].
  * All child nodes are complete.
  */
 interface CompleteObjectNode : CompleteMappingNode {

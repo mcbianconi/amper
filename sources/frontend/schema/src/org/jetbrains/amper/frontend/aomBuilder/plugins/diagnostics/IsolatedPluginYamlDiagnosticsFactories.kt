@@ -4,10 +4,13 @@
 
 package org.jetbrains.amper.frontend.aomBuilder.plugins.diagnostics
 
+import org.jetbrains.amper.frontend.tree.diagnoseUnknownProperties
+
 /**
  * All [IsolatedPluginYamlDiagnosticsFactory]s.
  */
 internal val IsolatedPluginYamlDiagnosticsFactories = listOf(
+    IsolatedPluginYamlDiagnosticsFactory { diagnoseUnknownProperties(it) },
     MissingPropertiesDiagnosticFactory,
     NoTasksDiagnosticFactory,
     InvalidTaskNameReferencesDiagnosticFactory,

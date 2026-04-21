@@ -4,9 +4,10 @@
 
 package org.jetbrains.amper.frontend.diagnostics
 
-import com.intellij.psi.PsiElement
 import org.jetbrains.amper.frontend.SchemaBundle
-import org.jetbrains.amper.frontend.messages.PsiBuildProblem
+import org.jetbrains.amper.frontend.types.SchemaObjectDeclaration
+import org.jetbrains.amper.problems.reporting.BuildProblem
+import org.jetbrains.amper.problems.reporting.BuildProblemSource
 import org.jetbrains.amper.problems.reporting.BuildProblemType
 import org.jetbrains.amper.problems.reporting.DiagnosticId
 import org.jetbrains.amper.problems.reporting.Level
@@ -17,10 +18,15 @@ import org.jetbrains.annotations.Nls
  */
 class UnknownProperty(
     val invalidName: String,
-    val possibleIntendedNames: List<String>,
-    override val element: PsiElement,
-) : PsiBuildProblem(Level.Error, BuildProblemType.UnknownSymbol) {
+    val inside: SchemaObjectDeclaration,
+    override val source: BuildProblemSource,
+) : BuildProblem {
+    val possibleIntendedNames: List<String> = inside.properties
+        .filter { invalidName in it.misnomers }
+        .map { it.name }
 
+    override val level get() = Level.Error
+    override val type get() = BuildProblemType.UnknownSymbol
     override val diagnosticId: DiagnosticId = FrontendDiagnosticId.UnknownProperty
     override val message: @Nls String
         get() = if (possibleIntendedNames.isEmpty()) {

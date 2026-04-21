@@ -164,6 +164,8 @@ private object SingleATypeSchemaBuilder : ATypesVisitor<JsonElement> {
         is SchemaType.EnumType -> error("Handled in visitEnum")
     }
 
+    override fun visitAny() = JsonPrimitive(true)
+
     override fun visitMap(type: SchemaType.MapType) =
         ArrayElement(
             items = ObjectElement(patternProperties = mapOf("^[^@+:]+$" to type.valueType.accept())),

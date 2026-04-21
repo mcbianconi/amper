@@ -63,9 +63,9 @@ internal sealed interface ResolutionEdge {
     val step: ResolutionStep
 
     /**
-     * A [key][text] in the map
+     * A [key][text] in the map, or an unknown property in an object.
      */
-    data class MapKey(
+    data class Key(
         override val step: ResolutionStep,
         override val text: String,
     ) : ResolutionEdge

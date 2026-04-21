@@ -33,6 +33,8 @@ interface KeyValue : WithContexts, Traceable {
     /**
      * Property declaration, if the mapping this key-value belongs to is an [object][SchemaObjectDeclaration].
      * `null` if this belongs to a [map][SchemaType.MapType].
+     *
+     * NOTE: can still be `null` even for object case, if the corresponding property doesn't exist (invalid tree).
      */
     val propertyDeclaration: SchemaObjectDeclaration.Property?
 }

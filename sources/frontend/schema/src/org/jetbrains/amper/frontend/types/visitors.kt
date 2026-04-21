@@ -16,6 +16,7 @@ interface ATypesVisitor<R> {
         is SchemaType.ListType -> visitList(type)
         is SchemaType.VariantType -> visitPolymorphic(type)
         is SchemaType.ObjectType -> visitObject(type)
+        SchemaType.UndefinedType -> visitAny()
     }
 
     fun visitEnum(type: SchemaType.EnumType): R
@@ -24,6 +25,7 @@ interface ATypesVisitor<R> {
     fun visitList(type: SchemaType.ListType): R
     fun visitPolymorphic(type: SchemaType.VariantType): R
     fun visitObject(type: SchemaType.ObjectType): R
+    fun visitAny(): R
 }
 
 /**
@@ -40,6 +42,7 @@ private class AObjectRecursiveCollector : ATypesVisitor<List<SchemaType.ObjectTy
 
     override fun visitEnum(type: SchemaType.EnumType) = empty
     override fun visitScalar(type: SchemaType.ScalarType) = empty
+    override fun visitAny() = empty
     override fun visitMap(type: SchemaType.MapType) = type.valueType.accept()
     override fun visitList(type: SchemaType.ListType) = type.elementType.accept()
 

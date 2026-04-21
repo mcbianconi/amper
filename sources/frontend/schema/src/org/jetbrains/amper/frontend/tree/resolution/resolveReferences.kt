@@ -15,6 +15,7 @@ import org.jetbrains.amper.frontend.tree.LeafTreeNode
 import org.jetbrains.amper.frontend.tree.PathNode
 import org.jetbrains.amper.frontend.tree.RecurringRefinedTreeVisitorUnit
 import org.jetbrains.amper.frontend.tree.ReferenceNode
+import org.jetbrains.amper.frontend.tree.RefinedListNode
 import org.jetbrains.amper.frontend.tree.RefinedMappingNode
 import org.jetbrains.amper.frontend.tree.RefinedTreeNode
 import org.jetbrains.amper.frontend.tree.RefinedTreeTransformer
@@ -110,7 +111,9 @@ private class ReferenceResolutionSession(
         }.visit(root)
     }
 
-    // null means resolution happened in type-only mode. The resolution result is valid, but no physical node is there.
+    // null means resolution happened in type-only mode or the resolved value contained some nested references.
+    // This means that the corresponding key node should not be replaced with anything and left as is for now.
+    // In the case of errors, `ErrorNode` is here, not null.
     private val resolvedNodes = mutableMapOf<ResolvableNode, RefinedTreeNode?>()  // black
     private val currentlyResolvingStack = mutableListOf<ResolvableNode>()        // gray
 
@@ -121,7 +124,7 @@ private class ReferenceResolutionSession(
     fun perform(): RefinedTreeNode {
         // Perform the resolution DFS, detecting loops
         ensureEverythingInSubtreeResolved(root)
-        // At the result, we have `resolvedNodes` populated.
+        // As a result, we have `resolvedNodes` populated.
 
         // Now make a tree copy, substituting all the fully resolved references, where applicable
         //  (those without holes and without transitive unresolved references)
@@ -131,17 +134,7 @@ private class ReferenceResolutionSession(
             private fun resolvedOrSelf(node: ResolvableNode): RefinedTreeNode {
                 // If the resolved subtree contains
                 val resolvedNode = resolvedNodes[node] ?: return node
-
-                val resolvedSubtree = visit(resolvedNode)!!
-                if (resolvedSubtree.subtreeContainsResolvableNodes()) {
-                    /*
-                     If a subtree contains yet-unresolved references, we don't substitute this tree.
-                     It's because these nested references will lose the original ResolutionContext after relocation.
-                     They will be resolved later when all the holes are filled.
-                     */
-                    return node
-                }
-                return resolvedSubtree
+                return visit(resolvedNode)!!
             }
         }.visit(root) as RefinedMappingNode
     }
@@ -182,8 +175,8 @@ private class ReferenceResolutionSession(
         referenceNode: ReferenceNode,
         context: ResolutionContext,
     ): RefinedTreeNode? = when (val result = doResolve(referenceNode, context, referenceNode.referencedPath)) {
-        is ResolutionStep.Value -> when (result.value) {
-            is ResolvableNode -> result.value // Reference with a "hole", leave as is
+        is ResolutionStep.Value -> when {
+            result.value.subtreeContainsResolvableNodes() -> null // Reference (nested) with a "hole", leave as is
             else -> {
                 var value = result.value
                 val transform = referenceNode.transform
@@ -211,7 +204,11 @@ private class ReferenceResolutionSession(
             }
         }
         is ResolutionStep.Hole -> if (referenceNode.expectedType.isAssignableFrom(result.type)) {
-            null  // Type-check - OK, leave as is
+            if (referenceNode.expectedType == SchemaType.UndefinedType) {
+                // Replace the type with a more precise one from the hole.
+                // Some clients (like unknown properties diagnostics) may be interested in as narrow types as possible.
+                referenceNode.copy(expectedType = result.type)
+            } else null  // Type-check - OK, leave as is
         } else {
             reporter.reportBundleError(
                 source = referenceNode.trace.asBuildProblemSource(),
@@ -229,7 +226,7 @@ private class ReferenceResolutionSession(
     private fun resolveStringInterpolationNode(
         interpolationNode: StringInterpolationNode,
         context: ResolutionContext,
-    ): LeafTreeNode {
+    ): LeafTreeNode? {
         val allResolvedValues = mutableListOf<Traceable>()
         val resolvedParts = interpolationNode.parts.map { part ->
             when (part) {
@@ -287,9 +284,7 @@ private class ReferenceResolutionSession(
 
             // Partial resolution - update the node with the resolved parts
             resolvedParts.any { it is StringInterpolationNode.Part.Reference } -> {
-                // FIXME: pre-resolved trace
-                // Doesn't matter for now as `definitionTrace` is always present for string interpolations
-                interpolationNode.copy(resolvedParts)
+                null  // Contains holes, keep as is
             }
             else -> {  // All parts are resolved - do the interpolation
                 val interpolated = resolvedParts.joinToString(separator = "") {
@@ -491,23 +486,27 @@ private class ReferenceResolutionSession(
             null
         }
     }
+
+    private fun RefinedTreeNode.subtreeContainsResolvableNodes(): Boolean = when(this) {
+        is RefinedListNode -> children.any { it.subtreeContainsResolvableNodes() }
+        is RefinedMappingNode -> children.any { it.value.subtreeContainsResolvableNodes() }
+        is ResolvableNode -> resolvedNodes[this]?.subtreeContainsResolvableNodes() ?: true
+        else -> false
+    }
 }
 
 private fun RefinedMappingNode.resolveEdge(
     text: String,
-): ResolutionEdge? = when (val declaration = declaration) {
-    // Map
+): ResolutionEdge? = when (val property = declaration?.getProperty(text)) {
+    // Map or unknown property in an object
     null -> when (val keyValue = refinedChildren[text]) {
         null -> null
-        else -> ResolutionEdge.MapKey(ResolutionStep.Value(keyValue.value), text)
+        else -> ResolutionEdge.Key(ResolutionStep.Value(keyValue.value), text)
     }
-    // Object
-    else -> when (val property = declaration.getProperty(text)) {
-        null -> null
-        else -> when (val keyValue = refinedChildren[text]) {
-            null -> ResolutionEdge.Property(ResolutionStep.Hole(property.type), property)
-            else -> ResolutionEdge.Property(ResolutionStep.Value(keyValue.value), property)
-        }
+    // Known object property
+    else -> when (val keyValue = refinedChildren[text]) {
+        null -> ResolutionEdge.Property(ResolutionStep.Hole(property.type), property)
+        else -> ResolutionEdge.Property(ResolutionStep.Value(keyValue.value), property)
     }
 }
 

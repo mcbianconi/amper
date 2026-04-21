@@ -32,18 +32,6 @@ internal fun parseNode(
     type: SchemaType,
     explicitContexts: Contexts = EmptyContexts,
 ): TreeNode {
-    // Unquoted `null` string is treated as the `null` keyword, not a string
-    if (value is YamlValue.Scalar && value.isLiteral && value.textValue == "null") {
-        if (!type.isMarkedNullable) {
-            when (type) {
-                is SchemaType.EnumType, is SchemaType.PathType, is SchemaType.StringType,
-                    -> reportParsing(value, TreeDiagnosticId.UnexpectedNull, "validation.types.unexpected.null.stringlike", type = BuildProblemType.TypeMismatch)
-                else -> reportParsing(value, TreeDiagnosticId.UnexpectedNull, "validation.types.unexpected.null", type = BuildProblemType.TypeMismatch)
-            }
-            return ErrorNode(type, value.asTrace(), explicitContexts)
-        }
-        return NullLiteralNode(value.asTrace(), explicitContexts)
-    }
     value.tag?.let { tag ->
         if (tag.text.startsWith("!!")) {
             reportParsing(tag, TreeDiagnosticId.TagsAreNotSupported, "validation.structure.unsupported.standard.tag", tag.text)
@@ -55,6 +43,27 @@ internal fun parseNode(
 
     value.psi.childrenOfType<YAMLAnchor>().forEach { anchor ->
         reportParsing(anchor, TreeDiagnosticId.AliasesAreNotSupported, "validation.structure.unsupported.alias")
+    }
+
+    // Unquoted `null` string is treated as the `null` keyword, not a string
+    if (value is YamlValue.Scalar && value.isLiteral && value.textValue == "null") {
+        if (!type.isMarkedNullable) {
+            when (type) {
+                is SchemaType.EnumType, is SchemaType.PathType, is SchemaType.StringType,
+                    -> reportParsing(
+                    value, TreeDiagnosticId.UnexpectedNull,
+                    "validation.types.unexpected.null.stringlike",
+                    type = BuildProblemType.TypeMismatch,
+                )
+                else -> reportParsing(
+                    value, TreeDiagnosticId.UnexpectedNull,
+                    "validation.types.unexpected.null",
+                    type = BuildProblemType.TypeMismatch,
+                )
+            }
+            return ErrorNode(type, value.asTrace(), explicitContexts)
+        }
+        return NullLiteralNode(value.asTrace(), explicitContexts)
     }
 
     // This is required because all "inherited" contexts, that are not explicitly mentioned must not have any traces.
@@ -82,10 +91,11 @@ internal fun parseNode(
             is SchemaType.MapType if value is YamlValue.Sequence -> parseMapFromSequence(value, type)
             is SchemaType.ObjectType -> parseObject(value, type)
             is SchemaType.VariantType -> parseVariant(value, type)
+            SchemaType.UndefinedType -> parseUndefinedBestEffort(value)
             else -> {
                 reportUnexpectedValue(value, type)
-                null
+                ErrorNode(type, value.asTrace(), explicitContexts)
             }
-        } ?: ErrorNode(type, value.asTrace(), explicitContexts)
+        }
     }
 }

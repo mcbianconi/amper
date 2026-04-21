@@ -114,6 +114,14 @@ class StringInterpolationNode(
     }
 }
 
+fun ReferenceNode.copy(
+    referencedPath: List<String> = this.referencedPath,
+    expectedType: SchemaType = this.expectedType,
+    transform: ReferenceNode.Transform? = this.transform,
+    trace: Trace = this.trace,
+    contexts: Contexts = this.contexts,
+) = ReferenceNode(referencedPath, expectedType, transform, trace, contexts)
+
 fun StringInterpolationNode.copy(
     parts: List<StringInterpolationNode.Part> = this.parts,
     expectedType: SchemaType.StringInterpolatableType = this.expectedType,

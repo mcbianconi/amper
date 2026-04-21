@@ -15,7 +15,7 @@ import org.jetbrains.amper.problems.reporting.ProblemReporter
  * Any [errors][org.jetbrains.amper.problems.reporting.Level.Error] issued lead to the plugin being considered invalid:
  * it can no longer be applied to any module.
  */
-internal interface IsolatedPluginYamlDiagnosticsFactory {
+internal fun interface IsolatedPluginYamlDiagnosticsFactory {
     /**
      * Analyzes given [pluginTree] and issues diagnostics into [reporter].
      *

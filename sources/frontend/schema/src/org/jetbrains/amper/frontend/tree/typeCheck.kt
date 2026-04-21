@@ -35,6 +35,7 @@ fun SchemaType.isAssignableFrom(
     }
 
     return when (this) {
+        SchemaType.UndefinedType -> true
         is SchemaType.ListType -> rhs is SchemaType.ListType
                 && elementType.isAssignableFrom(rhs.elementType, allowStringConversion = false)
         is SchemaType.MapType -> rhs is SchemaType.MapType
@@ -98,6 +99,7 @@ fun SchemaType.cast(
 
     return when (this) {
         // No conversion - just type check
+        SchemaType.UndefinedType -> node
         is SchemaType.ObjectType if node is RefinedMappingNode && declaration == node.declaration -> node
         is SchemaType.BooleanType if node is BooleanNode -> node
         is SchemaType.EnumType if node is EnumNode && declaration == node.declaration -> node

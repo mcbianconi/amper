@@ -91,6 +91,7 @@ fun Default.Static.toTreeValue(type: SchemaType, trace: Trace): RefinedTreeNode 
         is SchemaType.ObjectType, is SchemaType.VariantType -> {
             error("Static defaults for object types are not supported")
         }
+        SchemaType.UndefinedType -> error("Defaults for UndefinedType are unexpected.")
     }
 }
 

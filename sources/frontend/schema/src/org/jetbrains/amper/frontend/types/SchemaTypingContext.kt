@@ -43,20 +43,7 @@ class SchemaTypingContext(
     }
 
     private val mavenPluginSettingsDeclaration = createMavenPluginsSettingsDeclaration(mavenPlugins)
-
-    private val allPluginSettingsDeclaration = object : BuiltinSchemaObjectDeclarationBase<PluginSettings>() {
-        override val qualifiedName get() = "org.jetbrains.amper.frontend.schema.PluginSettings"
-        override fun createInstance() = PluginSettings()
-        override val properties: List<Property> = pluginDeclarations.map { (id, declarations) ->
-            Property(
-                name = id.value,
-                type = declarations.settingsClassDeclaration.toType(isMarkedNullable = true),
-                documentation = declarations.pluginData.description,
-                origin = declarations.pluginData.source.toOrigin(),
-                default = Default.Static(null),
-            )
-        }
-    }
+    private val allPluginSettingsDeclaration = PluginsSettingsBlockDeclarationImpl()
 
     val moduleDeclaration = DeclarationOfModule(
         mavenPluginSettingsDeclaration = mavenPluginSettingsDeclaration,
@@ -71,12 +58,27 @@ class SchemaTypingContext(
     fun pluginYamlDeclaration(id: PluginData.Id): DeclarationOfPluginYamlRoot {
         return pluginYamlDeclarations[id] ?: error("Plugin with ID $id not found")
     }
+
+    private inner class PluginsSettingsBlockDeclarationImpl
+        : BuiltinSchemaObjectDeclarationBase<PluginSettings>(), PluginsSettingsBlockDeclaration {
+        override val qualifiedName get() = "org.jetbrains.amper.frontend.schema.PluginSettings"
+        override fun createInstance() = PluginSettings()
+        override val properties: List<Property> = pluginDeclarations.map { (id, declarations) ->
+            Property(
+                name = id.value,
+                type = declarations.settingsClassDeclaration.toType(isMarkedNullable = true),
+                documentation = declarations.pluginData.description,
+                origin = declarations.pluginData.source.toOrigin(),
+                default = Default.Static(null),
+            )
+        }
+    }
 }
 
 /**
  * Synthetic variant that includes all available [task action types][TaskActionDeclaration].
  */
-internal class TaskActionVariantDeclaration(
+class TaskActionVariantDeclaration(
     override val qualifiedName: String,
     override val variants: List<TaskActionDeclaration>,
 ) : SchemaVariantDeclaration {
@@ -91,7 +93,17 @@ internal class TaskActionVariantDeclaration(
  * A declaration corresponding to a concrete `@TaskAction` function in the plugin code.
  * A member of a [TaskActionVariantDeclaration].
  */
-internal interface TaskActionDeclaration : SchemaObjectDeclaration
+interface TaskActionDeclaration : SchemaObjectDeclaration
+
+/**
+ * A declaration corresponding to `plugins:` in the `module.yaml` and templates.
+ */
+interface PluginsSettingsBlockDeclaration : SchemaObjectDeclaration
+
+/**
+ * A declaration that is used when no `pluginSettings` interface is specified for a plugin.
+ */
+interface PluginSettingsStubDeclaration : SchemaObjectDeclaration
 
 private class PluginDeclarations(
     val pluginData: PluginData,
@@ -139,8 +151,10 @@ private class PluginDeclarations(
     }
 
     val settingsClassDeclaration: SchemaObjectDeclaration =
+        // TODO: If invalid, maybe use SchemaType.UndefinedType here somehow?
         pluginData.pluginSettingsSearchResult.asSuccessOrNull()?.name?.let(::classDeclarationFor)
-            ?: object : SchemaObjectDeclarationBase() {
+            ?: object : SchemaObjectDeclarationBase(), PluginSettingsStubDeclaration {
+                override val origin = pluginData.source.toOrigin()
                 override val properties = listOf(enabledProperty(pluginData.source.toOrigin()))
                 override fun createInstance() = ExtensionSchemaNode()
                 override val qualifiedName: String get() = "${pluginData.id.value}.Settings"
@@ -250,7 +264,6 @@ private fun Defaults?.toInternalDefault(forType: PluginData.Type): Default? {
 
     if (forType is PluginData.Type.ObjectType) {
         // For non-nullable objects we instantiate a nested object by default, like with `by nested()`
-        // Note: the real type will be taken out of the property type, so it's not important what to put here.
         return Default.NestedObject
     }
 

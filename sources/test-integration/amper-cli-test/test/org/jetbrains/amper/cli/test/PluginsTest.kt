@@ -16,8 +16,6 @@ import org.jetbrains.amper.frontend.schema.DefaultVersions
 import org.jetbrains.amper.test.AmperCliResult
 import org.jetbrains.amper.test.Dirs
 import org.jetbrains.amper.test.normalizeLineSeparators
-import org.junit.jupiter.api.parallel.Execution
-import org.junit.jupiter.api.parallel.ExecutionMode
 import org.slf4j.event.Level
 import java.io.File
 import kotlin.io.path.div
@@ -431,6 +429,8 @@ class PluginsTest : AmperCliTestBase() {
                 "${projectDir / "no-tasks-plugin" / "plugin.yaml"}: Plugin doesn't register any tasks, so it will have no effect when applied",
             )
             assertErrors(
+                "${projectDir / "app" / "module.yaml"}:5:3: Unknown plugin ID `unknown`. Ensure the corresponding plugin is registered in the `project.yaml` in the `plugins:` list.",
+                "${projectDir / "app" / "module.yaml"}:7:5: Unknown property `hello` (inferred type `string`) in `Settings`",
                 "${projectDir / "invalid-plugin-yaml-2" / "plugin.yaml"}:3:5: Expected a value: `existingTaskAction {..}`",
                 "${projectDir / "invalid-plugin-yaml-2" / "plugin.yaml"}:5:13: Expected a value: `existingTaskAction {..}`",
                 "${projectDir / "invalid-plugin-yaml" / "plugin.yaml"}:2:3: Expected a value: `Task {..}`",
@@ -543,9 +543,9 @@ class PluginsTest : AmperCliTestBase() {
         with(result) {
             val pluginYaml = projectDir / "plugin1" / "plugin.yaml"
             assertErrors(
-                "${pluginYaml}:20:5: Cannot assign to property `taskOutputDir` - it is a built-in property available for reference only",
+                "${pluginYaml}:27:5: Cannot assign to property `taskOutputDir` - it is a built-in property available for reference only",
                 "${pluginYaml}:18:11: Expected `Dependency.Maven ( maven-coordinates )`, but got `sequence []`",
-                "${pluginYaml}:22:1: Cannot assign to property `module` - it is a built-in property available for reference only",
+                "${pluginYaml}:29:1: Cannot assign to property `module` - it is a built-in property available for reference only",
                 "${pluginYaml}:17:11: Referencing `markOutputsAs` is not allowed",
                 "${pluginYaml}:14:11: Maven coordinates should not contain slashes",
                 "${pluginYaml}:15:11: Maven coordinates one-part should contain at least two parts separated by ':', but got 1",
@@ -560,6 +560,14 @@ class PluginsTest : AmperCliTestBase() {
                 "${pluginYaml}:19:24: Unable to resolve `missing` on a non-object type `string`",
                 "${pluginYaml}:19:24: Unable to resolve `unknown`: no such property is found in type `Settings`",
                 "${pluginYaml}:10:20: The value of type `path | null` cannot be assigned to the type `integer | null`",
+                "${pluginYaml}:20:7: Unknown property `unknownProperty1` (inferred type `string`) in `someAction`",
+                "${pluginYaml}:21:7: Unknown property `unknownProperty2` (inferred type `integer`) in `someAction`",
+                "${pluginYaml}:22:7: Unknown property `unknownProperty3` (inferred type `integer`) in `someAction`",
+                "${pluginYaml}:23:7: Unknown property `unknownProperty4` (inferred type `list [Dependency.Maven]`) in `someAction`",
+                "${pluginYaml}:24:7: Unknown property `unknownProperty5` (inferred type `string`) in `someAction`",
+                "${pluginYaml}:25:7: Unknown property `unknownProperty6` (inferred type `<undefined-type>`) in `someAction`",
+                "${pluginYaml}:25:25: Referencing `settings` is not allowed",
+                "${pluginYaml}:26:7: Unknown property `unknownProperty7` (inferred type `KotlinVersion | null`) in `someAction`",
                 "failed to read Amper model, refer to the errors above",
             )
         }
