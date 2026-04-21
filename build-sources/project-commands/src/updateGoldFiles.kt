@@ -73,6 +73,8 @@ private class AmperGoldUpdater(
             val updatedFilesCount = updateTmpFilesUnder(goldFilesRoot)
             if (updatedFilesCount == 0) {
                 println("Tests failed for $sectionName, but no .tmp files were found.")
+                println("Retrying is pointless here because gold files didn't change, please check the test failure.")
+                return
             } else {
                 println("Updated $updatedFilesCount gold file(s) for $sectionName.")
             }
