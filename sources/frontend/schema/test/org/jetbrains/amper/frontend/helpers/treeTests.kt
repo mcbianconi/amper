@@ -15,10 +15,10 @@ import org.jetbrains.amper.frontend.contexts.PathInheritance
 import org.jetbrains.amper.frontend.contexts.plus
 import org.jetbrains.amper.frontend.contexts.tryReadMinimalModule
 import org.jetbrains.amper.frontend.tree.TreeNode
+import org.jetbrains.amper.frontend.tree.TreeRefiner
 import org.jetbrains.amper.frontend.tree.jsonDump
 import org.jetbrains.amper.frontend.tree.mergeTrees
 import org.jetbrains.amper.frontend.tree.reading.readTree
-import org.jetbrains.amper.frontend.tree.refineTree
 import org.jetbrains.amper.frontend.types.SchemaTypingContext
 import org.jetbrains.amper.problems.reporting.BuildProblem
 import org.jetbrains.amper.problems.reporting.CollectingProblemReporter
@@ -187,7 +187,10 @@ internal fun readAndRefineModule(
 ): TreeBuilderFunction = {
     val minimalModule = checkNotNull(tryReadMinimalModule(it)) { "Failed to read minimal module for $it" }
     val tree = readTree(it, ModuleDeclaration)
-    tree.refineTree(contexts, minimalModule.platformsInheritance + MainTestInheritance + DefaultInheritance, withDefaults = withDefaults)
+    val refiner = TreeRefiner(
+        contextComparator = minimalModule.platformsInheritance + MainTestInheritance + DefaultInheritance,
+    )
+    refiner.refineTree(tree, contexts, withDefaults = withDefaults)
 }
 
 // Helper function read the module with templates and refine it with selected contexts.
@@ -204,5 +207,5 @@ internal fun readAndRefineModuleWithTemplates(contexts: (VirtualFile) -> Context
     )
     val combinedInheritance =
         minimalModule.platformsInheritance + pathInheritance + MainTestInheritance + DefaultInheritance
-    resultTree.refineTree(contexts(file), combinedInheritance, withDefaults = false)
+    TreeRefiner(combinedInheritance).refineTree(resultTree, contexts(file), withDefaults = false)
 }

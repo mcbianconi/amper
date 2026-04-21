@@ -18,7 +18,6 @@ import org.jetbrains.amper.frontend.tree.resolution.resolveReferences
 import org.jetbrains.amper.frontend.types.SchemaObjectDeclaration
 import org.jetbrains.amper.frontend.types.SchemaType
 import org.jetbrains.amper.problems.reporting.ProblemReporter
-import org.jetbrains.annotations.TestOnly
 
 /**
  * This is a class responsible for refining [TreeNode] values for a specified [Contexts].
@@ -53,18 +52,6 @@ class TreeRefiner(
         contextComparator = contextComparator,
     ).refineMapping(tree)
 }
-
-@TestOnly
-context(_: ProblemReporter)
-internal fun MappingNode.refineTree(
-    selectedContexts: Contexts,
-    contextComparator: ContextsInheritance<Context>,
-    withDefaults: Boolean = true,
-): RefinedMappingNode = RefineRequest(
-    selectedContexts = selectedContexts,
-    withDefaults = withDefaults,
-    contextComparator = contextComparator,
-).refineMapping(this)
 
 private class RefineRequest(
     private val selectedContexts: Contexts,
