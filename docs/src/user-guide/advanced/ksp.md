@@ -103,18 +103,14 @@ The annotations module is a very simple JVM library module without any required 
 some annotations to work with, if necessary):
 
 ```yaml title="my-processor-annotations/module.yaml"
-product:
-  type: kmp/lib
-  platforms: [ jvm ]
+product: jvm/lib
 ```
 
 The processor module is a JVM library with a `compile-only` dependency on KSP facilities, and on the custom annotations
 module:
 
 ```yaml title="my-processor/module.yaml"
-product:
-  type: kmp/lib
-  platforms: [ jvm ]
+product: jvm/lib
 
 dependencies:
   - ../my-processor-annotations
