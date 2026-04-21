@@ -62,7 +62,7 @@ platforms. To do so, use the `product.platforms` list:
 
 ```yaml
 product:
-  type: lib
+  type: kmp/lib
   platforms: [iosArm64, android, jvm]
 ```
 
@@ -139,7 +139,7 @@ You can then use the alias in places where `@platform` suffixes usually appear t
 
 ```yaml
 product:
-  type: lib
+  type: kmp/lib
   platforms: [iosArm64, android, jvm]
 
 aliases:
@@ -175,7 +175,7 @@ To add the [KmLogging library](https://github.com/DiamondEdge1/KmLogging) to a m
 
 ```yaml
 product:
-  type: lib
+  type: kmp/lib
   platforms: [android, iosArm64, jvm]
 
 dependencies:
@@ -205,7 +205,7 @@ For the explicitly specified dependencies in the `@platform`-sections the genera
 
 ```yaml
 product:
-  type: lib
+  type: kmp/lib
   platforms: [android, iosArm64, iosSimulatorArm64]
   
 dependencies:
@@ -239,7 +239,7 @@ dependencies@iosArm64:
 All toolchain settings, even platform-specific can be placed in the `settings:` section:
 ```yaml
 product:
-  type: lib
+  type: kmp/lib
   platforms: [android, iosArm64]
 
 settings:
@@ -290,7 +290,7 @@ E.g., for the given configuration:
 
 ```yaml
 product:
-  type: lib
+  type: kmp/lib
   platforms: [android, iosArm64, iosSimulatorArm64]
 
 settings:           # common toolchain settings

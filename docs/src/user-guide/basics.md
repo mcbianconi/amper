@@ -197,7 +197,7 @@ Here are some example module files for different types of modules:
 
     ```yaml
     product:
-      type: lib #(1)!
+      type: kmp/lib #(1)!
       platforms: [android, iosArm64, iosSimulatorArm64] #(2)!
     
     dependencies:
@@ -219,7 +219,7 @@ Here are some example module files for different types of modules:
         allWarningsAsErrors: false #(10)!
     ```
 
-    1. The `lib` product type means that the module produces a [:jetbrains-kotlin-multiplatform: Kotlin Multiplatform 
+    1. The `kmp/lib` product type means that the module produces a [:jetbrains-kotlin-multiplatform: Kotlin Multiplatform 
        library](product-types/kmp-lib.md).
        Read more about other product types in the [Product types](product-types/index.md) section.
     2. The `platforms` list contains the platforms that this module is built for.
@@ -250,7 +250,7 @@ Here are some example module files for different types of modules:
 ### Product type
 
 The **product type** describes what is created when building the module: a JVM application (`jvm/app`), Android 
-application (`android/app`), Kotlin Multiplatform library (`lib`), etc.
+application (`android/app`), Kotlin Multiplatform library (`kmp/lib`), etc.
 It actually tells us both the target platform and the type of the module at the same time.
 
 All modules generally work the same way, but each product type may add its own set of rules and capabilities.

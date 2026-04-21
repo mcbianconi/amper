@@ -123,7 +123,7 @@ A more interesting example would be `shared/module.yaml`:
 ```yaml
 # Produce a shared library for the JVM, Android, and iOS platforms:
 product:
-  type: lib
+  type: kmp/lib
   platforms: [jvm, android, iosArm64, iosSimulatorArm64, iosX64]
 
 # Shared Compose dependencies:

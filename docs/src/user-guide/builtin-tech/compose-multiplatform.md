@@ -47,7 +47,7 @@ Use `settings.compose.enabled` to enable Compose:
 
     ```yaml
     product:
-      type: lib
+      type: kmp/lib
       platforms: [ jvm, android, iosSimulatorArm64, iosX64, iosArm64 ]
     
     dependencies:

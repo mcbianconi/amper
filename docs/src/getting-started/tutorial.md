@@ -294,7 +294,7 @@ a `module.yaml` with the following content:
 
 ```YAML
 product:
-  type: lib
+  type: kmp/lib
   platforms: [jvm]
 
 dependencies:
@@ -429,7 +429,7 @@ Let's update the `shared/module.yaml` and add the new platforms and a couple of 
 
 ```yaml hl_lines="3 9-10 12-15"
 product:
-  type: lib
+  type: kmp/lib
   platforms: [ jvm, android, iosArm64, iosSimulatorArm64, iosX64 ]
 
 dependencies:
@@ -569,7 +569,7 @@ Now we will apply these templates to our module files:
 
 ```yaml title="shared/module.yaml" hl_lines="5-6"
 product:
-  type: lib
+  type: kmp/lib
   platforms: [ jvm, android, iosArm64, iosSimulatorArm64, iosX64 ]
 
 apply:

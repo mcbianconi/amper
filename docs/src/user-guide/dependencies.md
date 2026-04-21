@@ -196,11 +196,11 @@ To make a dependency accessible to all dependent modules during their compilatio
 ??? info "`exported` is like a scope for transitive consumers"
 
     We can see `exported` as a way to modify the scope of a transitive dependency in the context of the consuming 
-    module. For example, say `app` depends on `lib`, which depends on `ktor`. The `ktor` dependency is transitively 
-    part of the dependencies of `app`.
+    module. For example, say some module named `app` depends on `lib`, which depends on `ktor`. The `ktor` dependency 
+    is transitively part of the dependencies of `app`.
 
-    * If `lib` doesn't export `ktor`, the `ktor` dependency effectively has a `scope: runtime-only` in `app`
-    * If `lib` marks `ktor` as `exported`, the `ktor` dependency effectively has a `scope: all` in `app`
+     * If `lib` doesn't export `ktor`, the `ktor` dependency effectively has a `scope: runtime-only` in `app`
+     * If `lib` marks `ktor` as `exported`, the `ktor` dependency effectively has a `scope: all` in `app`
 
 ##### When to use `exported`
 

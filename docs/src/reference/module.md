@@ -15,7 +15,7 @@ Example:
 ```yaml
 # Create an alias to share code between JVM and Android platforms.  
 product:
-  type: lib
+  type: kmp/lib
   platforms: [ jvm, android, iosArm64, iosSimulatorArm64 ]
 
 aliases:
@@ -179,7 +179,7 @@ Supported product types and platforms:
 | `jvm/amper-plugin` | A plugin for Amper (see [Plugins](../user-guide/plugins/quick-start.md)). | `jvm`                                                            |
 | `jvm/app`          | A JVM application (console, desktop, server...).                          | `jvm`                                                            |
 | `jvm/lib`          | A JVM library that other modules can depend on.                           | `jvm`                                                            |
-| `lib`              | A reusable multiplatform library that other modules can depend on.        | any (the list must be specified explicitly)                      |
+| `kmp/lib`          | A reusable Kotlin Multiplatform library that other modules can depend on. | any (the list must be specified explicitly)                      |
 | `linux/app`        | A native Linux application.                                               | `linuxX86`, `linuxArm64`                                         |
 | `macos/app`        | A native macOS application.                                               | `macosX64`, `macosArm64`                                         |
 | `wasmJs/app`       | A Wasm (JS) application.                                                  | `wasmJs`                                                         |
@@ -204,7 +204,7 @@ product:
 
 ```yaml title="Multiplatform Library for JVM and Android platforms"
 product:
-  type: lib
+  type: kmp/lib
   platforms: [ jvm, android ]
 ```
 

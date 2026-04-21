@@ -1,9 +1,9 @@
 ---
-description: Learn how to use the `lib` product type in a module to build a Kotlin Multiplatform library.
+description: Learn how to use the `kmp/lib` product type in a module to build a Kotlin Multiplatform library.
 ---
 # :jetbrains-kotlin-multiplatform: Kotlin Multiplatform library
 
-Use the `lib` product type in a module to build a 
+Use the `kmp/lib` product type in a module to build a 
 [Kotlin Multiplatform](https://kotlinlang.org/docs/multiplatform/get-started.html) library.
 
 !!! tip "Using IntelliJ IDEA?"

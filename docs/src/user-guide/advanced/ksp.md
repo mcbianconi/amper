@@ -104,7 +104,7 @@ some annotations to work with, if necessary):
 
 ```yaml title="my-processor-annotations/module.yaml"
 product:
-  type: lib
+  type: kmp/lib
   platforms: [ jvm ]
 ```
 
@@ -113,7 +113,7 @@ module:
 
 ```yaml title="my-processor/module.yaml"
 product:
-  type: lib
+  type: kmp/lib
   platforms: [ jvm ]
 
 dependencies:

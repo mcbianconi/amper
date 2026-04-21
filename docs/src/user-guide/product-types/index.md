@@ -15,7 +15,7 @@ Here is the list of supported product types:
 |------------------------------------------------------|------------------------------------------------------------------------------------------------|
 | [`jvm/lib`](jvm-lib.md)                              | A JVM library                                                                                  |
 | [`jvm/app`](jvm-app.md)                              | A JVM console or desktop application                                                           |
-| [`lib`](kmp-lib.md)                                  | A Kotlin Multiplatform library                                                                 |
+| [`kmp/lib`](kmp-lib.md)                              | A Kotlin Multiplatform library                                                                 |
 | [`windows/app`](native-app.md)                       | A Kotlin/Native mingw-w64 application                                                          |
 | [`linux/app`](native-app.md)                         | A Kotlin/Native Linux application                                                              |
 | [`macos/app`](native-app.md)                         | A Kotlin/Native macOS application                                                              |

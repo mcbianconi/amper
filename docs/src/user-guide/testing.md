@@ -59,7 +59,7 @@ Example:
 
 ```yaml title="module.yaml"
 product:
-  type: lib
+  type: kmp/lib
   platforms: [android, iosArm64]
 
 # these dependencies are available in main and test code
