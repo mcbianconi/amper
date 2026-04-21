@@ -29,13 +29,13 @@ fun <T : Any> depthFirstDetectLoops(
         // Substack is introduced to preserve node hierarchy
         val subStack = stack.last()
         if (subStack.isEmpty()) {
-            stack.removeLast()
+            stack.removeAt(stack.lastIndex)
             continue
         }
 
         when (val node = subStack.last()) {
             in markedBlack -> {
-                subStack.removeLast()
+                subStack.removeAt(subStack.lastIndex)
             }
 
             in markedGray -> {
