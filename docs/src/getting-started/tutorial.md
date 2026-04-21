@@ -293,9 +293,7 @@ create it from here. Otherwise, just create a new `shared` directory manually, w
 a `module.yaml` with the following content:
 
 ```YAML
-product:
-  type: kmp/lib
-  platforms: [jvm]
+product: jvm/lib
 
 dependencies:
   - $compose.foundation: exported #(1)!
@@ -425,7 +423,8 @@ settings:
 ```
 </div>
 
-Let's update the `shared/module.yaml` and add the new platforms and a couple of additional dependencies for Android:
+Let's update the `shared/module.yaml` to turn it into a Kotlin Multiplatform library by changing `jvm/lib` to `kmp/lib`,
+and add the new platforms and a couple of additional dependencies for Android:
 
 ```yaml hl_lines="3 9-10 12-15"
 product:
