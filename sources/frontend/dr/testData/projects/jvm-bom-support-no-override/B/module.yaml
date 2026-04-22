@@ -1,6 +1,4 @@
-product:
-  type: kmp/lib
-  platforms: [ jvm ]
+product: jvm/lib
 
 dependencies:
   - io.ktor:ktor-client-cio-jvm:3.1.2

@@ -43,7 +43,7 @@ class KspTest: AmperCliTestBase() {
         val projectRoot = testProject("ksp-jvm-autoservice")
         val buildResult = runCli(projectRoot, "build")
 
-        val generatedFilesDir = buildResult.generatedFilesDir(module = "service-impl", fragment = "jvm")
+        val generatedFilesDir = buildResult.generatedFilesDir(module = "service-impl", fragment = "main")
         generatedFilesDir.assertContainsRelativeFiles(
             "resources/ksp/META-INF/services/com.sample.service.MyService",
         )

@@ -1,3 +1,1 @@
-product:
-  type: kmp/lib
-  platforms: [jvm]
+product: jvm/lib
