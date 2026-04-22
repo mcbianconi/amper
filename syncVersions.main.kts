@@ -10,12 +10,13 @@ import kotlin.io.path.absolute
 import kotlin.io.path.pathString
 
 /*
-This script is meant to be used to update several user-facing versions in:
-- the Amper project itself
-- our examples
-- our docs
-
-The source of truth is the list of versions at the top of this file.
+This script is just a wrapper around the `amper do syncVersions` command that is used to update several user-facing versions in:
+  - the Amper project itself
+  - our examples
+  - our docs
+The source of truth is the list of versions located in `build-sources/project-commands/module.yaml`.
+The script is used by TeamCity.
+Locally, developers should use either the "Sync versions" run configuration or the custom command itself.
  */
 
 val bootstrapAmperVersion = "0.11.0-dev-3836" // AUTO-UPDATED BY THE CI - DO NOT RENAME
