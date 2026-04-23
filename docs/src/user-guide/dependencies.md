@@ -242,7 +242,7 @@ migration).
 
 !!! info "You can only have one project catalog"
 
-    You have to choose between `libs.versions.toml` and `gradle/libs.versions.toml`", but cannot use both at the same 
+    You can choose between `libs.versions.toml` and `gradle/libs.versions.toml`, but you cannot use both at the same 
     time.
 
 To use dependencies from the project catalog, use the syntax `$libs.<key>` instead of the coordinates, where `$libs` is
