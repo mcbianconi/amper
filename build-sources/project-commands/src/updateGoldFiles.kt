@@ -44,13 +44,14 @@ private class AmperGoldUpdater(
             launch { updateDrGoldFiles(amperRootDir) }
             launch { updateSchemaGoldFiles(amperRootDir) }
             launch { updateCliGoldFiles(amperRootDir) }
+            launch { updatePluginGoldFiles(amperRootDir) }
         }
     }
 
     private suspend fun updateDrGoldFiles(amperRootDir: Path) {
         updateGoldFilesUntilSuccess(
             sectionName = "dr module",
-            goldFilesRoot = amperRootDir / "sources/frontend/dr",
+            goldFilesRoots = listOf(amperRootDir / "sources/frontend/dr"),
         ) {
             runAmperCli(amperRootDir, "test", "-m", "dr")
         }
@@ -59,7 +60,7 @@ private class AmperGoldUpdater(
     private suspend fun updateSchemaGoldFiles(amperRootDir: Path) {
         updateGoldFilesUntilSuccess(
             sectionName = "schema module",
-            goldFilesRoot = schemaModuleDir,
+            goldFilesRoots = listOf(schemaModuleDir),
         ) {
             runAmperCli(amperRootDir, "test", "-m", "schema")
         }
@@ -68,13 +69,25 @@ private class AmperGoldUpdater(
     private suspend fun updateCliGoldFiles(amperRootDir: Path) {
         updateGoldFilesUntilSuccess(
             sectionName = "amper-cli-test module",
-            goldFilesRoot = amperRootDir / "sources/test-integration/amper-cli-test",
+            goldFilesRoots = listOf(amperRootDir / "sources/test-integration/amper-cli-test"),
         ) {
             runAmperCli(amperRootDir, "test", "-m", "amper-cli-test", "--include-classes=*.ShowSettingsCommandTest", "--include-classes=*.ShowDependenciesCommandTest")
         }
     }
 
-    private inline fun updateGoldFilesUntilSuccess(sectionName: String, goldFilesRoot: Path, runTests: () -> Int) {
+    private suspend fun updatePluginGoldFiles(amperRootDir: Path) {
+        updateGoldFilesUntilSuccess(
+            sectionName = "amper-cli-test module",
+            goldFilesRoots = listOf(
+                amperRootDir / "sources/extensibility/amper-schema-processing",
+                amperRootDir / "sources/frontend-api",
+            ),
+        ) {
+            runAmperCli(amperRootDir, "test", "-m", "amper-schema-processing")
+        }
+    }
+
+    private inline fun updateGoldFilesUntilSuccess(sectionName: String, goldFilesRoots: List<Path>, runTests: () -> Int) {
         println("=== Updating $sectionName gold files ===")
         repeat(maxAttempts) { attemptIndex ->
             val attemptNumber = attemptIndex + 1
@@ -86,7 +99,7 @@ private class AmperGoldUpdater(
                 return
             }
 
-            val updatedFilesCount = updateTmpFilesUnder(goldFilesRoot)
+            val updatedFilesCount = updateTmpFilesUnder(goldFilesRoots)
             if (updatedFilesCount == 0) {
                 println("Tests failed for $sectionName, but no .tmp files were found.")
                 println("Retrying is pointless here because gold files didn't change, please check the test failure.")
@@ -100,10 +113,12 @@ private class AmperGoldUpdater(
         error("Failed to update $sectionName gold files after $maxAttempts attempts.")
     }
 
-    private fun updateTmpFilesUnder(root: Path): Int {
+    private fun updateTmpFilesUnder(roots: List<Path>): Int {
         var updatedFilesCount = 0
-        root.walk()
-            .filter { it.name.endsWith(".tmp") }
+        roots
+            .flatMap {
+                it.walk().filter { it.name.endsWith(".tmp") }
+            }
             .forEach { tmpResultFile ->
                 updateGoldFileFor(tmpResultFile)
                 updatedFilesCount++
