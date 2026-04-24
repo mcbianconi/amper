@@ -61,7 +61,6 @@ object AzulApi {
                 "&java_package_type=jre" +
                 "&javafx_bundled=false" +
                 "&crac_supported=false" +
-                "&latest=true" +
                 "&release_status=ga" +
                 "&page=1" +
                 "&page_size=1",
