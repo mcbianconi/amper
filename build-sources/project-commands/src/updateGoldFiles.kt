@@ -4,17 +4,31 @@
 
 @file:Suppress("ReplacePrintlnWithLogging")
 
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.launch
+import kotlinx.coroutines.runBlocking
+import kotlinx.coroutines.withContext
 import org.jetbrains.amper.plugins.ExecutionAvoidance
 import org.jetbrains.amper.plugins.Input
 import org.jetbrains.amper.plugins.TaskAction
+import org.jetbrains.amper.processes.runProcessWithInheritedIO
 import java.io.File
 import java.nio.file.Path
-import kotlin.io.path.*
+import kotlin.io.path.absolutePathString
+import kotlin.io.path.deleteExisting
+import kotlin.io.path.div
+import kotlin.io.path.name
+import kotlin.io.path.pathString
+import kotlin.io.path.readText
+import kotlin.io.path.walk
+import kotlin.io.path.writeText
 
 @TaskAction(ExecutionAvoidance.Disabled) // we can't track all outputs
 fun updateGoldFiles(@Input amperRootDir: Path, versions: Versions) {
-    syncVersions(amperRootDir, versions)
-    AmperGoldUpdater(amperRootDir).updateGoldFiles()
+    runBlocking {
+        syncVersions(amperRootDir, versions)
+        AmperGoldUpdater(amperRootDir).updateGoldFiles()
+    }
 }
 
 private class AmperGoldUpdater(
@@ -25,13 +39,15 @@ private class AmperGoldUpdater(
     private val testResourcesDir = schemaModuleDir / "testResources"
     private val testResourcePathRegex = Regex("(${Regex.escape(testResourcesDir.absolutePathString())})[^),\"'\n\r]*")
 
-    fun updateGoldFiles() {
-        updateDrGoldFiles(amperRootDir)
-        updateSchemaGoldFiles(amperRootDir)
-        updateCliGoldFiles(amperRootDir)
+    suspend fun updateGoldFiles() {
+        withContext(Dispatchers.IO) {
+            launch { updateDrGoldFiles(amperRootDir) }
+            launch { updateSchemaGoldFiles(amperRootDir) }
+            launch { updateCliGoldFiles(amperRootDir) }
+        }
     }
 
-    private fun updateDrGoldFiles(amperRootDir: Path) {
+    private suspend fun updateDrGoldFiles(amperRootDir: Path) {
         updateGoldFilesUntilSuccess(
             sectionName = "dr module",
             goldFilesRoot = amperRootDir / "sources/frontend/dr",
@@ -40,7 +56,7 @@ private class AmperGoldUpdater(
         }
     }
 
-    private fun updateSchemaGoldFiles(amperRootDir: Path) {
+    private suspend fun updateSchemaGoldFiles(amperRootDir: Path) {
         updateGoldFilesUntilSuccess(
             sectionName = "schema module",
             goldFilesRoot = schemaModuleDir,
@@ -49,7 +65,7 @@ private class AmperGoldUpdater(
         }
     }
 
-    private fun updateCliGoldFiles(amperRootDir: Path) {
+    private suspend fun updateCliGoldFiles(amperRootDir: Path) {
         updateGoldFilesUntilSuccess(
             sectionName = "amper-cli-test module",
             goldFilesRoot = amperRootDir / "sources/test-integration/amper-cli-test",
@@ -58,7 +74,7 @@ private class AmperGoldUpdater(
         }
     }
 
-    private fun updateGoldFilesUntilSuccess(sectionName: String, goldFilesRoot: Path, runTests: () -> Int) {
+    private inline fun updateGoldFilesUntilSuccess(sectionName: String, goldFilesRoot: Path, runTests: () -> Int) {
         println("=== Updating $sectionName gold files ===")
         repeat(maxAttempts) { attemptIndex ->
             val attemptNumber = attemptIndex + 1
@@ -95,11 +111,10 @@ private class AmperGoldUpdater(
         return updatedFilesCount
     }
 
-    @Suppress("PROCESS_BUILDER_START_LEAK")
-    private fun runAmperCli(amperRootDir: Path, vararg args: String): Int {
+    private suspend fun runAmperCli(amperRootDir: Path, vararg args: String): Int {
         val isWindows = System.getProperty("os.name").startsWith("Win", ignoreCase = true)
         val amperScript = amperRootDir.resolve(if (isWindows) "amper.bat" else "amper")
-        return ProcessBuilder(amperScript.pathString, *args).inheritIO().start().waitFor()
+        return runProcessWithInheritedIO(command = listOf(amperScript.pathString) + args)
     }
 
     private fun updateGoldFileFor(tmpResultFile: Path) {

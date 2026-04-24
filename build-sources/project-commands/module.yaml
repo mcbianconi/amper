@@ -12,6 +12,10 @@ apply:
 pluginInfo:
   settingsClass: ProjectCommandsSettings
 
+dependencies:
+  - ../../sources/libraries/async-processes
+  - $libs.kotlinx.coroutines.core
+
 plugins:
   project-commands:
     enabled: true
