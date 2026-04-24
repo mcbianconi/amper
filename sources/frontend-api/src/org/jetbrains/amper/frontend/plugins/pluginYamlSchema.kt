@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+ * Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
  */
 
 package org.jetbrains.amper.frontend.plugins
@@ -37,11 +37,11 @@ class PluginYamlRoot : SchemaNode() {
     val commands by value<List<CustomCommand>>(default = emptyList())
 
     @ReadOnly
-    @SchemaDoc("Data from the module the plugin is applied to")
+    @SchemaDoc("Data from the module the plugin is enabled in")
     val module by value<ModuleDataForPlugin>()
 
     @ReadOnly
-    @SchemaDoc("Data from the project within which the plugin is applied")
+    @SchemaDoc("Data from the project within which the plugin is registered")
     val project by value<ProjectDataForPlugin>()
 
     @ReadOnly

@@ -123,7 +123,7 @@ tasks:
 
 | Property path              | Type                                                          | Description                                                                                                           |
 |----------------------------|---------------------------------------------------------------|-----------------------------------------------------------------------------------------------------------------------|
-| `pluginSettings`           | the type specified in `pluginInfo.settingsClass`              | The plugin’s settings object from the `plugins.<plugin-id>` block of the module the plugin is applied to.             |
+| `pluginSettings`           | the type specified in `pluginInfo.settingsClass`              | The plugin’s settings object from the `plugins.<plugin-id>` block of the module the plugin is enabled in.             |
 | `module.name`              | `string`                                                      | Module display name.                                                                                                  |
 | `module.rootDir`           | `path`                                                        | Absolute path to the module root (where `module.yaml` is).                                                            |
 | `module.runtimeClasspath`  | `Classpath`                                                   | Resolved runtime classpath (JVM, main).                                                                               |
@@ -132,7 +132,7 @@ tasks:
 | `module.resources`         | `ModuleSources`                                               | Resources (JVM, main).                                                                                                |
 | `module.jar`               | `CompilationArtifact`                                         | Compiled JAR (JVM, main).                                                                                             |
 | `module.self`              | `Dependency.Local`                                            | A dependency pointing to the module itself                                                                            |
-| `module.settings.**`       | depends on the actual setting type: `string`, `boolean`, etc. | The settings of the module where the plugin is applied. For example, `module.settings.publishing.version`.            |
+| `module.settings.**`       | depends on the actual setting type: `string`, `boolean`, etc. | The settings of the module where the plugin is enabled. For example, `module.settings.publishing.version`.            |
 | `project.rootDir`          | `path`                                                        | Absolute path to the project root where `project.yaml` (or `module.yaml`) is for multi- (or single-) module projects. |
 
 !!! note

@@ -86,7 +86,7 @@ internal fun applyPlugins(
             val taskDescription = TaskFromPluginDescription(
                 name = name,
                 pluginId = plugin.id,
-                appliedTo = moduleBuildCtx.module,
+                enabledIn = moduleBuildCtx.module,
                 backendTaskName = plugin.taskNameFor(moduleBuildCtx.module, name),
                 actionFunctionJvmName = taskInfo.jvmFunctionName,
                 actionClassJvmName = taskInfo.jvmFunctionClassName,

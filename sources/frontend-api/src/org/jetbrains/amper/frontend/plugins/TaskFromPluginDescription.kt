@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+ * Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
  */
 
 package org.jetbrains.amper.frontend.plugins
@@ -34,9 +34,9 @@ class TaskFromPluginDescription(
     val pluginId: PluginData.Id,
 
     /**
-     * Amper module that the [plugin][pluginId] is applied to, resulting into this task registration.
+     * Amper module that the [plugin][pluginId] is enabled in, resulting into this task registration.
      */
-    val appliedTo: AmperModule,
+    val enabledIn: AmperModule,
 
     /**
      * Unique internal task name.

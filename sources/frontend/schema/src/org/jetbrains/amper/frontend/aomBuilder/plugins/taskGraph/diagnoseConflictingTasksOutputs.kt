@@ -38,7 +38,7 @@ internal fun diagnoseConflictingTasksOutputs(
             )
             val taskNames = tasksToOutputs.keys.joinToString {
                 FrontendTaskGraphBundle.message("task.graph.node.task",
-                    it.name, it.appliedTo.userReadableName, it.pluginId.value)
+                    it.name, it.enabledIn.userReadableName, it.pluginId.value)
             }
             reporter.reportBundleError(
                 source = source,

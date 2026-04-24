@@ -28,9 +28,9 @@ class BuildAmperPluginInfoTask(
     private val projectContext: AmperProjectContext,
     override val module: AmperModule,
     /**
-     * Indicates whether the plugin is applied to the project
+     * Indicates whether the plugin is registered in the project
      */
-    private val isApplied: Boolean,
+    private val isRegistered: Boolean,
     override val taskName: TaskName,
 ) : BuildTask {
     override val isTest: Boolean = false
@@ -41,7 +41,7 @@ class BuildAmperPluginInfoTask(
         dependenciesResult: List<TaskResult>,
         executionContext: TaskGraphExecutionContext,
     ): TaskResult {
-        if (isApplied) {
+        if (isRegistered) {
             // Do nothing for now, as we don't know the "plugin binary format" yet.
             // TODO: fetch plugin data from the model
             return EmptyTaskResult

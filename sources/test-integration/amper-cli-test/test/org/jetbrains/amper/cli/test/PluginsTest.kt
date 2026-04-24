@@ -425,8 +425,8 @@ class PluginsTest : AmperCliTestBase() {
 
         with(result) {
             assertWarnings(
-                "${projectDir / "empty-plugin" / "module.yaml" }:2:3: `plugin.yaml` file is missing in the plugins module directory, so it will have no effect when applied",
-                "${projectDir / "no-tasks-plugin" / "plugin.yaml"}: Plugin doesn't register any tasks, so it will have no effect when applied",
+                "${projectDir / "empty-plugin" / "module.yaml" }:2:3: `plugin.yaml` file is missing in the plugins module directory, so it will have no effect when enabled",
+                "${projectDir / "no-tasks-plugin" / "plugin.yaml"}: Plugin doesn't register any tasks, so it will have no effect when enabled",
             )
             assertErrors(
                 "${projectDir / "app" / "module.yaml"}:5:3: Unknown plugin ID `unknown`. Ensure the corresponding plugin is registered in the `project.yaml` in the `plugins:` list.",
@@ -674,7 +674,7 @@ class PluginsTest : AmperCliTestBase() {
 
     // TODO: Test about missing mandatory property inside the `plugin.yaml`
     @Test
-    fun `plugin is diagnosed on sync when applied to the project but not enabled anywhere`() = runSlowTest {
+    fun `plugin is diagnosed on sync when registered to the project but not enabled anywhere`() = runSlowTest {
         val projectDir = testProject("extensibility/pure-plugins-project")
         val pluginYaml = projectDir.resolve("plugin1/plugin.yaml")
         runCli(
@@ -723,40 +723,40 @@ class PluginsTest : AmperCliTestBase() {
         )
     }
     @Test
-    fun `unapplied plugins diagnostics`() = runSlowTest {
-        // 1. Assert that no error messages associated with the unapplied plugin are issued just by parsing it.
+    fun `unregistered plugins diagnostics`() = runSlowTest {
+        // 1. Assert that no error messages associated with the unregistered plugin are issued just by parsing it.
         val r1 = runCli(
-            projectDir = testProject("extensibility/unapplied-plugin-error"),
+            projectDir = testProject("extensibility/unregistered-plugin-error"),
             "show", "checks",
         )
 
         // 2.1 Assert that the build triggers plugin analysis.
         val r2 = runCli(
             projectDir = r1.projectDir,
-            "build", "-m", "unapplied-plugin",
+            "build", "-m", "unregistered-plugin",
             assertEmptyStdErr = false,
             expectedExitCode = 1,
         )
-        val pluginKt = r1.projectDir / "unapplied-plugin" / "src" / "plugin.kt"
+        val pluginKt = r1.projectDir / "unregistered-plugin" / "src" / "plugin.kt"
         r2.assertErrors(
             "$pluginKt:12:5: [Amper] Illegal overload for `org.example.myAction`: `@TaskAction` functions can't be overloaded",
             "$pluginKt:9:5: [Amper] Illegal overload for `org.example.myAction`: `@TaskAction` functions can't be overloaded",
-            "Task ':unapplied-plugin:buildAmperPluginInfo' failed: Plugin Kotlin schema processing failed, see the errors above.",
+            "Task ':unregistered-plugin:buildAmperPluginInfo' failed: Plugin Kotlin schema processing failed, see the errors above.",
         )
-        r2.assertStderrContains("Task ':unapplied-plugin:buildAmperPluginInfo' failed: Plugin Kotlin schema processing failed, see the errors above.")
+        r2.assertStderrContains("Task ':unregistered-plugin:buildAmperPluginInfo' failed: Plugin Kotlin schema processing failed, see the errors above.")
 
         // 2.2
         val r3 = runCli(
             projectDir = r1.projectDir,
-            "build", "-m", "unapplied-plugin-2",
+            "build", "-m", "unregistered-plugin-2",
             assertEmptyStdErr = false,
             expectedExitCode = 1,
         )
-        val plugin2Yaml = r1.projectDir / "unapplied-plugin-2" / "plugin.yaml"
+        val plugin2Yaml = r1.projectDir / "unregistered-plugin-2" / "plugin.yaml"
         r3.assertErrors(
             "$plugin2Yaml:3:13: The task action function specifier 'nonExistedType' doesn't correspond to any available `@TaskAction`-annotated top-level functions. Available task action functions: <none>",
-            "Task ':unapplied-plugin-2:buildAmperPluginInfo' failed: `plugin.yaml` processing failed, see the errors above.",
+            "Task ':unregistered-plugin-2:buildAmperPluginInfo' failed: `plugin.yaml` processing failed, see the errors above.",
         )
-        r3.assertStderrContains("Task ':unapplied-plugin-2:buildAmperPluginInfo' failed: `plugin.yaml` processing failed, see the errors above.")
+        r3.assertStderrContains("Task ':unregistered-plugin-2:buildAmperPluginInfo' failed: `plugin.yaml` processing failed, see the errors above.")
     }
 }

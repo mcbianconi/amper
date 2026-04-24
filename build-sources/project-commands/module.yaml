@@ -3,7 +3,7 @@ product: jvm/amper-plugin
 description: |
   Provides commands to handle common maintenance and dev tasks.
   
-  This is both a plugin module that defines the custom commands and a project module where the plugin is applied to 
+  This is both a plugin module that defines the custom commands and a project module where the plugin is enabled to 
   register those commands. It's a bit strange, but we don't have real project-level plugins or commands support yet.
 
 apply:

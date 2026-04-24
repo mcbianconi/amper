@@ -88,7 +88,7 @@ The property with the name `enabled` is reserved in such interfaces.
 Then the object with this type (e.g., `com.example.MyPluginSettings | null`) becomes available under `plugins.<plugin-id>`
 in every module in the project.
 An additional synthetic boolean `enabled` [shorthand](#shorthand-notation) property is present in the object to control
-if the plugin is applied to the module or not.
+if the plugin is enabled in the module or not.
 
 ## Enums
 

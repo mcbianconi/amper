@@ -52,7 +52,7 @@ plugins: #(5)!
 2.    Our plugin is also a normal module and needs to be listed here
 3.    Regular module, e.g., `jvm/lib` that contains generic utilities useful for most modules in the project
 4.    There may be other project modules
-5.    This is a block where we list our plugin dependencies to [make available](topics/structure.md#making-plugins-available-in-the-project) in the project.
+5.    This is a block where we list our plugin dependencies to [register](topics/structure.md#registering-plugins-in-the-project) in the project.
 
 And the `build-config/module.yaml` looks like this:
 ```yaml title="build-config/module.yaml"
@@ -64,9 +64,9 @@ This is already a valid (although incomplete) Amper plugin.
 It has a *plugin ID* which defaults to the plugin module name (`build-config`).
 The plugin ID is the string used to refer to the plugin throughout the project, e.g., to enable/configure it.
 
-Declaring the plugin in the `plugins` section of `project.yaml` makes it *available to the project*,
-but it is not yet *enabled in* (*applied to*) any of its modules.
-Learn more about it [here](topics/structure.md#making-plugins-available-in-the-project).
+Declaring the plugin in the `plugins` section of `project.yaml` is called _registering_ the plugin, and makes it 
+available to the project, but it is not yet *enabled in* (applied to) any of its modules.
+Learn more about it [here](topics/structure.md#registering-plugins-in-the-project).
 But it doesn't contain anything useful yet.
 
 Let's start implementing our plugin by writing a [task action](topics/tasks.md#task-action-definition)
@@ -146,7 +146,7 @@ Note that the task action's type is specified using the *type tag* — `!com.exa
 
 As we see here, the `plugin.yaml` file allows [Amper references](topics/references.md) with the syntax `${foo.bar.baz}`.
 Here we use the built‑in reference‑only property `taskOutputDir` to direct our output to the unique task‑associated output directory that Amper provides for us.
-And `module.rootDir` is the directory of the module the plugin is applied to. 
+And `module.rootDir` is the directory of the module the plugin is enabled in. 
 Learn more about [Amper-provided reference-only properties](topics/references.md#reference-only-properties).
 
 But we need to make Amper aware that our output is, in fact, generated Kotlin sources,
@@ -244,8 +244,9 @@ as the exact code is largely irrelevant in our example.)
     This way, plugins can easily depend on any other project modules (like `utils` in our example),
     as long as there are no physical cyclic dependencies between internal actions.
     !!! success "Example: Self‑documenting"
-        A documentation plugin can technically be safely applied to itself, because when the documentation generation
-        runs, the plugin's code itself can already be built and can be executed in a task to generate the docs for itself.
+        A documentation plugin can technically be safely applied to itself (enabled in its own module), because when 
+        the documentation generation runs, the plugin's code itself can already be built and can be executed in a task 
+        to generate the docs for itself.
     !!! failure "Example: Can't generate resources for itself"
         If a plugin contributes anything to the compilation, it can't be applied to itself,
         because the cyclic dependency is detected:
@@ -371,10 +372,10 @@ tasks:
         kind: kotlin-sources
 ```
 
-`pluginSettings` is a global reference-only property that contains the configured plugin settings for each module the plugin is applied to.
+`pluginSettings` is a global reference-only property that contains the configured plugin settings for each module the plugin is enabled in.
 In our case the type of `pluginSettings` would be `com.example.Settings` which we specified in `pluginInfo.settingsClass`.
 
-So, e.g., when the plugin is applied to the `app` module in our example when we refer to the `${pluginSettings.propertiesFileName}` in `plugin.yaml`,
+So, e.g., when the plugin is enabled in the `app` module in our example when we refer to the `${pluginSettings.propertiesFileName}` in `plugin.yaml`,
 we would get the `"konfig"` value the user specified in their `plugins.build-config.propertiesFileName` in `app/module.yaml`
 
 !!! tip

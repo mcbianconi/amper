@@ -40,7 +40,7 @@ public sealed class ShadowDependency : SchemaNode()
  * Generated!
  * Shadow for `org.jetbrains.amper.plugins.Classpath`
  */
-@SchemaDoc(doc = "Use to get a resolved JVM classpath for the list of [dependencies].\n\nThe resulting classpath can be obtained via [resolvedFiles] property.\n\nTo conveniently get the classpath of the *current module* the plugin is applied to,\nyou can reference the provided values:\n- `${'$'}{module.runtimeClasspath}`\n- `${'$'}{module.compileClasspath}`")
+@SchemaDoc(doc = "Use to get a resolved JVM classpath for the list of [dependencies].\n\nThe resulting classpath can be obtained via [resolvedFiles] property.\n\nTo conveniently get the classpath of the *current module* the plugin is enabled in,\nyou can reference the provided values:\n- `${'$'}{module.runtimeClasspath}`\n- `${'$'}{module.compileClasspath}`")
 public class ShadowClasspath : SchemaNode() {
     @Shorthand
     @CanBeReferenced

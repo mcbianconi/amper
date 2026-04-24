@@ -58,7 +58,7 @@ For more information on these features, see the KDocs on these built‑in config
 ### Planned for upcoming releases
 
 - Packaging and publishing plugins
-- Bundled module templates in plugins to contribute to the configuration of the modules they are applied to
+- Bundled module templates in plugins to contribute to the configuration of the modules they are enabled in
 - A simpler way of authoring trivial plugins consisting of a single task, template, etc.
 - Dependencies between plugins
 

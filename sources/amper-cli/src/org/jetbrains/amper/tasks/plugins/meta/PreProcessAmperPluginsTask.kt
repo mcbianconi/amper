@@ -19,7 +19,7 @@ import org.jetbrains.amper.plugins.runAmperSchemaProcessor
 import org.jetbrains.amper.tasks.TaskResult
 
 /**
- * Pre-processes unapplied Amper plugins by running schema processing and collecting diagnostics.
+ * Pre-processes unregistered Amper plugins by running schema processing and collecting diagnostics.
  * This task is never marked as failed and doesn't report any diagnostics itself.
  *
  * All the diagnostics are reported later by individual per-plugin tasks.
@@ -32,17 +32,17 @@ class PreProcessAmperPluginsTask(
     private val projectRoot: AmperProjectRoot,
     private val incrementalCache: IncrementalCache,
     private val processRunner: ProcessRunner,
-    private val unappliedPluginModules: List<AmperModule>,
+    private val unregisteredPluginModules: List<AmperModule>,
 ) : Task {
     init {
-        require(unappliedPluginModules.all { it.type == ProductType.JVM_AMPER_PLUGIN })
+        require(unregisteredPluginModules.all { it.type == ProductType.JVM_AMPER_PLUGIN })
     }
 
     override suspend fun run(
         dependenciesResult: List<TaskResult>,
         executionContext: TaskGraphExecutionContext,
     ): TaskResult {
-        val plugins = unappliedPluginModules.associate { module ->
+        val plugins = unregisteredPluginModules.associate { module ->
             val pluginInfo = checkNotNull(module.commonModuleNode.pluginInfo) {
                 "Plugin info must be present for plugin module: ${module.userReadableName}"
             }

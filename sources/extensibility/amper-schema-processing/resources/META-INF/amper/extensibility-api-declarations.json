@@ -91,7 +91,7 @@
                     }
                 }
             ],
-            "doc": "Use to get a resolved JVM classpath for the list of [dependencies].\n\nThe resulting classpath can be obtained via [resolvedFiles] property.\n\nTo conveniently get the classpath of the *current module* the plugin is applied to,\nyou can reference the provided values:\n- `${module.runtimeClasspath}`\n- `${module.compileClasspath}`"
+            "doc": "Use to get a resolved JVM classpath for the list of [dependencies].\n\nThe resulting classpath can be obtained via [resolvedFiles] property.\n\nTo conveniently get the classpath of the *current module* the plugin is enabled in,\nyou can reference the provided values:\n- `${module.runtimeClasspath}`\n- `${module.compileClasspath}`"
         },
         {
             "name": "org.jetbrains.amper.plugins/CompilationArtifact",

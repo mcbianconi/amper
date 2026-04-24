@@ -46,11 +46,11 @@ abstract class Base : FragmentBase() {
     val repositories by nullableValue<List<Repository>>()
 
     @PlatformAgnostic
-    @SchemaDoc("Plugins applied in `project.yaml` can be enabled and configured here")
+    @SchemaDoc("Plugins registered in `project.yaml` can be enabled and configured here")
     val plugins: PluginSettings by nested()
     
     @PlatformAgnostic
-    @SchemaDoc("Maven plugin mojos (from maven plugins applied in `project.yaml`) can be enabled and configured here")
+    @SchemaDoc("Maven plugin mojos (from Maven plugins registered in `project.yaml`) can be enabled and configured here")
     val mavenPlugins: MavenPluginSettings by nested()
 
     @HiddenFromCompletion

@@ -17,41 +17,41 @@ fun ProjectTasksBuilder.setupAmperPluginTasks() {
     val allPluginModules = model.modules.filter { it.type == ProductType.JVM_AMPER_PLUGIN }
     if (allPluginModules.isEmpty()) return
 
-    val appliedPluginModules = model.amperPlugins.mapTo(hashSetOf()) { it.pluginModule }
+    val registeredPluginModules = model.amperPlugins.mapTo(hashSetOf()) { it.pluginModule }
 
     // We gather all the plugins in the project that are not registered in the `project.yaml`.
     // That means they are not included in the `preparePlugins` phase.
-    val unappliedPluginModules = allPluginModules.filter {
-        it !in appliedPluginModules
+    val unregisteredPluginModules = allPluginModules.filter {
+        it !in registeredPluginModules
     }
 
-    // So we process such unapplied plugins separately in a "global task", in batch, as it's more efficient.
-    val preProcessUnappliedPluginsTaskName = TaskName("preProcessUnappliedPlugins")
-    if (unappliedPluginModules.isNotEmpty()) {
+    // We process unregistered plugins separately in a "global task", in batch, as it's more efficient.
+    val preProcessUnregisteredPluginsTaskName = TaskName("preProcessUnregisteredPlugins")
+    if (unregisteredPluginModules.isNotEmpty()) {
         tasks.registerTask(
             PreProcessAmperPluginsTask(
-                taskName = preProcessUnappliedPluginsTaskName,
+                taskName = preProcessUnregisteredPluginsTaskName,
                 projectRoot = context.projectRoot,
                 incrementalCache = context.incrementalCache,
                 processRunner = context.processRunner,
-                unappliedPluginModules = unappliedPluginModules,
+                unregisteredPluginModules = unregisteredPluginModules,
             )
         )
     }
 
     for (module in allPluginModules) {
-        val isApplied = module in appliedPluginModules
+        val isRegistered = module in registeredPluginModules
         val taskName = TaskName.moduleTask(module, AmperPluginTaskType.BuildAmperPluginInfo.prefix)
         tasks.registerTask(
             BuildAmperPluginInfoTask(
                 projectContext = context.projectContext,
                 module = module,
-                isApplied = isApplied,
+                isRegistered = isRegistered,
                 taskName = taskName,
             ),
             dependsOn = buildList {
-                if (!isApplied) {
-                    add(preProcessUnappliedPluginsTaskName)
+                if (!isRegistered) {
+                    add(preProcessUnregisteredPluginsTaskName)
                 }
             }
         )

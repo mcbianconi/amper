@@ -127,7 +127,7 @@ private fun TaskGraph.Node.stringRepresentation(): String = when (this) {
     is TaskGraph.Node.SourceGeneration ->
         FrontendTaskGraphBundle.message("task.graph.node.generation.sources", module.userReadableName)
     is TaskGraph.Node.PluginTask -> with(description) {
-        FrontendTaskGraphBundle.message("task.graph.node.task", name, appliedTo.userReadableName, pluginId.value)
+        FrontendTaskGraphBundle.message("task.graph.node.task", name, enabledIn.userReadableName, pluginId.value)
     }
 }
 

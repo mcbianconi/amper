@@ -30,13 +30,13 @@ The **plugin ID** is used across the project to refer to the plugin, e.g., when 
     :warning: Changing the default ID makes little sense if we are not sharing the plugin between projects, which is not supported yet.
     Currently, the ID string doesn't have a well-defined format, so leaving the ID at its default is a good idea. 
 
-## Making plugins available in the project
+## Registering plugins in the project
 
-Amper plugins are module-level plugins – they are enabled and applied per module.
+Amper plugins are module-level plugins – they are enabled per module.
 There is no such concept as a project-wide plugin in Amper.
 
-To make a plugin available in the project,
-the dependency on it must be listed under the [`plugins`section](../../../reference/project.md#plugins) of the `project.yaml` file:
+To make a plugin available in the project, it must be _registered_ by listing
+the dependency on it in the [`plugins` section](../../../reference/project.md#plugins) of the `project.yaml` file:
 ```yaml
 modules:
   - ...
@@ -46,14 +46,14 @@ plugins:
   - ./plugins/my-plugin
 ```
 
-Plugins listed this way are not yet enabled anywhere.
+Registered plugins are not yet _enabled_ anywhere.
 One must enable them manually in each module where they are needed.
 
 There may be cases where a plugin is developed as part of the project, but not needed _in the project itself_.
 Then such a plugin is present in the `modules` list, but not included in the `plugins` list.
 
 ??? note "Similar to `apply false` in Gradle..."
-    Amper's approach to listing plugins project-wide and applying them per-module is somewhat similar to the 
+    Amper's approach to registering plugins project-wide and enabling them per-module is somewhat similar to the 
     recommended approach in Gradle. There one lists plugins at the project level with the `apply false` clause and
     then enables them where needed.
 
