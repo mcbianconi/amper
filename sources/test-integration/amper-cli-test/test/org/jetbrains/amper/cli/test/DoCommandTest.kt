@@ -33,8 +33,11 @@ class DoCommandTest : AmperCliTestBase() {
             expectedExitCode = 1,
             assertEmptyStdErr = false,
         )
-        result.assertStderrContains("Ambiguous command name 'uploadPictures'")
-        result.assertStderrContains("Please use a qualified name: my-plugin:uploadPictures, other-plugin:uploadPictures")
+        result.assertStderrContains(
+            "Ambiguous command name 'uploadPictures'. " +
+                    "Multiple plugins provide a command with this name. " +
+                    "Please use a qualified name: my-plugin:uploadPictures, other-plugin:uploadPictures"
+        )
     }
 
     @Test
@@ -75,6 +78,7 @@ class DoCommandTest : AmperCliTestBase() {
         val occurrences = result.stdout.split("Uploading pictures...").size - 1
         assertEquals(1, occurrences, "Should only run for app")
     }
+
     @Test
     fun `do command - missing command`() = runSlowTest {
         val projectDir = testProject("extensibility/custom-commands")
@@ -85,7 +89,9 @@ class DoCommandTest : AmperCliTestBase() {
             expectedExitCode = 1,
             assertEmptyStdErr = false,
         )
-        result.assertStderrContains("Unknown command 'nonExistent'")
+        result.assertStderrContains(
+            "Unknown command 'nonExistent'. Run `show commands` to list available commands"
+        )
     }
 
     @Test

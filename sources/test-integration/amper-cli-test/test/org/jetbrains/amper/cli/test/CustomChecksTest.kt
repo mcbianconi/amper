@@ -68,7 +68,7 @@ class CustomChecksTest : AmperCliTestBase() {
             "check", "-m", "app-without-checks", "checkA",
             expectedExitCode = 1,
             assertEmptyStdErr = false,
-        ).assertStderrContains("Unknown check 'checkA'. Available checks: 'tests'")
+        ).assertStderrContains("Unknown check 'checkA'. Run `show checks` to list available checks")
     }
 
     @Test
@@ -78,8 +78,7 @@ class CustomChecksTest : AmperCliTestBase() {
             "check", "nonExistentCheck",
             expectedExitCode = 1,
             assertEmptyStdErr = false,
-        ).assertStderrContains("Unknown check 'nonExistentCheck'. " +
-                "Available checks: 'tests', 'checkA' (or 'checker:checkA'), 'checkB' (or 'checker:checkB')")
+        ).assertStderrContains("Unknown check 'nonExistentCheck'. Run `show checks` to list available checks")
     }
 
     @Test
@@ -124,8 +123,7 @@ class CustomChecksTest : AmperCliTestBase() {
             "check", "--skip", "nonExistentCheck",
             expectedExitCode = 1,
             assertEmptyStdErr = false,
-        ).assertStderrContains("Unknown check 'nonExistentCheck' in --skip. " +
-                "Available checks: 'tests', 'checkA' (or 'checker:checkA'), 'checkB' (or 'checker:checkB')")
+        ).assertStderrContains("Unknown check 'nonExistentCheck' in --skip. Run `show checks` to list available checks")
     }
 
     @Test
@@ -178,17 +176,11 @@ class CustomChecksTest : AmperCliTestBase() {
             "check", "codestyle",
             expectedExitCode = 1,
             assertEmptyStdErr = false,
-        ).assertStderrContains("Ambiguous check name 'codestyle'")
-    }
-
-    @Test
-    fun `check with wrong name prints available ambiguous checks with qualified name`() = runSlowTest {
-        runCli(
-            projectDir = testProject("extensibility/custom-checks-ambiguous-name"),
-            "check", "wrong",
-            expectedExitCode = 1,
-            assertEmptyStdErr = false,
-        ).assertStderrContains("Unknown check 'wrong'. Available checks: 'tests', 'alpha:codestyle', 'beta:codestyle'")
+        ).assertStderrContains(
+            "Ambiguous check name 'codestyle'. " +
+                    "Multiple plugins provide a check with this name. " +
+                    "Please use a qualified name: alpha:codestyle, beta:codestyle"
+        )
     }
 
     @Test
@@ -208,7 +200,11 @@ class CustomChecksTest : AmperCliTestBase() {
             "check", "--skip", "codestyle",
             expectedExitCode = 1,
             assertEmptyStdErr = false,
-        ).assertStderrContains("Ambiguous check name 'codestyle' in --skip")
+        ).assertStderrContains(
+            "Ambiguous check name 'codestyle' in --skip. " +
+                    "Multiple plugins provide a check with this name. " +
+                    "Please use a qualified name: alpha:codestyle, beta:codestyle"
+        )
     }
 
     @Test

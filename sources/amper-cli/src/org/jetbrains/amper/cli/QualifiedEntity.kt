@@ -54,26 +54,6 @@ fun <T : QualifiedEntity> resolveMatchingEntities(
 ): List<T> {
     val allNames = entities.map(QualifiedEntity::name).distinct()
 
-    fun formatAllAvailable() = buildList {
-        allNames.groupBy(
-            keySelector = QualifiedName::simpleName,
-            valueTransform = QualifiedName::qualifiedName,
-        ).forEach { (name, qualifiedNames) ->
-            val singleQualifiedName = qualifiedNames.singleOrNull()
-            if (singleQualifiedName != null) {
-                if (name != singleQualifiedName) {
-                    add("'$name' (or '$singleQualifiedName')")
-                } else {
-                    add("'$name'")
-                }
-            } else {
-                qualifiedNames.forEach {
-                    add("'$it'")
-                }
-            }
-        }
-    }.joinToString(prefix = "Available ${entityDisplayName}s: ")
-
     val resolvedNames = if (':' in userProvidedName) {
         allNames.filter { it.qualifiedName == userProvidedName }
     } else {
@@ -81,7 +61,7 @@ fun <T : QualifiedEntity> resolveMatchingEntities(
     }.toSet()
 
     if (resolvedNames.isEmpty()) {
-        userReadableError("Unknown $entityDisplayName '$userProvidedName'$context. ${formatAllAvailable()}")
+        userReadableError("Unknown $entityDisplayName '$userProvidedName'$context. Run `show ${entityDisplayName}s` to list available ${entityDisplayName}s")
     }
     if (resolvedNames.size > 1) {
         userReadableError(
