@@ -24,7 +24,7 @@ import kotlin.io.path.pathString
 
 class TypeCheckTest {
     private val stringType = SchemaType.StringType()
-    private val mavenStringType = SchemaType.StringType(semantics = SchemaType.StringType.Semantics.MavenCoordinates)
+    private val mainClassStringType = SchemaType.StringType(semantics = SchemaType.StringType.Semantics.JvmMainClass)
     private val nullableStringType = SchemaType.StringType(isMarkedNullable = true)
     private val intType = SchemaType.IntType()
     private val booleanType = SchemaType.BooleanType()
@@ -93,9 +93,9 @@ class TypeCheckTest {
         assertFalse(stringType.isAssignableFrom(intType, allowStringConversion = false))
         
         // String with semantics should NOT do conversions
-        assertFalse(mavenStringType.isAssignableFrom(pathType))
-        assertFalse(mavenStringType.isAssignableFrom(enumType))
-        assertFalse(mavenStringType.isAssignableFrom(intType))
+        assertFalse(mainClassStringType.isAssignableFrom(pathType))
+        assertFalse(mainClassStringType.isAssignableFrom(enumType))
+        assertFalse(mainClassStringType.isAssignableFrom(intType))
     }
 
     @Test
@@ -130,7 +130,7 @@ class TypeCheckTest {
         assertFalse(stringMap.isAssignableFrom(pathMap))
 
         // Different key types
-        val customKeyMap = SchemaType.MapType(stringType, keyType = mavenStringType)
+        val customKeyMap = SchemaType.MapType(stringType, keyType = mainClassStringType)
         
         // Maps are assignable if their key types are assignable.
         assertTrue(stringMap.isAssignableFrom(customKeyMap))
@@ -196,7 +196,7 @@ class TypeCheckTest {
         assertEquals(path.pathString, casted.value)
 
         assertNull(stringType.cast(pathNode, allowStringConversion = false))
-        assertNull(mavenStringType.cast(pathNode))
+        assertNull(mainClassStringType.cast(pathNode))
     }
 
     @Test
@@ -208,7 +208,7 @@ class TypeCheckTest {
         assertEquals("spring", casted.value)
 
         assertNull(stringType.cast(enumNode, allowStringConversion = false))
-        assertNull(mavenStringType.cast(enumNode))
+        assertNull(mainClassStringType.cast(enumNode))
     }
 
     @Test
@@ -220,7 +220,7 @@ class TypeCheckTest {
         assertEquals("123", casted.value)
 
         assertNull(stringType.cast(intNode, allowStringConversion = false))
-        assertNull(mavenStringType.cast(intNode))
+        assertNull(mainClassStringType.cast(intNode))
     }
 
     @Test
@@ -237,7 +237,7 @@ class TypeCheckTest {
         assertSame(listNode, nullableStringListType.cast(listNode))
 
         val intListType = SchemaType.ListType(intType)
-        val mavenStringListType = SchemaType.ListType(mavenStringType)
+        val mavenStringListType = SchemaType.ListType(mainClassStringType)
         assertNull(intListType.cast(listNode))
         assertNull(mavenStringListType.cast(listNode))
     }
@@ -275,7 +275,7 @@ class TypeCheckTest {
         assertSame(mapNode, nullableStringMapType.cast(mapNode))
 
         // Incompatible
-        val mavenStringMapType = SchemaType.MapType(mavenStringType)
+        val mavenStringMapType = SchemaType.MapType(mainClassStringType)
         val intMapType = SchemaType.MapType(intType)
         assertNull(intMapType.cast(mapNode))
         assertNull(mavenStringMapType.cast(mapNode))

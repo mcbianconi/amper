@@ -15,9 +15,12 @@ import org.jetbrains.amper.cli.test.utils.runSlowTest
 import org.jetbrains.amper.frontend.schema.DefaultVersions
 import org.jetbrains.amper.test.AmperCliResult
 import org.jetbrains.amper.test.Dirs
+import org.jetbrains.amper.test.assertEqualsIgnoreLineSeparator
 import org.jetbrains.amper.test.normalizeLineSeparators
 import org.slf4j.event.Level
 import java.io.File
+import java.nio.file.Path
+import kotlin.io.path.absolutePathString
 import kotlin.io.path.div
 import kotlin.io.path.exists
 import kotlin.io.path.readText
@@ -53,14 +56,16 @@ class PluginsTest : AmperCliTestBase() {
     @Test
     fun `distribution plugin`() = runSlowTest {
         val taskName = ":app:build@distribution-plugin"
+        val testProjectSourcesDir = testProject("extensibility/distribution")
         val r1 = runCli(
-            projectDir = testProject("extensibility/distribution"),
+            projectDir = testProjectSourcesDir,
             "task", taskName,
             copyToTempDir = true,
         )
 
         val buildDir = tempRoot / "build"
         val projectDir = r1.projectDir
+        val expectedOutputPath = testProjectSourcesDir / "expected-plugin-output.txt"
 
         // In the 'core' and 'lib' modules, the Kotlin version is not overridden, so we expect the default in the
         //   corresponding classpaths.
@@ -71,56 +76,17 @@ class PluginsTest : AmperCliTestBase() {
         //   In 'compile', the version is aligned with the runtime classpath of the module.
         //   The runtime classpath of the module gets the default Kotlin version transitively from core/lib because it's
         //   higher, so we expect the default Kotlin version even though it sets Kotlin to 2.2.10 explicitly.
-        r1.assertCustomTaskStdoutContains(
-            taskName = taskName,
-            output = """
-            Hello from distribution
-            someInt: 42, someInt2: 42
-            local.properties: $projectDir/local.properties
-            classpath base.dependencies = [{modulePath: $projectDir/app}]
-            classpath base.dependencies[0] = {modulePath: $projectDir/app}
-            classpath base.dependencies[0].modulePath = $projectDir/app
-            classpath base.resolvedFiles = [$buildDir/tasks/_app_jarJvm/app-jvm.jar, $buildDir/tasks/_lib_jarJvm/lib-jvm.jar, $buildDir/tasks/_core_jarJvm/core-jvm.jar, ${Dirs.userCacheRoot}/.m2.cache/org/jetbrains/kotlin/kotlin-stdlib/${DefaultVersions.kotlin}/kotlin-stdlib-${DefaultVersions.kotlin}.jar, ${Dirs.userCacheRoot}/.m2.cache/net/freeutils/jcharset/2.1/jcharset-2.1.jar, ${Dirs.userCacheRoot}/.m2.cache/org/jetbrains/annotations/13.0/annotations-13.0.jar]
-            classpath core.dependencies = [{modulePath: $projectDir/core}]
-            classpath core.dependencies[0] = {modulePath: $projectDir/core}
-            classpath core.dependencies[0].modulePath = $projectDir/core
-            classpath core.resolvedFiles = [$buildDir/tasks/_core_jarJvm/core-jvm.jar, ${Dirs.userCacheRoot}/.m2.cache/org/jetbrains/kotlin/kotlin-stdlib/${DefaultVersions.kotlin}/kotlin-stdlib-${DefaultVersions.kotlin}.jar, ${Dirs.userCacheRoot}/.m2.cache/org/jetbrains/annotations/13.0/annotations-13.0.jar]
-            classpath lib.dependencies = [{modulePath: $projectDir/lib}]
-            classpath lib.dependencies[0] = {modulePath: $projectDir/lib}
-            classpath lib.dependencies[0].modulePath = $projectDir/lib
-            classpath lib.resolvedFiles = [$buildDir/tasks/_lib_jarJvm/lib-jvm.jar, $buildDir/tasks/_core_jarJvm/core-jvm.jar, ${Dirs.userCacheRoot}/.m2.cache/net/freeutils/jcharset/2.1/jcharset-2.1.jar, ${Dirs.userCacheRoot}/.m2.cache/org/jetbrains/kotlin/kotlin-stdlib/${DefaultVersions.kotlin}/kotlin-stdlib-${DefaultVersions.kotlin}.jar, ${Dirs.userCacheRoot}/.m2.cache/org/jetbrains/annotations/13.0/annotations-13.0.jar]
-            classpath kotlin-poet.dependencies = [{coordinates: com.squareup:kotlinpoet:2.2.0}]
-            classpath kotlin-poet.dependencies[0] = {coordinates: com.squareup:kotlinpoet:2.2.0}
-            classpath kotlin-poet.dependencies[0].coordinates = com.squareup:kotlinpoet:2.2.0
-            classpath kotlin-poet.resolvedFiles = [${Dirs.userCacheRoot}/.m2.cache/com/squareup/kotlinpoet-jvm/2.2.0/kotlinpoet-jvm-2.2.0.jar, ${Dirs.userCacheRoot}/.m2.cache/org/jetbrains/kotlin/kotlin-stdlib/2.1.21/kotlin-stdlib-2.1.21.jar, ${Dirs.userCacheRoot}/.m2.cache/org/jetbrains/kotlin/kotlin-reflect/2.1.21/kotlin-reflect-2.1.21.jar, ${Dirs.userCacheRoot}/.m2.cache/org/jetbrains/annotations/13.0/annotations-13.0.jar]
-            classpath from-catalog.dependencies = [{coordinates: org.jetbrains.kotlin:kotlin-reflect:2.2.10}]
-            classpath from-catalog.dependencies[0] = {coordinates: org.jetbrains.kotlin:kotlin-reflect:2.2.10}
-            classpath from-catalog.dependencies[0].coordinates = org.jetbrains.kotlin:kotlin-reflect:2.2.10
-            classpath from-catalog.resolvedFiles = [${Dirs.userCacheRoot}/.m2.cache/org/jetbrains/kotlin/kotlin-reflect/2.2.10/kotlin-reflect-2.2.10.jar, ${Dirs.userCacheRoot}/.m2.cache/org/jetbrains/kotlin/kotlin-stdlib/2.2.10/kotlin-stdlib-2.2.10.jar, ${Dirs.userCacheRoot}/.m2.cache/org/jetbrains/annotations/13.0/annotations-13.0.jar]
-            classpath compile.dependencies = [{modulePath: $projectDir/app}]
-            classpath compile.dependencies[0] = {modulePath: $projectDir/app}
-            classpath compile.dependencies[0].modulePath = $projectDir/app
-            classpath compile.resolvedFiles = [${Dirs.userCacheRoot}/.m2.cache/org/jetbrains/kotlin/kotlin-stdlib/${DefaultVersions.kotlin}/kotlin-stdlib-${DefaultVersions.kotlin}.jar, ${Dirs.userCacheRoot}/.m2.cache/org/jetbrains/annotations/13.0/annotations-13.0.jar]
-            classpath moduleCompile.dependencies = [{modulePath: $projectDir/lib}]
-            classpath moduleCompile.dependencies[0] = {modulePath: $projectDir/lib}
-            classpath moduleCompile.dependencies[0].modulePath = $projectDir/lib
-            classpath moduleCompile.resolvedFiles = [${Dirs.userCacheRoot}/.m2.cache/net/freeutils/jcharset/2.1/jcharset-2.1.jar, ${Dirs.userCacheRoot}/.m2.cache/org/jetbrains/kotlin/kotlin-stdlib/${DefaultVersions.kotlin}/kotlin-stdlib-${DefaultVersions.kotlin}.jar, ${Dirs.userCacheRoot}/.m2.cache/org/jetbrains/annotations/13.0/annotations-13.0.jar]
-            classpath combined.dependencies = [{coordinates: org.jetbrains.kotlin:kotlin-reflect:2.2.10}, {coordinates: com.squareup:kotlinpoet:2.2.0}, {modulePath: $projectDir/lib}]
-            classpath combined.dependencies[0] = {coordinates: org.jetbrains.kotlin:kotlin-reflect:2.2.10}
-            classpath combined.dependencies[0].coordinates = org.jetbrains.kotlin:kotlin-reflect:2.2.10
-            classpath combined.dependencies[1] = {coordinates: com.squareup:kotlinpoet:2.2.0}
-            classpath combined.dependencies[1].coordinates = com.squareup:kotlinpoet:2.2.0
-            classpath combined.dependencies[2] = {modulePath: $projectDir/lib}
-            classpath combined.dependencies[2].modulePath = $projectDir/lib
-            classpath combined.resolvedFiles = [$buildDir/tasks/_lib_jarJvm/lib-jvm.jar, $buildDir/tasks/_core_jarJvm/core-jvm.jar, ${Dirs.userCacheRoot}/.m2.cache/org/jetbrains/kotlin/kotlin-reflect/2.2.10/kotlin-reflect-2.2.10.jar, ${Dirs.userCacheRoot}/.m2.cache/net/freeutils/jcharset/2.1/jcharset-2.1.jar, ${Dirs.userCacheRoot}/.m2.cache/org/jetbrains/kotlin/kotlin-stdlib/${DefaultVersions.kotlin}/kotlin-stdlib-${DefaultVersions.kotlin}.jar, ${Dirs.userCacheRoot}/.m2.cache/com/squareup/kotlinpoet-jvm/2.2.0/kotlinpoet-jvm-2.2.0.jar, ${Dirs.userCacheRoot}/.m2.cache/org/jetbrains/annotations/13.0/annotations-13.0.jar]
-            classes result: {from: {modulePath: $projectDir/app}, kind: Classes}
-            classes result contents[0] = $buildDir/tasks/_app_mergedClassesJvm/META-INF/main.kotlin_module
-            classes result contents[1] = $buildDir/tasks/_app_mergedClassesJvm/MainKt.class
-            classes result contents[2] = $buildDir/tasks/_app_mergedClassesJvm/com/example/Foo.class
-            classes result contents[3] = $buildDir/tasks/_app_mergedClassesJvm/dummy.txt
-            compilation result: {from: {modulePath: $projectDir/app}, kind: Jar}
-            compilation result path: $buildDir/tasks/_app_jarJvm/app-jvm.jar
-        """.trimIndent().replace('/', File.separatorChar))
+        val actualOutputSubstituted = r1.extractCustomTaskStdout(taskName)
+            .replace(projectDir.toString(), $$"$projectDir")
+            .replace(Dirs.userCacheRoot.toString(), $$"${Dirs.userCacheRoot}")
+            .replace(DefaultVersions.kotlin, $$"${DefaultVersions.kotlin}")
+            .replace(buildDir.toString(), $$"$buildDir")
+            .replace(File.separatorChar, '/')
+        assertEqualsIgnoreLineSeparator(
+            expectedOutputPath.readText(),
+            actualOutputSubstituted,
+            expectedOutputPath,
+        )
     }
 
     @Test
@@ -138,7 +104,8 @@ class PluginsTest : AmperCliTestBase() {
             output = """
             Consuming sources: 1
             Got source path: ${projectDir / "app1" / "src"} - [main.kt]
-        """.trimIndent())
+        """.trimIndent()
+        )
 
         runCli(
             projectDir = projectDir,
@@ -151,7 +118,8 @@ class PluginsTest : AmperCliTestBase() {
             Got source path: ${buildDir / "generated" / "app2" / "main" / "src" / "ksp" / "kotlin"} - [kspGenerated.kt]
             Got source path: ${buildDir / "generated" / "app2" / "main" / "src" / "ksp" / "java"} - []
             Got source path: ${buildDir / "tasks" / "_app2_produceSources@produce-sources-plugin" / "kotlin"} - [generated.kt]
-        """.trimIndent())
+        """.trimIndent()
+        )
 
         runCli(
             projectDir = projectDir,
@@ -161,9 +129,10 @@ class PluginsTest : AmperCliTestBase() {
             output = """
             Consuming sources: 3
             Got source path: ${projectDir / "app3" / "resources"} - [hello]
-            Got source path: ${buildDir / "generated" / "app3" / "main" / "resources" / "ksp" } - [com.example.amper.app.Greeter]
+            Got source path: ${buildDir / "generated" / "app3" / "main" / "resources" / "ksp"} - [com.example.amper.app.Greeter]
             Got source path: ${buildDir / "tasks" / "_app3_produceSources@produce-sources-plugin" / "resources"} - [generated.properties]
-        """.trimIndent())
+        """.trimIndent()
+        )
 
         runCli(
             projectDir = projectDir,
@@ -174,7 +143,8 @@ class PluginsTest : AmperCliTestBase() {
             Consuming sources: 2
             Got source path: ${projectDir / "kmp-lib" / "src"} - null
             Got source path: ${projectDir / "kmp-lib" / "src@jvm"} - null
-        """.trimIndent())
+        """.trimIndent()
+        )
 
         runCli(
             projectDir = projectDir,
@@ -185,7 +155,8 @@ class PluginsTest : AmperCliTestBase() {
             Consuming sources: 2
             Got source path: ${projectDir / "kmp-lib2" / "resources"} - null
             Got source path: ${projectDir / "kmp-lib2" / "resources@jvm"} - null
-        """.trimIndent())
+        """.trimIndent()
+        )
     }
 
     @Test
@@ -308,12 +279,14 @@ class PluginsTest : AmperCliTestBase() {
         r.assertStderrContains("Unresolved reference 'Konfig'")
 
         val app3 = r.projectDir / "app3" / "module.yaml"
-        r.assertStdoutContains("""
+        r.assertStdoutContains(
+            """
             Plugin `build-konfig` is not enabled, but has some explicit configuration.
             ╰─ Values explicitly set at:
                ├─ $app3:6:5
                ╰─ $app3:9:5
-        """.trimIndent())
+        """.trimIndent()
+        )
     }
 
     @Test
@@ -391,7 +364,10 @@ class PluginsTest : AmperCliTestBase() {
                 "${projectDir / "invalid-settings" / "module.yaml"}:4:18: Plugin settings class `com.example.Foo` must be an interface annotated with the `@Configurable` annotation",
                 "failed to read Amper model, refer to the errors above",
             )
-            assertLogContains("Processing local plugin schema for [plugin-empty-id, plugin-no-plugin-block, hello, invalid-settings]...", level = Level.INFO)
+            assertLogContains(
+                "Processing local plugin schema for [plugin-empty-id, plugin-no-plugin-block, hello, invalid-settings]...",
+                level = Level.INFO
+            )
         }
     }
 
@@ -409,7 +385,11 @@ class PluginsTest : AmperCliTestBase() {
             assertSomeStderrLineContains("project.yaml:6:5: Plugin module `existing-but-not-included` is not included in the project `modules` list")
             assertSomeStderrLineContains("project.yaml:7:5: Plugin module `non-existing` is not found")
             // May be changed in the future, beware
-            assertNotEquals(illegal = true, actual = logsDir?.exists(), message = "logs dir should not exist when project context parsing is failed")
+            assertNotEquals(
+                illegal = true,
+                actual = logsDir?.exists(),
+                message = "logs dir should not exist when project context parsing is failed"
+            )
         }
     }
 
@@ -425,7 +405,7 @@ class PluginsTest : AmperCliTestBase() {
 
         with(result) {
             assertWarnings(
-                "${projectDir / "empty-plugin" / "module.yaml" }:2:3: `plugin.yaml` file is missing in the plugins module directory, so it will have no effect when enabled",
+                "${projectDir / "empty-plugin" / "module.yaml"}:2:3: `plugin.yaml` file is missing in the plugins module directory, so it will have no effect when enabled",
                 "${projectDir / "no-tasks-plugin" / "plugin.yaml"}: Plugin doesn't register any tasks, so it will have no effect when enabled",
             )
             assertErrors(
@@ -712,16 +692,39 @@ class PluginsTest : AmperCliTestBase() {
         result.assertStdoutContains("taskAction2: path=${buildDir / "tasks" / "_app_task1@my-plugin" / "file.txt"}, name=test")
     }
 
-    private fun AmperCliResult.assertCustomTaskStdoutContains(
-        taskName: String,
-        output: String,
-    ) {
-        val taskOutputLineRegex = """^.{9}\s+INFO\s+${Regex.escape(taskName)}\s+(.*)$""".toRegex(RegexOption.MULTILINE)
-        assertContains(
-            charSequence = stdoutClean.replace(taskOutputLineRegex) { it.groupValues[1] },
-            other = output,
+    @Test
+    fun `parametrized dependencies`() = runSlowTest {
+        val testProject = testProject("extensibility/parametrized-dependencies")
+        val taskName = ":app:build@test-plugin"
+        val result = runCli(
+            projectDir = testProject,
+            "task", taskName,
+            copyToTempDir = true,
+        )
+
+        result.assertCustomTaskStdoutEquals(
+            testProject / "expected-plugin-output.txt", 
+            taskName,
         )
     }
+
+    private fun AmperCliResult.assertCustomTaskStdoutContains(taskName: String, output: String) =
+        assertContains(extractCustomTaskStdout(taskName), output)
+
+    private fun AmperCliResult.assertCustomTaskStdoutEquals(expected: Path, taskName: String) =
+        assertEqualsIgnoreLineSeparator(
+            expected.readText(),
+            extractCustomTaskStdout(taskName),
+            expected,
+        )
+
+    private fun AmperCliResult.extractCustomTaskStdout(taskName: String): String {
+        val taskOutputLineRegex = """^.{9}\s+INFO\s+${Regex.escape(taskName)}\s+(.*)$""".toRegex(RegexOption.MULTILINE)
+        return taskOutputLineRegex
+            .findAll(stdoutClean)
+            .joinToString(separator = "\n") { it.groupValues[1] }
+    }
+
     @Test
     fun `unregistered plugins diagnostics`() = runSlowTest {
         // 1. Assert that no error messages associated with the unregistered plugin are issued just by parsing it.

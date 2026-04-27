@@ -16,20 +16,28 @@
   },
   "dependencies(jvm)" : [
     {
-      "coordinates(jvmAndAndroid)" : "org.jetbrains.compose.runtime:runtime:1.4.1(jvmAndAndroid)"
+      "groupId(jvmAndAndroid)" : "org.jetbrains.compose.runtime(jvmAndAndroid)",
+      "artifactId(jvmAndAndroid)" : "runtime(jvmAndAndroid)",
+      "version(jvmAndAndroid)" : "1.4.1(jvmAndAndroid)"
     },
     {
-      "coordinates(jvm)" : "io.ktor:ktor-server-core:2.3.2(jvm)"
+      "groupId(jvm)" : "io.ktor(jvm)",
+      "artifactId(jvm)" : "ktor-server-core(jvm)",
+      "version(jvm)" : "2.3.2(jvm)"
     },
     {
-      "coordinates(jvm)" : "org.jetbrains.compose.material3:material3:1.4.1(jvm)"
+      "groupId(jvm)" : "org.jetbrains.compose.material3(jvm)",
+      "artifactId(jvm)" : "material3(jvm)",
+      "version(jvm)" : "1.4.1(jvm)"
     },
     {
-      "coordinates(jvm)" : "some:dep(jvm)",
+      "groupId(jvm)" : "some(jvm)",
+      "artifactId(jvm)" : "dep(jvm)",
       "scope(jvm)" : "COMPILE_ONLY(jvm)"
     },
     {
-      "coordinates(jvm)" : "other:dep(jvm)",
+      "groupId(jvm)" : "other(jvm)",
+      "artifactId(jvm)" : "dep(jvm)",
       "scope(jvm)" : "COMPILE_ONLY(jvm)",
       "exported(jvm)" : "true(jvm)"
     },

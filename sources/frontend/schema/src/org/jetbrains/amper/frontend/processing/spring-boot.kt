@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+ * Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
  */
 
 package org.jetbrains.amper.frontend.processing
@@ -10,6 +10,8 @@ import org.jetbrains.amper.frontend.schema.AllOpenPreset
 import org.jetbrains.amper.frontend.schema.DependencyMode
 import org.jetbrains.amper.frontend.schema.NoArgPreset
 import org.jetbrains.amper.frontend.schema.SpringBootSettings
+import org.jetbrains.amper.frontend.schema.UnscopedBomDependency
+import org.jetbrains.amper.frontend.schema.UnscopedExternalMavenDependency
 import org.jetbrains.amper.frontend.tree.MappingNode
 import org.jetbrains.amper.frontend.tree.add
 import org.jetbrains.amper.frontend.tree.buildTree
@@ -69,9 +71,13 @@ private fun springBootDefaultsTree(
             java {
                 annotationProcessing {
                     processors {
-                        add(DeclarationOfUnscopedExternalMavenBomDependency) {
-                            withTrace(springBootApplyBomTrace) {
-                                coordinates("org.springframework.boot:spring-boot-dependencies:$springBootVersion")
+                        add(DeclarationOfUnscopedBomDependency) {
+                            bom(DeclarationOfUnscopedExternalMavenDependency) {
+                                withTrace(springBootApplyBomTrace) {
+                                    groupId("org.springframework.boot")
+                                    artifactId("spring-boot-dependencies")
+                                    version(springBootVersion)
+                                }
                             }
                         }
                     }

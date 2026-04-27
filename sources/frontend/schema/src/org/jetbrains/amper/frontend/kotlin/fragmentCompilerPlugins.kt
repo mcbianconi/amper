@@ -16,7 +16,6 @@ import org.jetbrains.amper.frontend.schema.UnscopedCatalogDependency
 import org.jetbrains.amper.frontend.schema.UnscopedExternalDependency
 import org.jetbrains.amper.frontend.schema.UnscopedExternalMavenDependency
 import org.jetbrains.amper.frontend.schema.toMavenCoordinates
-import org.jetbrains.amper.frontend.types.generated.coordinatesDelegate
 
 /**
  * Returns the Kotlin compiler plugins configurations defined by these [Settings].
@@ -102,17 +101,14 @@ fun Settings.compilerPluginsConfigurations(): List<CompilerPluginConfig> = build
 }
 
 private fun UnscopedExternalDependency.toMavenCoordinates(): CompilerPluginConfig.MavenCoordinates = when (this) {
-    is UnscopedExternalMavenDependency -> coordinatesDelegate
-        .asTraceableValue()
-        .toMavenCoordinates()
-        .toPluginMavenCoordinates()
+    is UnscopedExternalMavenDependency -> toMavenCoordinates().toPluginMavenCoordinates()
     is UnscopedCatalogDependency -> error("Catalog dependencies should be substituted earlier")
 }
 
 private fun MavenCoordinates.toPluginMavenCoordinates(): CompilerPluginConfig.MavenCoordinates = MavenCoordinates(
     groupId = groupId,
     artifactId = artifactId,
-    version = version ?: error("'version' is required for compiler plugin dependencies"),
+    version = version?.value ?: error("'version' is required for compiler plugin dependencies"),
 )
 
 // for now the schema and compiler value are aligned

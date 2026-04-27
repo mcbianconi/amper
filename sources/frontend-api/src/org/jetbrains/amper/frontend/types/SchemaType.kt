@@ -43,11 +43,6 @@ sealed interface SchemaType {
     ) : ScalarType, StringInterpolatableType {
         enum class Semantics {
             /**
-             * String has maven coordinates format: <groupId>:<artifactId>(:<version>)?(:<qualifier>)?
-             */
-            MavenCoordinates,
-
-            /**
              * FQN that references a class used as an entrypoint for JVM.
              */
             JvmMainClass,

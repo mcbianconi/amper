@@ -6,6 +6,7 @@ package org.jetbrains.amper.frontend.api
 
 import org.jetbrains.amper.frontend.Platform
 import org.jetbrains.amper.frontend.schema.ProductType
+import org.jetbrains.amper.frontend.schema.SchemaMavenCoordinates
 import org.jetbrains.amper.frontend.types.SchemaType
 import org.jetbrains.amper.plugins.schema.model.InputOutputMark
 import kotlin.reflect.KClass
@@ -63,6 +64,17 @@ annotation class ModifierAware
 @Target(AnnotationTarget.PROPERTY)
 @Retention(AnnotationRetention.RUNTIME)
 annotation class FromKeyAndTheRestIsNested
+
+/**
+ * Works like [FromKeyAndTheRestIsNested], but this annotation is applied explicitly
+ * for [SchemaMavenCoordinates] inheritors and [org.jetbrains.amper.frontend.plugins.generated.ShadowDependencyMaven].
+ * 
+ * The key difference is that referenced classes have several fields that are fileld from maven coordinates string;
+ * thus there is no single field for which we can use [FromKeyAndTheRestIsNested].
+ */
+@Target(AnnotationTarget.CLASS)
+@Retention(AnnotationRetention.RUNTIME)
+annotation class ExternalDependencyNotation
 
 /**
  * This annotation can be used to indicate that the order in which the enumeration constants

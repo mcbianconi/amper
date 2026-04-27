@@ -10,6 +10,7 @@ import org.jetbrains.amper.frontend.api.TransformedValueTrace
 import org.jetbrains.amper.frontend.contexts.TestCtx
 import org.jetbrains.amper.frontend.schema.DependencyScope
 import org.jetbrains.amper.frontend.schema.ProductType
+import org.jetbrains.amper.frontend.schema.UnscopedExternalMavenDependency
 import org.jetbrains.amper.frontend.tree.add
 import org.jetbrains.amper.frontend.tree.buildTree
 import org.jetbrains.amper.frontend.tree.invoke
@@ -68,10 +69,14 @@ class RenderToYamlTest {
                     annotationProcessing {
                         processors {
                             add(DeclarationOfUnscopedExternalMavenDependency) {
-                                coordinates("com.example:proc-one:1.0.0")
+                                groupId("com.example")
+                                 artifactId("proc-one")
+                                 version("1.0.0")
                             }
                             add(DeclarationOfUnscopedExternalMavenDependency) {
-                                coordinates("com.acme:proc-two:2.1.3")
+                                groupId("com.acme")
+                                artifactId("proc-two")
+                                version("2.1.3")
                             }
                         }
                     }
@@ -226,15 +231,18 @@ class RenderToYamlTest {
             }
             dependencies {
                 add(DeclarationOfExternalMavenDependency) {
-                    coordinates("org.springframework.boot:spring-boot-starter")
+                    groupId("org.springframework.boot")
+                    artifactId("spring-boot-starter")
                 }
                 add(DeclarationOfExternalMavenDependency) {
-                    coordinates("org.springframework.boot:spring-boot-web")
+                    groupId("org.springframework.boot")
+                    artifactId("spring-boot-web")
                     scope(DependencyScope.COMPILE_ONLY)
                     exported(true)
                 }
                 add(DeclarationOfExternalMavenDependency) {
-                    coordinates("org.springframework.boot:spring-boot-devtools")
+                    groupId("org.springframework.boot")
+                    artifactId("spring-boot-devtools")
                     scope(DependencyScope.RUNTIME_ONLY)
                 }
             }
@@ -243,7 +251,8 @@ class RenderToYamlTest {
         val test = buildTree(moduleDeclaration, dummyTransformedTrace, contexts = listOf(TestCtx)) {
             dependencies {
                 add(DeclarationOfExternalMavenDependency) {
-                    coordinates("org.springframework.boot:spring-boot-starter-test")
+                    groupId("org.springframework.boot")
+                    artifactId("spring-boot-starter-test")
                 }
             }
         }
@@ -275,8 +284,12 @@ class RenderToYamlTest {
                 type(ProductType.JVM_APP)
             }
             dependencies {
-                add(DeclarationOfExternalMavenBomDependency) {
-                    coordinates("org.springframework.boot:spring-boot-dependencies:3.5.7")
+                add(DeclarationOfBomDependency) {
+                    bom(DeclarationOfUnscopedExternalMavenDependency) {
+                        groupId("org.springframework.boot")
+                        artifactId("spring-boot-dependencies")
+                        version("3.5.7")    
+                    }
                 }
             }
         }
@@ -320,8 +333,16 @@ class RenderToYamlTest {
                 add("module1")
             }
             mavenPlugins {
-                add { coordinates("org.apache.maven.plugins:maven-surefire-plugin:3.5.3") }
-                add { coordinates("org.apache.maven.plugins:maven-checkstyle-plugin:3.6.0") }
+                add {
+                    groupId("org.apache.maven.plugins")
+                    artifactId("maven-surefire-plugin")
+                    version("3.5.3")
+                }
+                add {
+                    groupId("org.apache.maven.plugins")
+                    artifactId("maven-checkstyle-plugin")
+                    version("3.6.0")
+                }
             }
         }
 
@@ -475,16 +496,24 @@ class RenderToYamlTest {
     fun `write the same key several times and refine`() = withTypeContext {
         val tree = buildTree(moduleDeclaration, dummyTransformedTrace) {
             dependencies {
-                add(DeclarationOfExternalMavenBomDependency) {
-                    coordinates("org.example:artifact1:version")
+                add(DeclarationOfBomDependency) {
+                    bom(DeclarationOfUnscopedExternalMavenDependency) {
+                        groupId("org.example")
+                        artifactId("artifact1")
+                        version("version")
+                    }
                 }
             }
         }
 
         val enhancedTree = buildTree(moduleDeclaration, dummyTransformedTrace) {
             dependencies {
-                add(DeclarationOfExternalMavenBomDependency) {
-                    coordinates("org.example:artifact2:version")
+                add(DeclarationOfBomDependency) {
+                    bom(DeclarationOfUnscopedExternalMavenDependency) {
+                        groupId("org.example")
+                        artifactId("artifact2")
+                        version("version")
+                    }
                 }
             }
         }

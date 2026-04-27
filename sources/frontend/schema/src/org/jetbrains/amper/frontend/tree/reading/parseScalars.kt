@@ -32,17 +32,14 @@ internal fun parseScalar(scalar: YamlValue.Scalar, type: SchemaType.ScalarType):
         else -> intNode(scalar, int)
     }
     is SchemaType.StringType -> {
-        val semanticsCheckPassed = when (type.semantics) {
-            SchemaType.StringType.Semantics.JvmMainClass,
-            SchemaType.StringType.Semantics.PluginSettingsClass,
-            SchemaType.StringType.Semantics.MavenPlexusConfigXml,
-            SchemaType.StringType.Semantics.TaskName,
-            null -> true
-            SchemaType.StringType.Semantics.MavenCoordinates -> validateAndReportMavenCoordinates(
-                origin = scalar.psi,
-                coordinates = scalar.textValue,
-            )
-        }
+        val semanticsCheckPassed =
+            when (type.semantics) {
+                SchemaType.StringType.Semantics.JvmMainClass,
+                SchemaType.StringType.Semantics.PluginSettingsClass,
+                SchemaType.StringType.Semantics.MavenPlexusConfigXml,
+                SchemaType.StringType.Semantics.TaskName,
+                null -> true
+            }
         if (semanticsCheckPassed) {
             stringNode(scalar, type.semantics, scalar.textValue)
         } else {

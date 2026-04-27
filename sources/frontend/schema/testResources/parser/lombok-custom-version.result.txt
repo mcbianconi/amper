@@ -11,7 +11,9 @@ Fragments:
         annotationProcessing: <default> {
           processors: <default> [
             - {
-                coordinates: org.projectlombok:lombok:1.18.35
+                artifactId: lombok
+                groupId: org.projectlombok
+                version: 1.18.35
               }
           ]
         }
@@ -36,7 +38,9 @@ Fragments:
         annotationProcessing: <default> {
           processors: <default> [
             - {
-                coordinates: org.projectlombok:lombok:1.18.35
+                artifactId: lombok
+                groupId: org.projectlombok
+                version: 1.18.35
               }
           ]
         }
@@ -60,7 +64,9 @@ Fragments:
         annotationProcessing: <default> {
           processors: <default> [
             - {
-                coordinates: org.projectlombok:lombok:1.18.35
+                artifactId: lombok
+                groupId: org.projectlombok
+                version: 1.18.35
               }
           ]
         }
@@ -86,7 +92,9 @@ Fragments:
         annotationProcessing: <default> {
           processors: <default> [
             - {
-                coordinates: org.projectlombok:lombok:1.18.35
+                artifactId: lombok
+                groupId: org.projectlombok
+                version: 1.18.35
               }
           ]
         }

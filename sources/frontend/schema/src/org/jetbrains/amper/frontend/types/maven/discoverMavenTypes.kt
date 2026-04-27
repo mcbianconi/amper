@@ -109,8 +109,9 @@ fun amperMavenPluginId(plugin: MavenPluginXml, mojo: Mojo): String =
 internal class CustomMavenTypeDeclaration(
     override val qualifiedName: String,
     override val properties: List<SchemaObjectDeclaration.Property>,
-    private val constructor: () -> SchemaNode,
+    private val constructor: () -> SchemaNode, 
 ) : SchemaObjectDeclarationBase() {
+    override val isExternalDependencyNotation: Boolean = false
     override val origin: SchemaOrigin = SchemaOrigin.MavenPlugin
     override fun createInstance() = constructor()
 }

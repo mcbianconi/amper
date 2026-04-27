@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+ * Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
  */
 
 package org.jetbrains.amper.frontend.dr.resolver
@@ -15,6 +15,8 @@ import org.jetbrains.amper.dependency.resolution.MavenDependencyNode
 import org.jetbrains.amper.dependency.resolution.getDefaultFileCacheBuilder
 import org.jetbrains.amper.frontend.AmperModule
 import org.jetbrains.amper.frontend.MavenDependencyBase
+import org.jetbrains.amper.frontend.schema.SchemaMavenCoordinates
+import org.jetbrains.amper.frontend.schema.toMavenCoordinates
 import org.jetbrains.amper.incrementalcache.IncrementalCache
 import org.jetbrains.amper.problems.reporting.MessageBundle
 import kotlin.io.path.absolutePathString
@@ -51,7 +53,7 @@ fun MavenDependencyBase.toDrMavenCoordinates() = coordinates.toDrMavenCoordinate
 fun org.jetbrains.amper.frontend.MavenCoordinates.toDrMavenCoordinates() = MavenCoordinates(
     groupId = groupId,
     artifactId = artifactId,
-    version = version,
+    version = version?.value,
     classifier = classifier,
     packagingType = packagingType,
 )

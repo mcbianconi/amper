@@ -55,10 +55,12 @@
             }
           }
         }
-      ]
+      ],
+      "internalAttributes": {}
     },
     {
-      "name": "com.example/Empty"
+      "name": "com.example/Empty",
+      "internalAttributes": {}
     },
     {
       "name": "com.example/Invalid",
@@ -97,7 +99,8 @@
             "type": "string"
           }
         }
-      ]
+      ],
+      "internalAttributes": {}
     },
     {
       "name": "com.example/Lists",
@@ -136,7 +139,8 @@
             }
           }
         }
-      ]
+      ],
+      "internalAttributes": {}
     },
     {
       "name": "com.example/Maps",
@@ -179,7 +183,8 @@
             }
           }
         }
-      ]
+      ],
+      "internalAttributes": {}
     },
     {
       "name": "com.example/MySettings",
@@ -229,7 +234,8 @@
             "schemaName": "com.example/Maps"
           }
         }
-      ]
+      ],
+      "internalAttributes": {}
     },
     {
       "name": "com.example/NoSchema2"
@@ -291,7 +297,8 @@
             "isNullable": true
           }
         }
-      ]
+      ],
+      "internalAttributes": {}
     },
     {
       "name": "com.example/WithInvalidDefaults",
@@ -392,7 +399,8 @@
             "type": "int"
           }
         }
-      ]
+      ],
+      "internalAttributes": {}
     },
     {
       "name": "com.example/WithValidDefaults",
@@ -639,7 +647,8 @@
             "type": "null"
           }
         }
-      ]
+      ],
+      "internalAttributes": {}
     }
   ],
   "tasks": [

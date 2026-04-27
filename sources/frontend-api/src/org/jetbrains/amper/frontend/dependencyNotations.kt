@@ -6,6 +6,7 @@ package org.jetbrains.amper.frontend
 
 import org.jetbrains.amper.frontend.api.Trace
 import org.jetbrains.amper.frontend.api.Traceable
+import org.jetbrains.amper.frontend.api.TraceableString
 
 /**
  * A dependency notation. It can have many different forms, defined by the subtypes of this interface.
@@ -38,7 +39,7 @@ sealed interface MavenDependencyBase : Notation {
 data class MavenCoordinates(
     val groupId: String,
     val artifactId: String,
-    val version: String?,
+    val version: TraceableString?,
     val classifier: String? = null,
     val packagingType: String? = null,
     override val trace: Trace,

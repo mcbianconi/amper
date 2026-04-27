@@ -1,10 +1,11 @@
 /*
- * Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+ * Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
  */
 
 package org.jetbrains.amper.schema.processing
 
 import org.junit.jupiter.api.Test
+import kotlin.io.path.Path
 
 class DiagnosticsTest : SchemaProcessorTestBase() {
 
@@ -231,11 +232,8 @@ fun /*{{*/overloaded/*}} [Amper] Illegal overload for `com.example.overloaded`: 
 }
 """
         )
-
-        expectPluginData(
-            javaClass.classLoader.getResourceAsStream("schema-smoke.json")!!
-                .bufferedReader().useLines { it.joinToString(separator = "\n") }
-        )
+        
+        expectPluginData(Path("testResources/schema-smoke.json"))
     }
 
     @Test
@@ -251,46 +249,6 @@ enum class MyEnum {
 }
         """.trimIndent())
 
-        expectPluginData("""
-{
-  "enums": [
-    {
-      "schemaName": "com.example/MyEnum",
-      "entries": [
-        {
-          "name": "MY_CONSTANT",
-          "schemaName": "MY_CONSTANT"
-        },
-        {
-          "name": "MyConstant",
-          "schemaName": "MyConstant"
-        },
-        {
-          "name": "hello-3world",
-          "schemaName": "hello-3world"
-        },
-        {
-          "name": "MY_CONSTANT2",
-          "schemaName": "yaml-name"
-        }
-      ]
-    }
-  ],
-  "classes": [
-    {
-      "name": "com.example/Settings",
-      "properties": [
-        {
-          "name": "prop",
-          "type": {
-            "type": "enum",
-            "schemaName": "com.example/MyEnum"
-          }
-        }
-      ]
-    }
-  ]
-}
-        """.trimIndent())
+        expectPluginData(Path("testResources/enum-constant-names.json"))
     }
 }

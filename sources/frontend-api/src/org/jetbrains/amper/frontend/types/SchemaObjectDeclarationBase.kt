@@ -64,10 +64,10 @@ abstract class SchemaObjectDeclarationBase : SchemaObjectDeclaration {
             secondary = secondaryShorthands.firstOrNull()
 
             fromKeyAndTheRestNestedProperty = properties.filter { it.isFromKeyAndTheRestNested }.also {
-                check(it.size <= 1) { "$this: Can't have more than one @FromKeyAndTheRestIsNested" }
+                check(it.size <= 1) { "${this@SchemaObjectDeclarationBase}: Can't have more than one @FromKeyAndTheRestIsNested" }
             }.singleOrNull()?.also {
                 check(it.type is SchemaType.StringType || it.type is SchemaType.PathType) {
-                    "$this: @FromKeyAndTheRestIsNested can only be String or Path"
+                    "${this@SchemaObjectDeclarationBase}: @FromKeyAndTheRestIsNested can only be String or Path"
                 }
                 check(it.isUserSettable) { "'FromKeyAndTheRestIsNested' property must be settable" }
             }

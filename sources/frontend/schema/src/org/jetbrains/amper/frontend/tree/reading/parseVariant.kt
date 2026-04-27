@@ -5,9 +5,10 @@
 package org.jetbrains.amper.frontend.tree.reading
 
 import org.jetbrains.amper.frontend.contexts.Contexts
+import org.jetbrains.amper.frontend.schema.SchemaMavenCoordinates
+import org.jetbrains.amper.frontend.tree.ErrorNode
 import org.jetbrains.amper.frontend.tree.TreeDiagnosticId
 import org.jetbrains.amper.frontend.tree.TreeNode
-import org.jetbrains.amper.frontend.tree.copyWithTrace
 import org.jetbrains.amper.frontend.tree.reading.DependencyTypeInferenceResult.Bom
 import org.jetbrains.amper.frontend.tree.reading.DependencyTypeInferenceResult.Catalog
 import org.jetbrains.amper.frontend.tree.reading.DependencyTypeInferenceResult.Failed
@@ -17,40 +18,48 @@ import org.jetbrains.amper.frontend.types.SchemaObjectDeclaration
 import org.jetbrains.amper.frontend.types.SchemaType
 import org.jetbrains.amper.frontend.types.SchemaVariantDeclaration
 import org.jetbrains.amper.frontend.types.TaskActionVariantDeclaration
-import org.jetbrains.amper.frontend.types.generated.*
+import org.jetbrains.amper.frontend.types.generated.DeclarationOfBomDependency
+import org.jetbrains.amper.frontend.types.generated.DeclarationOfCatalogDependency
+import org.jetbrains.amper.frontend.types.generated.DeclarationOfExternalMavenDependency
+import org.jetbrains.amper.frontend.types.generated.DeclarationOfInternalDependency
+import org.jetbrains.amper.frontend.types.generated.DeclarationOfShadowDependencyCatalog
+import org.jetbrains.amper.frontend.types.generated.DeclarationOfShadowDependencyLocal
+import org.jetbrains.amper.frontend.types.generated.DeclarationOfShadowDependencyMaven
+import org.jetbrains.amper.frontend.types.generated.DeclarationOfUnscopedBomDependency
+import org.jetbrains.amper.frontend.types.generated.DeclarationOfUnscopedCatalogDependency
+import org.jetbrains.amper.frontend.types.generated.DeclarationOfUnscopedExternalMavenDependency
+import org.jetbrains.amper.frontend.types.generated.DeclarationOfUnscopedModuleDependency
+import org.jetbrains.amper.frontend.types.generated.DeclarationOfVariantDependency
+import org.jetbrains.amper.frontend.types.generated.DeclarationOfVariantScopedDependency
+import org.jetbrains.amper.frontend.types.generated.DeclarationOfVariantShadowDependency
+import org.jetbrains.amper.frontend.types.generated.DeclarationOfVariantUnscopedDependency
+import org.jetbrains.amper.frontend.types.generated.DeclarationOfVariantUnscopedExternalDependency
 import org.jetbrains.amper.problems.reporting.ProblemReporter
+import kotlin.reflect.KClass
 
+/**
+ * Try to derive the concrete type from the value based on the rules for the given [type]
+ * and then call the corresponded concrete parsing routine with the derived type.
+ */
 context(_: Contexts, _: ParsingConfig, reporter: ProblemReporter)
 internal fun parseVariant(
     value: YamlValue,
     type: SchemaType.VariantType,
 ): TreeNode = when (type.declaration) {
+    // Do not parse directly, delegate to another branch for composability and DRY
     DeclarationOfVariantDependency -> when (inferDependencyType(value, isScoped = true)) {
-        Bom -> {
-            val bomDependency = (value as YamlValue.Mapping).keyValues.single()
-            parseNode(bomDependency.value, type.checkSubType(DeclarationOfVariantBomDependency))
-                .copyWithTrace(trace = bomDependency.asTrace())
-        }
-        Local, Catalog, Maven, // Do not parse directly, delegate to another branch for composability and DRY
-            -> parseVariant(value, type.checkSubType(DeclarationOfVariantScopedDependency))
+        Bom -> parseObject(value, type.checkSubType(DeclarationOfBomDependency))
         Failed -> {
-            reportParsing(value, TreeDiagnosticId.WrongDependencyFormat, "validation.types.dependency.wrong.syntax.scoped")
+            reportParsing(
+                value,
+                TreeDiagnosticId.WrongDependencyFormat,
+                "validation.types.dependency.wrong.syntax.scoped"
+            )
             errorNode(value, type)
         }
+        else -> parseVariant(value, type.checkSubType(DeclarationOfVariantScopedDependency))
     }
-    DeclarationOfVariantBomDependency -> when (inferDependencyType(value, isScoped = false)) {
-        Catalog -> parseObject(value, type.checkSubType(DeclarationOfCatalogBomDependency))
-        Maven, Bom,  // i.e. the second bom in `bom: bom` will be treated as maven coords
-            -> parseObject(value, type.checkSubType(DeclarationOfExternalMavenBomDependency))
-        Local -> {
-            reportParsing(value, TreeDiagnosticId.LocalBomAreNotSupported, "unexpected.bom.local")
-            errorNode(value, type)
-        }
-        Failed -> {
-            reportParsing(value, TreeDiagnosticId.WrongDependencyFormat, "validation.types.dependency.wrong.syntax.bom")
-            errorNode(value, type)
-        }
-    }
+
     DeclarationOfVariantScopedDependency -> when (inferDependencyType(value, isScoped = true)) {
         Local -> parseObject(value, type.checkSubType(DeclarationOfInternalDependency))
         Catalog -> parseObject(value, type.checkSubType(DeclarationOfCatalogDependency))
@@ -60,24 +69,30 @@ internal fun parseVariant(
             errorNode(value, type)
         }
         Failed -> {
-            reportParsing(value, TreeDiagnosticId.WrongDependencyFormat, "validation.types.dependency.wrong.syntax.scoped")
+            reportParsing(
+                value,
+                TreeDiagnosticId.WrongDependencyFormat,
+                "validation.types.dependency.wrong.syntax.scoped.no.bom"
+            )
             errorNode(value, type)
         }
     }
+
     DeclarationOfVariantUnscopedDependency -> when (inferDependencyType(value, isScoped = false)) {
-        Bom -> {
-            val bomDependency = (value as YamlValue.Mapping).keyValues.single()
-            parseVariant(bomDependency.value, type.checkSubType(DeclarationOfVariantUnscopedBomDependency))
-                .copyWithTrace(trace = bomDependency.asTrace())
-        }
         Local -> parseObject(value, type.checkSubType(DeclarationOfUnscopedModuleDependency))
-        Maven, Catalog, // Do not parse directly, delegate to another branch for composability and DRY
-             -> parseVariant(value, type.checkSubType(DeclarationOfVariantUnscopedExternalDependency))
+        // Do not parse directly, delegate to another branch for composability and DRY
+        Maven, Catalog -> parseVariant(value, type.checkSubType(DeclarationOfVariantUnscopedExternalDependency))
+        Bom -> parseObject(value, type.checkSubType(DeclarationOfUnscopedBomDependency))
         Failed -> {
-            reportParsing(value, TreeDiagnosticId.WrongDependencyFormat, "validation.types.dependency.wrong.syntax.unscoped")
+            reportParsing(
+                value,
+                TreeDiagnosticId.WrongDependencyFormat,
+                "validation.types.dependency.wrong.syntax.unscoped"
+            )
             errorNode(value, type)
         }
     }
+
     DeclarationOfVariantUnscopedExternalDependency -> when (inferDependencyType(value, isScoped = false)) {
         Catalog -> parseObject(value, type.checkSubType(DeclarationOfUnscopedCatalogDependency))
         Maven -> parseObject(value, type.checkSubType(DeclarationOfUnscopedExternalMavenDependency))
@@ -90,23 +105,15 @@ internal fun parseVariant(
             errorNode(value, type)
         }
         Failed -> {
-            reportParsing(value, TreeDiagnosticId.WrongDependencyFormat, "validation.types.dependency.wrong.syntax.unscoped.external")
+            reportParsing(
+                value,
+                TreeDiagnosticId.WrongDependencyFormat,
+                "validation.types.dependency.wrong.syntax.unscoped.external"
+            )
             errorNode(value, type)
         }
     }
-    DeclarationOfVariantUnscopedBomDependency -> when (inferDependencyType(value, isScoped = false)) {
-        Catalog -> parseObject(value, type.checkSubType(DeclarationOfUnscopedCatalogBomDependency))
-        Maven, Bom,  // i.e. the second bom in `bom: bom` will be treated as maven coords
-            -> parseObject(value, type.checkSubType(DeclarationOfUnscopedExternalMavenBomDependency))
-        Local -> {
-            reportParsing(value, TreeDiagnosticId.LocalBomAreNotSupported, "unexpected.bom.local")
-            errorNode(value, type)
-        }
-        Failed -> {
-            reportParsing(value, TreeDiagnosticId.WrongDependencyFormat, "validation.types.dependency.wrong.syntax.bom")
-            errorNode(value, type)
-        }
-    }
+
     DeclarationOfVariantShadowDependency -> when (inferDependencyType(value, isScoped = false)) {
         Local -> parseObject(value, type.checkSubType(DeclarationOfShadowDependencyLocal))
         Catalog -> parseObject(value, type.checkSubType(DeclarationOfShadowDependencyCatalog))
@@ -116,7 +123,11 @@ internal fun parseVariant(
             errorNode(value, type)
         }
         Failed -> {
-            reportParsing(value, TreeDiagnosticId.WrongDependencyFormat, "validation.types.dependency.wrong.syntax.unscoped.no.bom")
+            reportParsing(
+                value,
+                TreeDiagnosticId.WrongDependencyFormat,
+                "validation.types.dependency.wrong.syntax.unscoped.no.bom"
+            )
             errorNode(value, type)
         }
     }
@@ -148,49 +159,73 @@ internal fun parseVariant(
     }
 }
 
-private enum class DependencyTypeInferenceResult {
+private val gavDiscriminatorFields = setOf(
+    SchemaMavenCoordinates::artifactId.name,
+    SchemaMavenCoordinates::groupId.name,
+)
+
+internal enum class DependencyTypeInferenceResult {
     /** Starts from `.` */
     Local,
+
     /** Starts from `$` */
     Catalog,
-    /** arbitrary string (if the overall YAML structure around is correct) **/
+
+    /** Maven coordinates as string or in the full form **/
     Maven,
+
     /** has a single 'bom' property **/
     Bom,
+
     /** type inference is failed - the value has no chance to be correctly parsed as any type */
     Failed,
 }
 
-private fun inferDependencyType(psi: YamlValue, isScoped: Boolean): DependencyTypeInferenceResult {
-    val peekedKey: String = when (psi) {
-        is YamlValue.Mapping -> psi.keyValues.singleOrNull()?.key?.psi?.text
-        is YamlValue.Scalar -> psi.textValue
-        else -> null
-    } ?: return Failed
-    if (peekedKey == "bom" && psi is YamlValue.Mapping) {
-        return Bom
-    }
-    // Check this after checking for 'bom'
-    if (psi is YamlValue.Mapping && !isScoped) {
-        return Failed
-    }
-    return when (peekedKey.firstOrNull()) {
-        '$' -> Catalog
-        '.' -> Local
-        else -> Maven
-    }
+context(_: Contexts, _: ParsingConfig, _: ProblemReporter)
+private fun inferDependencyType(psi: YamlValue, isScoped: Boolean): DependencyTypeInferenceResult = when (psi) {
+    is YamlValue.Mapping ->
+        // First, try to find known keys.
+        tryInferTypeFromKnownKeys(psi)
+        // Then try to infer a type from the key text value. Fail if we know dependency can't have scope (thus only [YamlValue.Scalar] should be here).
+            ?: (if (isScoped) psi.keyValues.singleOrNull()?.key?.psi?.text?.let { inferDependencyTypeFromStringKey(it) } else Failed)
+            ?: Failed
+    is YamlValue.Scalar -> inferDependencyTypeFromStringKey(psi.textValue)
+    else -> Failed
+}
+
+// !Warning! Sets in internal maps must have no intersections.
+private val knownPropertiesDiscriminatedTypes = mapOf(
+    gavDiscriminatorFields to Maven,
+    setOf("bom") to Bom,
+)
+
+/**
+ * Try to infer the type from the keys that are available in the YAML mapping.
+ */
+context(_: Contexts, _: ParsingConfig, _: ProblemReporter)
+internal fun tryInferTypeFromKnownKeys(value: YamlValue.Mapping): DependencyTypeInferenceResult? {
+    val yamlKeys = value.keyValues.mapNotNull { parsePropertyKeyContexts(it.key)?.first }.toSet()
+    return knownPropertiesDiscriminatedTypes.entries
+        .firstOrNull { (uniqueKeys, _) -> yamlKeys.any { it in uniqueKeys } }
+        ?.value
+}
+
+private fun inferDependencyTypeFromStringKey(keyText: String) = when (keyText.firstOrNull()) {
+    '$' -> Catalog
+    '.' -> Local
+    else -> Maven
 }
 
 private fun SchemaType.VariantType.checkSubType(leaf: SchemaObjectDeclaration): SchemaType.ObjectType {
     require(declaration.variantTree.any { it.declaration == leaf }) {
-        "Leaf variant declaration not found in variant tree: ${leaf.qualifiedName}"
+        "Leaf variant declaration \"${leaf.qualifiedName}\" not found in variant tree of \"${declaration.qualifiedName}\""
     }
     return leaf.toType()
 }
 
 private fun SchemaType.VariantType.checkSubType(sub: SchemaVariantDeclaration): SchemaType.VariantType {
     require(declaration.variantTree.any { it.declaration == sub }) {
-        "Sub-variant declaration not found in variant tree: ${sub.qualifiedName}"
+        "Leaf variant declaration \"${sub.qualifiedName}\" not found in variant tree of \"${declaration.qualifiedName}\""
     }
     return sub.toType()
 }

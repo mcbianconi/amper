@@ -68,6 +68,11 @@ data class PluginData(
     }
 
     @Serializable
+    data class InternalAttributes(
+        val isExternalDependencyNotation: Boolean = false,
+    )
+    
+    @Serializable
     data class VariantData(
         val name: SchemaName,
         val variants: List<Type.ObjectType>,
@@ -88,16 +93,17 @@ data class PluginData(
             val origin: SourceLocation? = null,
         )
     }
-
+    
     @Serializable
     data class ClassData(
         val name: SchemaName,
         val properties: List<Property> = emptyList(),
         val doc: String? = null,
         val origin: SourceLocation? = null,
+        val internalAttributes: InternalAttributes? = null,
     ) {
         @Serializable
-        data class InternalAttributes(
+        data class InternalPropertyAttributes(
             val isProvided: Boolean = false,
             val isShorthand: Boolean = false,
             val isDependencyNotation: Boolean = false,
@@ -111,7 +117,7 @@ data class PluginData(
             val doc: String? = null,
             val origin: SourceLocation? = null,
             val inputOutputMark: InputOutputMark? = null,
-            val internalAttributes: InternalAttributes? = null,
+            val internalAttributes: InternalPropertyAttributes? = null,
         )
     }
 

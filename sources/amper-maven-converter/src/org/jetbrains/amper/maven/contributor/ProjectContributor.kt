@@ -37,7 +37,9 @@ internal fun ProjectTreeBuilder.contributeProjectMavenPlugins(pluginXmls: List<M
         mavenPlugins {
             pluginXmls.forEach { pluginXml ->
                 add {
-                    coordinates("${pluginXml.groupId}:${pluginXml.artifactId}:${pluginXml.version}")
+                    groupId(pluginXml.groupId)
+                    artifactId(pluginXml.artifactId)
+                    version(pluginXml.version)
                 }
             }
         }

@@ -5,6 +5,7 @@
 package org.jetbrains.amper.frontend.types
 
 import org.jetbrains.amper.frontend.api.SchemaNode
+import org.jetbrains.amper.frontend.schema.SchemaMavenCoordinates
 import kotlin.reflect.KClass
 
 inline fun <reified T : SchemaNode> SchemaTypeDeclaration.isSameAs(): Boolean = isSameAs(T::class)
@@ -62,7 +63,7 @@ fun SchemaType.render(
         is SchemaType.ObjectType -> {
             // e.g. Dependency ( string | { string: ( "exported" | DependencyScope | {..} } ) )
             val fromKeyProperty = declaration.getFromKeyAndTheRestNestedProperty()
-            val onlyNestedInEffect = fromKeyProperty != null && onlyNested
+            val onlyNestedInEffect = (fromKeyProperty != null || declaration.isExternalDependencyNotation) && onlyNested
 
             if (!onlyNestedInEffect) {
                 // Skip the name, if rendering only nested part
@@ -99,7 +100,15 @@ fun SchemaType.render(
                         )
                     }
                 }
-                if (fromKeyProperty != null && !onlyNested) {
+                if (declaration.isExternalDependencyNotation && !onlyNested) {
+                    if (declaration.properties.map { it.name }.sorted() == SchemaMavenCoordinates.properties.sorted()) {
+                        append("( maven-coordinates )")
+                    } else {
+                        append("( maven-coordinates | maven-coordinates: ")
+                        appendPossibleSyntax()
+                        append(" )")   
+                    }
+                } else if (fromKeyProperty != null && !onlyNested) {
                     append("( ")
                     val fromKeyPropertyType = fromKeyProperty.type.render(false)
                     append(fromKeyPropertyType)
@@ -131,7 +140,6 @@ fun SchemaType.render(
 }
 
 fun SchemaType.StringType.Semantics?.render(): String = when (this) {
-    SchemaType.StringType.Semantics.MavenCoordinates -> "maven-coordinates"
     SchemaType.StringType.Semantics.JvmMainClass -> "jvm-main-class"
     SchemaType.StringType.Semantics.PluginSettingsClass -> "plugin-settings-class"
     SchemaType.StringType.Semantics.MavenPlexusConfigXml -> "valid-xml"

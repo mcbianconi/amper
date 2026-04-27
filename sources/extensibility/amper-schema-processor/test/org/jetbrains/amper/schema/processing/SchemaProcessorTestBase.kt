@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+ * Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
  */
 
 package org.jetbrains.amper.schema.processing
@@ -11,9 +11,11 @@ import org.jetbrains.amper.plugins.schema.model.PluginDeclarationsRequest
 import org.jetbrains.amper.plugins.schema.model.diagnostics.KotlinSchemaBuildProblem
 import org.jetbrains.amper.plugins.schema.model.withoutOrigin
 import org.jetbrains.amper.test.TempDirExtension
+import org.jetbrains.amper.test.assertEqualsIgnoreLineSeparator
 import org.jetbrains.amper.test.assertEqualsWithDiff
 import org.junit.jupiter.api.extension.RegisterExtension
 import java.nio.file.Path
+import kotlin.io.path.readText
 import kotlin.io.path.writeText
 
 abstract class SchemaProcessorTestBase {
@@ -27,7 +29,7 @@ abstract class SchemaProcessorTestBase {
             name: String = "plugin.kt",
         )
 
-        fun expectPluginData(@Language("json") result: String)
+        fun expectPluginData(expectedPath: Path)
 
         fun givenPluginSettingsClassName(name: String)
     }
@@ -52,14 +54,14 @@ abstract class SchemaProcessorTestBase {
 
         val sources = mutableListOf<Source>()
         var pluginSettingsClassName: String? = null
-        var expectedJsonPluginData: String? = null
+        var expectedJsonPluginDataPath: Path? = null
         val builder = object : TestBuilder {
             override fun givenSourceFile(contents: String, packageName: String, name: String) {
                 sources += Source(contents, packageName, name)
             }
 
-            override fun expectPluginData(result: String) {
-                expectedJsonPluginData = result
+            override fun expectPluginData(expectedPath: Path) {
+                expectedJsonPluginDataPath = expectedPath
             }
 
             override fun givenPluginSettingsClassName(name: String) {
@@ -108,9 +110,11 @@ abstract class SchemaProcessorTestBase {
             @OptIn(ExperimentalSerializationApi::class)
             prettyPrintIndent = "  "
         }
-        assertEqualsWithDiff(
-            expected = expectedJsonPluginData ?: error("The test should call expectPluginData()"),
-            actual = format.encodeToString(result.declarations.withoutOrigin()),
+        
+        assertEqualsIgnoreLineSeparator(
+            expectedContent = expectedJsonPluginDataPath?.readText() ?: error("The test should call expectPluginData()"),
+            actualContent = format.encodeToString(result.declarations.withoutOrigin()),
+            originalFile = expectedJsonPluginDataPath,
         )
     }
 }

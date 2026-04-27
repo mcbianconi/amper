@@ -62,28 +62,19 @@ private fun ObjectBuilderContext<DeclarationOfSettings>.configureCompilerExecuti
                 }
                 "annotationProcessorPaths" -> {
                     child.children.forEach { annotationProcessorPath ->
-                        val annotationProcessorCoordinates = buildString {
-                            if (annotationProcessorPath is Xpp3Dom) {
-                                when (annotationProcessorPath.name) {
-                                    "path" -> {
-                                        annotationProcessorPath.children.forEach { path ->
-                                            if (path is Xpp3Dom) {
-                                                when (path.name) {
-                                                    "groupId" -> append(path.value)
-                                                    "artifactId" -> append(":${path.value}")
-                                                    "version" -> append(":${path.value}")
-                                                }
-                                            }
-                                        }
-                                    }
-                                }
-                            }
-                        }
                         java {
                             annotationProcessing {
                                 processors {
-                                    add(DeclarationOfUnscopedExternalMavenDependency) {
-                                        coordinates(annotationProcessorCoordinates)
+                                    if (annotationProcessorPath?.name == "path") {
+                                        add(DeclarationOfUnscopedExternalMavenDependency) {
+                                            annotationProcessorPath.children.forEach {
+                                                when (it?.name) {
+                                                    "groupId" -> groupId(it.value)
+                                                    "artifactId" -> artifactId(it.value)
+                                                    "version" -> version(it.value)
+                                                }
+                                            }
+                                        }
                                     }
                                 }
                             }

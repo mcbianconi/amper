@@ -127,8 +127,11 @@ object BasicDrDiagnosticsReporter : DrDiagnosticsReporter {
         dependencyElement: PsiElement,
     ): VersionDefinition? {
         if (node !is MavenDependencyNode) return null
-
-        val resolvedVersion = directDependency.notation.coordinates.findTraceableVersion() ?: return null
+        
+        val resolvedVersion = directDependency.notation.coordinates.version?.findTraceableVersion()
+            // Try to find resolvedVersion through version fields first.   
+            ?: directDependency.notation.coordinates.findTraceableVersion() 
+            ?: return null
 
         val versionTrace = resolvedVersion.trace
 

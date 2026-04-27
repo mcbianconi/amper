@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+ * Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
  */
 
 package org.jetbrains.amper.plugins
@@ -24,17 +24,6 @@ internal annotation class PathValueOnly
 @Retention(AnnotationRetention.BINARY)
 @Target(AnnotationTarget.PROPERTY)
 internal annotation class Provided
-
-/**
- * Specifies that polymorphic [Dependency] objects can be constructed from string without using YAML type tags.
- *
- * @see Dependency.Maven.coordinates
- * @see Dependency.Local.modulePath
- */
-@MustBeDocumented
-@Retention(AnnotationRetention.BINARY)
-@Target(AnnotationTarget.PROPERTY)
-internal annotation class DependencyNotation
 
 /**
  * Specifies that the whole object can be constructed from a single YAML value,

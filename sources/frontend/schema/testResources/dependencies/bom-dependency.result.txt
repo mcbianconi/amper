@@ -1,8 +1,8 @@
 Fragments:
   android
     External dependencies:
-      BomDependency(coordinates=com.fasterxml.jackson:jackson-bom:2.18.3, trace=PsiTrace(psiElement=YAML key value, precedingValue=null))
-      BomDependency(coordinates=io.ktor:ktor-bom:2.3.9, trace=PsiTrace(psiElement=YAML key value, precedingValue=null))
+      BomDependency(coordinates=com.fasterxml.jackson:jackson-bom:2.18.3, trace=PsiTrace(psiElement=YAML mapping, precedingValue=null))
+      BomDependency(coordinates=io.ktor:ktor-bom:2.3.9, trace=PsiTrace(psiElement=YAML mapping, precedingValue=null))
       MavenDependency(coordinates=com.fasterxml.jackson.core:jackson-core, trace=PsiTrace(psiElement=YAML plain scalar text, precedingValue=null), compile=true, runtime=true, exported=false)
       MavenDependency(coordinates=io.ktor:ktor-client-core, trace=PsiTrace(psiElement=YAML key value, precedingValue=null), compile=true, runtime=true, exported=true)
       MavenDependency(coordinates=org.jetbrains.kotlin:kotlin-stdlib-jdk7:2.3.20, trace=DefaultTrace, compile=true, runtime=true, exported=false)
@@ -17,8 +17,8 @@ Fragments:
 
   androidTest
     External dependencies:
-      BomDependency(coordinates=com.fasterxml.jackson:jackson-bom:2.18.3, trace=PsiTrace(psiElement=YAML key value, precedingValue=null))
-      BomDependency(coordinates=io.ktor:ktor-bom:2.3.9, trace=PsiTrace(psiElement=YAML key value, precedingValue=null))
+      BomDependency(coordinates=com.fasterxml.jackson:jackson-bom:2.18.3, trace=PsiTrace(psiElement=YAML mapping, precedingValue=null))
+      BomDependency(coordinates=io.ktor:ktor-bom:2.3.9, trace=PsiTrace(psiElement=YAML mapping, precedingValue=null))
       MavenDependency(coordinates=com.fasterxml.jackson.core:jackson-core, trace=PsiTrace(psiElement=YAML plain scalar text, precedingValue=null), compile=true, runtime=true, exported=false)
       MavenDependency(coordinates=io.ktor:ktor-client-core, trace=PsiTrace(psiElement=YAML key value, precedingValue=null), compile=true, runtime=true, exported=true)
       MavenDependency(coordinates=org.jetbrains.kotlin:kotlin-stdlib-jdk7:2.3.20, trace=DefaultTrace, compile=true, runtime=true, exported=false)
@@ -35,8 +35,8 @@ Fragments:
 
   apple
     External dependencies:
-      BomDependency(coordinates=com.fasterxml.jackson:jackson-bom:2.18.3, trace=PsiTrace(psiElement=YAML key value, precedingValue=null))
-      BomDependency(coordinates=io.ktor:ktor-bom:2.3.9, trace=PsiTrace(psiElement=YAML key value, precedingValue=null))
+      BomDependency(coordinates=com.fasterxml.jackson:jackson-bom:2.18.3, trace=PsiTrace(psiElement=YAML mapping, precedingValue=null))
+      BomDependency(coordinates=io.ktor:ktor-bom:2.3.9, trace=PsiTrace(psiElement=YAML mapping, precedingValue=null))
       MavenDependency(coordinates=com.fasterxml.jackson.core:jackson-core, trace=PsiTrace(psiElement=YAML plain scalar text, precedingValue=null), compile=true, runtime=true, exported=false)
       MavenDependency(coordinates=io.ktor:ktor-client-core, trace=PsiTrace(psiElement=YAML key value, precedingValue=null), compile=true, runtime=true, exported=true)
       MavenDependency(coordinates=org.jetbrains.kotlin:kotlin-stdlib:2.3.20, trace=DefaultTrace, compile=true, runtime=true, exported=false)
@@ -49,8 +49,8 @@ Fragments:
 
   appleTest
     External dependencies:
-      BomDependency(coordinates=com.fasterxml.jackson:jackson-bom:2.18.3, trace=PsiTrace(psiElement=YAML key value, precedingValue=null))
-      BomDependency(coordinates=io.ktor:ktor-bom:2.3.9, trace=PsiTrace(psiElement=YAML key value, precedingValue=null))
+      BomDependency(coordinates=com.fasterxml.jackson:jackson-bom:2.18.3, trace=PsiTrace(psiElement=YAML mapping, precedingValue=null))
+      BomDependency(coordinates=io.ktor:ktor-bom:2.3.9, trace=PsiTrace(psiElement=YAML mapping, precedingValue=null))
       MavenDependency(coordinates=com.fasterxml.jackson.core:jackson-core, trace=PsiTrace(psiElement=YAML plain scalar text, precedingValue=null), compile=true, runtime=true, exported=false)
       MavenDependency(coordinates=io.ktor:ktor-client-core, trace=PsiTrace(psiElement=YAML key value, precedingValue=null), compile=true, runtime=true, exported=true)
       MavenDependency(coordinates=org.jetbrains.kotlin:kotlin-stdlib:2.3.20, trace=DefaultTrace, compile=true, runtime=true, exported=false)
@@ -66,8 +66,8 @@ Fragments:
 
   common
     External dependencies:
-      BomDependency(coordinates=com.fasterxml.jackson:jackson-bom:2.18.3, trace=PsiTrace(psiElement=YAML key value, precedingValue=null))
-      BomDependency(coordinates=io.ktor:ktor-bom:2.3.9, trace=PsiTrace(psiElement=YAML key value, precedingValue=null))
+      BomDependency(coordinates=com.fasterxml.jackson:jackson-bom:2.18.3, trace=PsiTrace(psiElement=YAML mapping, precedingValue=null))
+      BomDependency(coordinates=io.ktor:ktor-bom:2.3.9, trace=PsiTrace(psiElement=YAML mapping, precedingValue=null))
       MavenDependency(coordinates=com.fasterxml.jackson.core:jackson-core, trace=PsiTrace(psiElement=YAML plain scalar text, precedingValue=null), compile=true, runtime=true, exported=false)
       MavenDependency(coordinates=io.ktor:ktor-client-core, trace=PsiTrace(psiElement=YAML key value, precedingValue=null), compile=true, runtime=true, exported=true)
       MavenDependency(coordinates=org.jetbrains.kotlin:kotlin-stdlib:2.3.20, trace=DefaultTrace, compile=true, runtime=true, exported=false)
@@ -79,8 +79,8 @@ Fragments:
 
   commonTest
     External dependencies:
-      BomDependency(coordinates=com.fasterxml.jackson:jackson-bom:2.18.3, trace=PsiTrace(psiElement=YAML key value, precedingValue=null))
-      BomDependency(coordinates=io.ktor:ktor-bom:2.3.9, trace=PsiTrace(psiElement=YAML key value, precedingValue=null))
+      BomDependency(coordinates=com.fasterxml.jackson:jackson-bom:2.18.3, trace=PsiTrace(psiElement=YAML mapping, precedingValue=null))
+      BomDependency(coordinates=io.ktor:ktor-bom:2.3.9, trace=PsiTrace(psiElement=YAML mapping, precedingValue=null))
       MavenDependency(coordinates=com.fasterxml.jackson.core:jackson-core, trace=PsiTrace(psiElement=YAML plain scalar text, precedingValue=null), compile=true, runtime=true, exported=false)
       MavenDependency(coordinates=io.ktor:ktor-client-core, trace=PsiTrace(psiElement=YAML key value, precedingValue=null), compile=true, runtime=true, exported=true)
       MavenDependency(coordinates=org.jetbrains.kotlin:kotlin-stdlib:2.3.20, trace=DefaultTrace, compile=true, runtime=true, exported=false)
@@ -95,8 +95,8 @@ Fragments:
 
   ios
     External dependencies:
-      BomDependency(coordinates=com.fasterxml.jackson:jackson-bom:2.18.3, trace=PsiTrace(psiElement=YAML key value, precedingValue=null))
-      BomDependency(coordinates=io.ktor:ktor-bom:2.3.9, trace=PsiTrace(psiElement=YAML key value, precedingValue=null))
+      BomDependency(coordinates=com.fasterxml.jackson:jackson-bom:2.18.3, trace=PsiTrace(psiElement=YAML mapping, precedingValue=null))
+      BomDependency(coordinates=io.ktor:ktor-bom:2.3.9, trace=PsiTrace(psiElement=YAML mapping, precedingValue=null))
       MavenDependency(coordinates=com.fasterxml.jackson.core:jackson-core, trace=PsiTrace(psiElement=YAML plain scalar text, precedingValue=null), compile=true, runtime=true, exported=false)
       MavenDependency(coordinates=io.ktor:ktor-client-core, trace=PsiTrace(psiElement=YAML key value, precedingValue=null), compile=true, runtime=true, exported=true)
       MavenDependency(coordinates=org.jetbrains.kotlin:kotlin-stdlib:2.3.20, trace=DefaultTrace, compile=true, runtime=true, exported=false)
@@ -109,8 +109,8 @@ Fragments:
 
   iosTest
     External dependencies:
-      BomDependency(coordinates=com.fasterxml.jackson:jackson-bom:2.18.3, trace=PsiTrace(psiElement=YAML key value, precedingValue=null))
-      BomDependency(coordinates=io.ktor:ktor-bom:2.3.9, trace=PsiTrace(psiElement=YAML key value, precedingValue=null))
+      BomDependency(coordinates=com.fasterxml.jackson:jackson-bom:2.18.3, trace=PsiTrace(psiElement=YAML mapping, precedingValue=null))
+      BomDependency(coordinates=io.ktor:ktor-bom:2.3.9, trace=PsiTrace(psiElement=YAML mapping, precedingValue=null))
       MavenDependency(coordinates=com.fasterxml.jackson.core:jackson-core, trace=PsiTrace(psiElement=YAML plain scalar text, precedingValue=null), compile=true, runtime=true, exported=false)
       MavenDependency(coordinates=io.ktor:ktor-client-core, trace=PsiTrace(psiElement=YAML key value, precedingValue=null), compile=true, runtime=true, exported=true)
       MavenDependency(coordinates=org.jetbrains.kotlin:kotlin-stdlib:2.3.20, trace=DefaultTrace, compile=true, runtime=true, exported=false)
@@ -126,8 +126,8 @@ Fragments:
 
   iosX64
     External dependencies:
-      BomDependency(coordinates=com.fasterxml.jackson:jackson-bom:2.18.3, trace=PsiTrace(psiElement=YAML key value, precedingValue=null))
-      BomDependency(coordinates=io.ktor:ktor-bom:2.3.9, trace=PsiTrace(psiElement=YAML key value, precedingValue=null))
+      BomDependency(coordinates=com.fasterxml.jackson:jackson-bom:2.18.3, trace=PsiTrace(psiElement=YAML mapping, precedingValue=null))
+      BomDependency(coordinates=io.ktor:ktor-bom:2.3.9, trace=PsiTrace(psiElement=YAML mapping, precedingValue=null))
       MavenDependency(coordinates=com.fasterxml.jackson.core:jackson-core, trace=PsiTrace(psiElement=YAML plain scalar text, precedingValue=null), compile=true, runtime=true, exported=false)
       MavenDependency(coordinates=io.ktor:ktor-client-core, trace=PsiTrace(psiElement=YAML key value, precedingValue=null), compile=true, runtime=true, exported=true)
       MavenDependency(coordinates=org.jetbrains.kotlin:kotlin-stdlib:2.3.20, trace=DefaultTrace, compile=true, runtime=true, exported=false)
@@ -140,8 +140,8 @@ Fragments:
 
   iosX64Test
     External dependencies:
-      BomDependency(coordinates=com.fasterxml.jackson:jackson-bom:2.18.3, trace=PsiTrace(psiElement=YAML key value, precedingValue=null))
-      BomDependency(coordinates=io.ktor:ktor-bom:2.3.9, trace=PsiTrace(psiElement=YAML key value, precedingValue=null))
+      BomDependency(coordinates=com.fasterxml.jackson:jackson-bom:2.18.3, trace=PsiTrace(psiElement=YAML mapping, precedingValue=null))
+      BomDependency(coordinates=io.ktor:ktor-bom:2.3.9, trace=PsiTrace(psiElement=YAML mapping, precedingValue=null))
       MavenDependency(coordinates=com.fasterxml.jackson.core:jackson-core, trace=PsiTrace(psiElement=YAML plain scalar text, precedingValue=null), compile=true, runtime=true, exported=false)
       MavenDependency(coordinates=io.ktor:ktor-client-core, trace=PsiTrace(psiElement=YAML key value, precedingValue=null), compile=true, runtime=true, exported=true)
       MavenDependency(coordinates=org.jetbrains.kotlin:kotlin-stdlib:2.3.20, trace=DefaultTrace, compile=true, runtime=true, exported=false)
@@ -157,8 +157,8 @@ Fragments:
 
   jvm
     External dependencies:
-      BomDependency(coordinates=com.fasterxml.jackson:jackson-bom:2.18.3, trace=PsiTrace(psiElement=YAML key value, precedingValue=null))
-      BomDependency(coordinates=io.ktor:ktor-bom:2.3.9, trace=PsiTrace(psiElement=YAML key value, precedingValue=null))
+      BomDependency(coordinates=com.fasterxml.jackson:jackson-bom:2.18.3, trace=PsiTrace(psiElement=YAML mapping, precedingValue=null))
+      BomDependency(coordinates=io.ktor:ktor-bom:2.3.9, trace=PsiTrace(psiElement=YAML mapping, precedingValue=null))
       MavenDependency(coordinates=com.fasterxml.jackson.core:jackson-core, trace=PsiTrace(psiElement=YAML plain scalar text, precedingValue=null), compile=true, runtime=true, exported=false)
       MavenDependency(coordinates=io.ktor:ktor-client-core, trace=PsiTrace(psiElement=YAML key value, precedingValue=null), compile=true, runtime=true, exported=true)
       MavenDependency(coordinates=org.jetbrains.kotlin:kotlin-stdlib:2.3.20, trace=DefaultTrace, compile=true, runtime=true, exported=false)
@@ -171,8 +171,8 @@ Fragments:
 
   jvmTest
     External dependencies:
-      BomDependency(coordinates=com.fasterxml.jackson:jackson-bom:2.18.3, trace=PsiTrace(psiElement=YAML key value, precedingValue=null))
-      BomDependency(coordinates=io.ktor:ktor-bom:2.3.9, trace=PsiTrace(psiElement=YAML key value, precedingValue=null))
+      BomDependency(coordinates=com.fasterxml.jackson:jackson-bom:2.18.3, trace=PsiTrace(psiElement=YAML mapping, precedingValue=null))
+      BomDependency(coordinates=io.ktor:ktor-bom:2.3.9, trace=PsiTrace(psiElement=YAML mapping, precedingValue=null))
       MavenDependency(coordinates=com.fasterxml.jackson.core:jackson-core, trace=PsiTrace(psiElement=YAML plain scalar text, precedingValue=null), compile=true, runtime=true, exported=false)
       MavenDependency(coordinates=io.ktor:ktor-client-core, trace=PsiTrace(psiElement=YAML key value, precedingValue=null), compile=true, runtime=true, exported=true)
       MavenDependency(coordinates=org.jetbrains.kotlin:kotlin-stdlib:2.3.20, trace=DefaultTrace, compile=true, runtime=true, exported=false)
@@ -187,8 +187,8 @@ Fragments:
 
   native
     External dependencies:
-      BomDependency(coordinates=com.fasterxml.jackson:jackson-bom:2.18.3, trace=PsiTrace(psiElement=YAML key value, precedingValue=null))
-      BomDependency(coordinates=io.ktor:ktor-bom:2.3.9, trace=PsiTrace(psiElement=YAML key value, precedingValue=null))
+      BomDependency(coordinates=com.fasterxml.jackson:jackson-bom:2.18.3, trace=PsiTrace(psiElement=YAML mapping, precedingValue=null))
+      BomDependency(coordinates=io.ktor:ktor-bom:2.3.9, trace=PsiTrace(psiElement=YAML mapping, precedingValue=null))
       MavenDependency(coordinates=com.fasterxml.jackson.core:jackson-core, trace=PsiTrace(psiElement=YAML plain scalar text, precedingValue=null), compile=true, runtime=true, exported=false)
       MavenDependency(coordinates=io.ktor:ktor-client-core, trace=PsiTrace(psiElement=YAML key value, precedingValue=null), compile=true, runtime=true, exported=true)
       MavenDependency(coordinates=org.jetbrains.kotlin:kotlin-stdlib:2.3.20, trace=DefaultTrace, compile=true, runtime=true, exported=false)
@@ -201,8 +201,8 @@ Fragments:
 
   nativeTest
     External dependencies:
-      BomDependency(coordinates=com.fasterxml.jackson:jackson-bom:2.18.3, trace=PsiTrace(psiElement=YAML key value, precedingValue=null))
-      BomDependency(coordinates=io.ktor:ktor-bom:2.3.9, trace=PsiTrace(psiElement=YAML key value, precedingValue=null))
+      BomDependency(coordinates=com.fasterxml.jackson:jackson-bom:2.18.3, trace=PsiTrace(psiElement=YAML mapping, precedingValue=null))
+      BomDependency(coordinates=io.ktor:ktor-bom:2.3.9, trace=PsiTrace(psiElement=YAML mapping, precedingValue=null))
       MavenDependency(coordinates=com.fasterxml.jackson.core:jackson-core, trace=PsiTrace(psiElement=YAML plain scalar text, precedingValue=null), compile=true, runtime=true, exported=false)
       MavenDependency(coordinates=io.ktor:ktor-client-core, trace=PsiTrace(psiElement=YAML key value, precedingValue=null), compile=true, runtime=true, exported=true)
       MavenDependency(coordinates=org.jetbrains.kotlin:kotlin-stdlib:2.3.20, trace=DefaultTrace, compile=true, runtime=true, exported=false)

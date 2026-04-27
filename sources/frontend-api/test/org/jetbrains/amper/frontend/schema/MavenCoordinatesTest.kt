@@ -7,6 +7,7 @@ package org.jetbrains.amper.frontend.schema
 import org.jetbrains.amper.frontend.MavenCoordinates
 import org.jetbrains.amper.frontend.api.DefaultTrace
 import org.jetbrains.amper.frontend.api.TraceableString
+import org.jetbrains.amper.frontend.api.asTraceable
 import kotlin.test.Test
 import kotlin.test.assertEquals
 
@@ -46,7 +47,7 @@ class MavenCoordinatesTest {
         val expected = MavenCoordinates(
             groupId = "org.example",
             artifactId = "artifact",
-            version = "1.0.0",
+            version = "1.0.0".asTraceable(DefaultTrace),
             trace = DefaultTrace,
         )
         assertEquals(expected, coordinates.toMavenCoordinates())
@@ -59,7 +60,7 @@ class MavenCoordinatesTest {
         val expected = MavenCoordinates(
             groupId = "org.example",
             artifactId = "artifact",
-            version = "1.2.3",
+            version = "1.2.3".asTraceable(DefaultTrace),
             packagingType = "jar",
             trace = DefaultTrace,
         )
@@ -73,7 +74,7 @@ class MavenCoordinatesTest {
         val expected = MavenCoordinates(
             groupId = "org.example",
             artifactId = "artifact",
-            version = "1.2.3",
+            version = "1.2.3".asTraceable(DefaultTrace),
             classifier = "jdk11",
             trace = DefaultTrace,
         )
@@ -87,7 +88,7 @@ class MavenCoordinatesTest {
         val expected = MavenCoordinates(
             groupId = "org.example",
             artifactId = "artifact",
-            version = "1.2.3",
+            version = "1.2.3".asTraceable(DefaultTrace),
             classifier = "jdk11",
             packagingType = "jar",
             trace = DefaultTrace,

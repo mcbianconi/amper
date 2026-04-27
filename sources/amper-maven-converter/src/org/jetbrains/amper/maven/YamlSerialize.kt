@@ -7,7 +7,7 @@ package org.jetbrains.amper.maven
 import org.jetbrains.amper.frontend.contexts.TestCtx
 import org.jetbrains.amper.frontend.contexts.defaultContextsInheritance
 import org.jetbrains.amper.frontend.contexts.plus
-import org.jetbrains.amper.frontend.schema.BomDependency
+import org.jetbrains.amper.frontend.schema.SchemaMavenCoordinates
 import org.jetbrains.amper.frontend.tree.BooleanNode
 import org.jetbrains.amper.frontend.tree.EnumNode
 import org.jetbrains.amper.frontend.tree.IntNode
@@ -64,33 +64,56 @@ internal fun MappingNode.serializeToYaml(comments: YamlComments = emptyMap()): S
     }
 }
 
-private fun TreeNode.serializeToYaml(indent: Int, currentPath: List<String>, comments: YamlComments): String = buildString {
+private fun TreeNode.serializeToYaml(
+    indent: Int, 
+    currentPath: List<String>, 
+    comments: YamlComments,
+    listItem: Boolean = false,
+): String = buildString {
     when (this@serializeToYaml) {
         is ListNode -> append(this@serializeToYaml.serializeToYaml(indent))
-        is MappingNode -> append(this@serializeToYaml.serializeToYaml(indent, currentPath, comments))
+        is MappingNode -> append(this@serializeToYaml.serializeToYaml(indent, currentPath, comments, listItem))
         is ScalarNode -> append(this@serializeToYaml.serializeToYaml(indent))
         else -> {}
     }
 }
 
-private fun MappingNode.serializeToYaml(indent: Int, currentPath: List<String>, comments: YamlComments): String = buildString {
+private fun MappingNode.serializeToYaml(
+    indent: Int, 
+    currentPath: List<String>, 
+    comments: YamlComments,
+    listItem: Boolean = false,
+): String = buildString {
     val isFromKeyAndTheRestNestedProperties = children.filter { it.propertyDeclaration?.isFromKeyAndTheRestNested == true }
-    val isCollapsibleFromKey = isFromKeyAndTheRestNestedProperties.size == 1
+    val isCollapsibleFromKey = isFromKeyAndTheRestNestedProperties.isNotEmpty()
+    
+    val coordinatesPresent = declaration?.isExternalDependencyNotation == true && children.any { it.key in SchemaMavenCoordinates.properties }
+    
+    if (isCollapsibleFromKey || coordinatesPresent) {
+        
+        // We treat [ExternalDependencyNotation] as if all coordinates parts are marked with [FromKeyAndTheRestIsNested].
+        val theRest = if (declaration?.isExternalDependencyNotation != true)
+            children.filter { it !in isFromKeyAndTheRestNestedProperties }
+        else 
+            children.filter { it.key !in SchemaMavenCoordinates.properties }
 
-    if (isCollapsibleFromKey) {
-        val collapsibleProperty = isFromKeyAndTheRestNestedProperties.single()
-        val collapsiblePropertyValue = collapsibleProperty.value
+        val declarationInstance = declaration?.createInstance()
+        val collapsiblePropertyValue = if (declarationInstance is SchemaMavenCoordinates) {
+            SchemaMavenCoordinates.properties
+                .mapNotNull { property -> children.find { it.key == property }?.value }
+                .filterIsInstance<StringNode>()
+                .joinToString(separator = ":") { it.value }
+        } else if (isFromKeyAndTheRestNestedProperties.size == 1) {
+            isFromKeyAndTheRestNestedProperties.single().value
+        } else error("Must not reach here")
 
-        require(collapsiblePropertyValue is ScalarNode) {
+        require(collapsiblePropertyValue is ScalarNode || collapsiblePropertyValue is String) {
             "Only scalar values can be collapsible"
         }
-
-        val theRest = children.filter { it !== collapsibleProperty }
+        
         append(" ")
-        if (declaration?.createInstance() is BomDependency) {
-            append("bom: ")
-        }
         when (collapsiblePropertyValue) {
+            is String -> append(collapsiblePropertyValue)
             is BooleanNode -> append(collapsiblePropertyValue.value)
             is EnumNode -> append(collapsiblePropertyValue.schemaValue)
             is IntNode -> append(collapsiblePropertyValue.value)
@@ -118,8 +141,12 @@ private fun MappingNode.serializeToYaml(indent: Int, currentPath: List<String>, 
                 else -> append(child.value.serializeToYaml(indent, childPath, comments))
             }
         } else {
-            if (indent > 0 && child == children.first()) {
-                appendLine()
+            // If this is a nested mapping, we need to add a line break before the key.
+            // If this is a list item, we need to add a space before the key.
+            val isFirstChild = child == children.first()
+            if (isFirstChild) {
+                if (indent > 0 && !listItem) appendLine()
+                else if (listItem) append(" ")
             }
 
             require(child.contexts.size == 1) {
@@ -133,17 +160,10 @@ private fun MappingNode.serializeToYaml(indent: Int, currentPath: List<String>, 
                     appendLine(line)
                 }
             }
-
-            val context = child.contexts.single()
-            if (context is TestCtx) {
-                if (indent == 0) {
-                    append(("test-${child.key}").serializeToYaml(indent))
-                } else {
-                    append(child.key.serializeToYaml(indent))
-                }
-            } else {
-                append(child.key.serializeToYaml(indent))
-            }
+            
+            val keyString = if (child.contexts.singleOrNull() is TestCtx && indent == 0) "test-${child.key}" else child.key
+            val keyIndent = if (listItem && isFirstChild) 0 else indent
+            append(keyString.serializeToYaml(keyIndent))
 
             append(child.value.serializeToYaml(indent + 1, childPath, comments))
 
@@ -167,7 +187,7 @@ private fun ListNode.serializeToYaml(indent: Int): String = buildString {
     for (item in children) {
         append("  ".repeat(indent))
         append("-")
-        append(item.serializeToYaml(indent + 1, emptyList(), emptyMap()))
+        append(item.serializeToYaml(indent + 1, emptyList(), emptyMap(), listItem = true))
     }
 }
 

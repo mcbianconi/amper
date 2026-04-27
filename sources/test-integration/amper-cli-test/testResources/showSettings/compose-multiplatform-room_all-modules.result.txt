@@ -273,7 +273,10 @@ settings@jvm+android:
     ksp:
       processorOptions: {}  # default
       processors:
-        - coordinates: androidx.room:room-compiler:2.7.0-alpha12  # module.yaml
+        - artifactId: room-compiler  # module.yaml
+          classifier: null  # default
+          groupId: androidx.room  # module.yaml
+          version: 2.7.0-alpha12  # module.yaml
       version: 2.3.6  # default
     languageFeatures: null  # default
     languageVersion: null  # default
@@ -376,7 +379,10 @@ settings@jvm:
       processorOptions:
         "room.schemaLocation": ./generated-db-schema/jvm  # module.yaml
       processors:
-        - coordinates: androidx.room:room-compiler:2.7.0-alpha12  # module.yaml
+        - artifactId: room-compiler  # module.yaml
+          classifier: null  # default
+          groupId: androidx.room  # module.yaml
+          version: 2.7.0-alpha12  # module.yaml
       version: 2.3.6  # default
     languageFeatures: null  # default
     languageVersion: null  # default
@@ -486,7 +492,10 @@ settings@android:
       processorOptions:
         "room.schemaLocation": ./generated-db-schema/android  # module.yaml
       processors:
-        - coordinates: androidx.room:room-compiler:2.7.0-alpha12  # module.yaml
+        - artifactId: room-compiler  # module.yaml
+          classifier: null  # default
+          groupId: androidx.room  # module.yaml
+          version: 2.7.0-alpha12  # module.yaml
       version: 2.3.6  # default
     languageFeatures: null  # default
     languageVersion: null  # default

@@ -16,10 +16,14 @@
   },
   "dependencies(android)" : [
     {
-      "coordinates(jvmAndAndroid)" : "org.jetbrains.compose.runtime:runtime:1.4.1(jvmAndAndroid)"
+      "groupId(jvmAndAndroid)" : "org.jetbrains.compose.runtime(jvmAndAndroid)",
+      "artifactId(jvmAndAndroid)" : "runtime(jvmAndAndroid)",
+      "version(jvmAndAndroid)" : "1.4.1(jvmAndAndroid)"
     },
     {
-      "coordinates(android)" : "androidx.compose.animation:animation-graphics:1.4.3(android)"
+      "groupId(android)" : "androidx.compose.animation(android)",
+      "artifactId(android)" : "animation-graphics(android)",
+      "version(android)" : "1.4.3(android)"
     }
   ],
   "settings" : {

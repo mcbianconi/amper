@@ -88,7 +88,7 @@ private fun springBootBomDependency(springBootVersion: TraceableString, dependen
 private fun coords(group: String, artifact: String, version: TraceableString) = MavenCoordinates(
     groupId = group,
     artifactId = artifact,
-    version = version.value,
+    version = version,
     trace = TransformedValueTrace(
         description = "injected version ${version.value} into default coordinates",
         sourceValue = version,
@@ -277,7 +277,7 @@ private fun Fragment.calculateImplicitDependencies(): List<MavenDependencyBase> 
             coordinates = MavenCoordinates(
                 groupId = "org.jetbrains.amper",
                 artifactId = "amper-extensibility-api",
-                version = AmperBuild.mavenVersion,
+                version = TraceableString(AmperBuild.mavenVersion, DefaultTrace),
                 trace = DefaultTrace,
             ),
             // TODO we should trace to the product type, but we don't seem to have this trace in the AOM

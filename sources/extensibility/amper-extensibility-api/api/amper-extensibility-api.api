@@ -33,7 +33,10 @@ public abstract interface class org/jetbrains/amper/plugins/Dependency$Local : o
 }
 
 public abstract interface class org/jetbrains/amper/plugins/Dependency$Maven : org/jetbrains/amper/plugins/Dependency {
-	public abstract fun getCoordinates ()Ljava/lang/String;
+	public abstract fun getArtifactId ()Ljava/lang/String;
+	public abstract fun getClassifier ()Ljava/lang/String;
+	public abstract fun getGroupId ()Ljava/lang/String;
+	public abstract fun getVersion ()Ljava/lang/String;
 }
 
 public abstract interface annotation class org/jetbrains/amper/plugins/EnumValue : java/lang/annotation/Annotation {

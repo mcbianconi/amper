@@ -41,12 +41,12 @@ import org.jetbrains.amper.frontend.processing.substituteComposeOsSpecific
 import org.jetbrains.amper.frontend.project.AmperProjectContext
 import org.jetbrains.amper.frontend.schema.CatalogDependency
 import org.jetbrains.amper.frontend.schema.Dependency
-import org.jetbrains.amper.frontend.schema.ExternalMavenBomDependency
 import org.jetbrains.amper.frontend.schema.ExternalMavenDependency
 import org.jetbrains.amper.frontend.schema.InternalDependency
 import org.jetbrains.amper.frontend.schema.Module
 import org.jetbrains.amper.frontend.schema.ProductType
 import org.jetbrains.amper.frontend.schema.Settings
+import org.jetbrains.amper.frontend.schema.UnscopedExternalMavenDependency
 import org.jetbrains.amper.frontend.schema.toMavenCoordinates
 import org.jetbrains.amper.frontend.tree.MappingNode
 import org.jetbrains.amper.frontend.tree.RefinedMappingNode
@@ -256,15 +256,16 @@ private fun Dependency.resolveInternalDependency(
     reportedUnresolvedModules: MutableSet<Trace>,
 ): Notation? = when (this) {
     is ExternalMavenDependency -> MavenDependency(
-        coordinates = coordinatesDelegate.asTraceableValue().toMavenCoordinates(),
+        coordinates = toMavenCoordinates(),
         trace = trace,
         compile = scope.compile,
         runtime = scope.runtime,
         exported = exported,
     )
     is InternalDependency -> resolveModuleDependency(moduleDir2module, reportedUnresolvedModules)
-    is ExternalMavenBomDependency -> BomDependency(
-        coordinates = coordinatesDelegate.asTraceableValue().toMavenCoordinates(),
+    is org.jetbrains.amper.frontend.schema.BomDependency -> BomDependency(
+        // We can safely caset here, because catalogs were substituted.
+        coordinates = (bom as UnscopedExternalMavenDependency).toMavenCoordinates(),
         trace = trace,
     )
     is CatalogDependency -> error("Catalog dependency must be processed earlier!")

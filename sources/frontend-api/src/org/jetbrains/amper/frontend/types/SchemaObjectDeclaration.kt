@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+ * Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
  */
 
 package org.jetbrains.amper.frontend.types
@@ -17,6 +17,13 @@ interface SchemaObjectDeclaration : SchemaTypeDeclaration {
     fun getProperty(name: String): Property?
 
     /**
+     * True if this declaration is a external dependency notation, i.e.,
+     * its corresponding Kotlin type is marked with [org.jetbrains.amper.frontend.api.ExternalDependencyNotation] 
+     * annotation, and it can be parsed from Maven coordinates string.
+     */
+    val isExternalDependencyNotation: Boolean
+
+    /**
      * Returns the boolean shorthand property, if any.
      *
      * @see org.jetbrains.amper.frontend.api.Shorthand
@@ -30,7 +37,7 @@ interface SchemaObjectDeclaration : SchemaTypeDeclaration {
      * @see org.jetbrains.amper.frontend.api.Shorthand
      */
     fun getSecondaryShorthand(): Property?
-
+    
     /**
      * @see org.jetbrains.amper.frontend.api.FromKeyAndTheRestIsNested
      */

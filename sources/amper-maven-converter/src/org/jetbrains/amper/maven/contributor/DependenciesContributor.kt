@@ -54,8 +54,12 @@ internal fun ProjectTreeBuilder.contributeDependencies(
                     dependencies {
                         // Emit BOMs root-first so that nearer parent versions take precedence
                         for (ancestor in ancestors.reversed()) {
-                            add(DeclarationOfExternalMavenBomDependency) {
-                                coordinates("${ancestor.groupId}:${ancestor.artifactId}:${ancestor.version}")
+                            add(DeclarationOfBomDependency) {
+                                bom(DeclarationOfUnscopedExternalMavenDependency) {
+                                    groupId(ancestor.groupId)
+                                    artifactId(ancestor.artifactId)
+                                    version(ancestor.version)
+                                }
                             }
                         }
                     }
@@ -100,7 +104,9 @@ private fun ProjectTreeBuilder.ModuleTreeBuilder.addDependencyInContext(
                 }
             } else {
                 add(DeclarationOfExternalMavenDependency) {
-                    coordinates("${dependency.groupId}:${dependency.artifactId}:${dependency.version}")
+                    groupId(dependency.groupId)
+                    artifactId(dependency.artifactId)
+                    version(dependency.version)
                     scope?.let { s -> scope(s) }
                     exported?.let { e -> exported(e) }
                 }
@@ -163,8 +169,12 @@ private fun ProjectTreeBuilder.ModuleTreeBuilder.contributeDependency(
         "import" -> {
             withDefaultContext {
                 dependencies {
-                    add(DeclarationOfExternalMavenBomDependency) {
-                        coordinates("${dependency.groupId}:${dependency.artifactId}:${dependency.version}")
+                    add(DeclarationOfBomDependency) {
+                        bom(DeclarationOfUnscopedExternalMavenDependency) {
+                            groupId(dependency.groupId)
+                            artifactId(dependency.artifactId)
+                            version(dependency.version)
+                        }
                     }
                 }
             }

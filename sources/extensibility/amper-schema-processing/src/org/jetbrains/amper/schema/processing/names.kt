@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+ * Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
  */
 
 package org.jetbrains.amper.schema.processing
@@ -31,6 +31,17 @@ val PROVIDED_ANNOTATION_CLASS = ClassId(EXTENSIBILITY_API_PACKAGE, Name.identifi
 val SHORTHAND_ANNOTATION_CLASS = ClassId(EXTENSIBILITY_API_PACKAGE, Name.identifier("Shorthand"))
 val DEP_NOTATION_ANNOTATION_CLASS = ClassId(EXTENSIBILITY_API_PACKAGE, Name.identifier("DependencyNotation"))
 val PATH_VALUE_ONLY_ANNOTATION_CLASS = ClassId(EXTENSIBILITY_API_PACKAGE, Name.identifier("PathValueOnly"))
+
+val MAVEN_DEPENDENCY_CLASS = ClassId(
+    EXTENSIBILITY_API_PACKAGE,
+    FqName.fromSegments(listOf("Dependency", "Maven")),
+    false,
+)
+val LOCAL_DEPENDENCY_CLASS = ClassId(
+    EXTENSIBILITY_API_PACKAGE,
+    FqName.fromSegments(listOf("Dependency", "Local")),
+    false,
+)
 
 val ENUM_VALUE_ANNOTATION_CLASS = ClassId(EXTENSIBILITY_API_PACKAGE, Name.identifier("EnumValue"))
 

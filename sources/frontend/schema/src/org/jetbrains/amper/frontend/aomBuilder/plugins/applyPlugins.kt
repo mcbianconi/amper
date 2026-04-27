@@ -5,6 +5,7 @@
 package org.jetbrains.amper.frontend.aomBuilder.plugins
 
 import org.jetbrains.amper.frontend.AmperModule
+import org.jetbrains.amper.frontend.MavenCoordinates
 import org.jetbrains.amper.frontend.SchemaBundle
 import org.jetbrains.amper.frontend.aomBuilder.ModuleBuildCtx
 import org.jetbrains.amper.frontend.api.TraceablePath
@@ -108,8 +109,15 @@ internal fun applyPlugins(
                     TaskFromPluginDescription.ClasspathRequest(
                         node = node,
                         localDependencies = localModules.distinct(),
-                        externalDependencies = node.dependencies.filterIsInstance<ShadowDependencyMaven>()
-                            .map { it.coordinatesDelegate.asTraceableValue().toMavenCoordinates() },
+                        externalDependencies = node.dependencies.filterIsInstance<ShadowDependencyMaven>().map {
+                            MavenCoordinates(
+                                groupId = it.groupId,
+                                artifactId = it.artifactId,
+                                version = it.versionDelegate.asTraceableValue(),
+                                classifier = it.classifier,
+                                trace = it.trace,
+                            )
+                        },
                         propertyLocation = propertyLocation,
                     )
                 },

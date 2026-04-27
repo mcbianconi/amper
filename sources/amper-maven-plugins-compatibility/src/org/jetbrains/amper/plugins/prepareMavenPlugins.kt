@@ -9,6 +9,7 @@ import kotlinx.coroutines.awaitAll
 import kotlinx.coroutines.coroutineScope
 import org.jetbrains.amper.core.AmperUserCacheRoot
 import org.jetbrains.amper.core.UsedInIdePlugin
+import org.jetbrains.amper.dependency.resolution.MavenCoordinates
 import org.jetbrains.amper.dependency.resolution.withJarEntry
 import org.jetbrains.amper.frontend.api.TraceableString
 import org.jetbrains.amper.frontend.api.asTraceableValue
@@ -16,7 +17,6 @@ import org.jetbrains.amper.frontend.dr.resolver.MavenResolver
 import org.jetbrains.amper.frontend.dr.resolver.toDrMavenCoordinates
 import org.jetbrains.amper.frontend.project.AmperProjectContext
 import org.jetbrains.amper.frontend.schema.toMavenCoordinates
-import org.jetbrains.amper.frontend.types.generated.coordinatesDelegate
 import org.jetbrains.amper.incrementalcache.IncrementalCache
 import org.jetbrains.amper.maven.MavenPluginXml
 import org.jetbrains.amper.maven.download.downloadSingleArtifactJar
@@ -37,26 +37,25 @@ suspend fun prepareMavenPlugins(
     val mavenResolver = MavenResolver(userCacheRoot, incrementalCache)
     projectContext.externalMavenPlugins.map { mavenPlugin ->
         async {
-            val traceableCoordinates = mavenPlugin.coordinatesDelegate.asTraceableValue()
-            val pluginJarFile = downloadPluginAndDirectDependencies(mavenResolver, traceableCoordinates) ?: return@async null
+            val pluginCoordinates = MavenCoordinates(
+                groupId = mavenPlugin.groupId,
+                artifactId = mavenPlugin.artifactId,
+                version = mavenPlugin.version,
+                packagingType = null,
+                classifier = null,
+            )
+            val pluginJarFile = mavenResolver.downloadSingleArtifactJar(pluginCoordinates) ?: return@async null
             withJarEntry(pluginJarFile, "META-INF/maven/plugin.xml") {
                 try {
                     parseMavenPluginXml(it)
                 } catch (e: Exception) {
-                    logger.warn("Failed to parse plugin.xml for ${mavenPlugin.coordinates}", e)
+                    val coordinatesString = "${mavenPlugin.groupId}:${mavenPlugin.artifactId}:${mavenPlugin.version}"
+                    logger.warn("Failed to parse plugin.xml for $coordinatesString", e)
                     null
                 }
             }
         }
     }.awaitAll().filterNotNull()
 }
-
-/**
- * Resolve and download the plugin and its direct dependencies.
- */
-private suspend fun downloadPluginAndDirectDependencies(
-    mavenResolver: MavenResolver,
-    coordinates: TraceableString,
-): Path? = mavenResolver.downloadSingleArtifactJar(coordinates.toMavenCoordinates().toDrMavenCoordinates())
 
 private val logger = LoggerFactory.getLogger("PrepareMavenPluginsKt")

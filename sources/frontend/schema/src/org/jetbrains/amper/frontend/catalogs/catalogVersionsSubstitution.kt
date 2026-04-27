@@ -18,8 +18,8 @@ import org.jetbrains.amper.frontend.asBuildProblemSource
 import org.jetbrains.amper.frontend.diagnostics.FrontendDiagnosticId
 import org.jetbrains.amper.frontend.messages.PsiBuildProblem
 import org.jetbrains.amper.frontend.reportBundleError
-import org.jetbrains.amper.problems.reporting.BuildProblemType
-import org.jetbrains.amper.problems.reporting.Level
+import org.jetbrains.amper.frontend.schema.ExternalMavenDependency
+import org.jetbrains.amper.frontend.schema.toMavenCoordinates
 import org.jetbrains.amper.frontend.tree.Changed
 import org.jetbrains.amper.frontend.tree.KeyValue
 import org.jetbrains.amper.frontend.tree.MappingNode
@@ -31,7 +31,9 @@ import org.jetbrains.amper.frontend.tree.TreeTransformer
 import org.jetbrains.amper.frontend.tree.copy
 import org.jetbrains.amper.frontend.types.SchemaType
 import org.jetbrains.amper.frontend.types.generated.*
+import org.jetbrains.amper.problems.reporting.BuildProblemType
 import org.jetbrains.amper.problems.reporting.DiagnosticId
+import org.jetbrains.amper.problems.reporting.Level
 import org.jetbrains.amper.problems.reporting.ProblemReporter
 import org.jetbrains.annotations.Nls
 
@@ -46,8 +48,6 @@ internal class CatalogVersionsSubstitutor(
     private val substitutionTypes = mapOf(
         DeclarationOfCatalogDependency to DeclarationOfExternalMavenDependency,
         DeclarationOfUnscopedCatalogDependency to DeclarationOfUnscopedExternalMavenDependency,
-        DeclarationOfUnscopedCatalogBomDependency to DeclarationOfUnscopedExternalMavenBomDependency,
-        DeclarationOfCatalogBomDependency to DeclarationOfExternalMavenBomDependency,
         DeclarationOfShadowDependencyCatalog to DeclarationOfShadowDependencyMaven,
     )
 
@@ -62,27 +62,35 @@ internal class CatalogVersionsSubstitutor(
         val found = context(problemReporter) {
             catalog.findInCatalogWithReport(catalogKey.removePrefix("$"), catalogKeyScalar.trace) ?: return Removed
         }
-        val coordinatesProperty = checkNotNull(substituted.getProperty("coordinates")) {
-            "Missing `coordinates` property in the dependency type"
+
+        // Parse coordinates and create new key values.
+        val catalogCoordinates = found.toMavenCoordinates()
+        val newKeyValues = listOf(
+            ExternalMavenDependency::groupId.name to catalogCoordinates.groupId,
+            ExternalMavenDependency::artifactId.name to catalogCoordinates.artifactId,
+            ExternalMavenDependency::version.name to catalogCoordinates.version?.value,
+        ).mapNotNull { (propName, value) ->
+            val property = checkNotNull(substituted.getProperty(propName)) { "Missing `$propName` property in the dependency type" }
+            val newNode = StringNode(
+                value = value ?: return@mapNotNull null,
+                semantics = (property.type as SchemaType.StringType).semantics,
+                trace = ResolvedReferenceTrace(
+                    description = "from $catalogKey",
+                    referenceTrace = catalogKeyScalar.trace,
+                    resolvedValue = found,
+                ),
+                contexts = catalogKeyScalar.contexts,
+            )
+            KeyValue(catalogKeyProp.keyTrace, newNode, property, catalogKeyProp.trace)
         }
-        val newCValue = StringNode(
-            value = found.value,
-            semantics = (coordinatesProperty.type as SchemaType.StringType).semantics,
-            trace = ResolvedReferenceTrace(
-                description = "from $catalogKey",
-                referenceTrace = catalogKeyScalar.trace,
-                resolvedValue = found,
-            ),
-            contexts = catalogKeyScalar.contexts,
-        )
-        val newChildren = node.children - catalogKeyProp +
-                KeyValue(catalogKeyProp.keyTrace, newCValue, coordinatesProperty, catalogKeyProp.trace)
+        
+        val newChildren = node.children - catalogKeyProp + newKeyValues
         return Changed(node.copy(children = newChildren, declaration = substituted))
     }
 }
 
 /**
- * Get dependency notation by key. Reports on a missing value or unknown version mapping.
+ * Get dependency notation by key. Reports on a missing value.
  */
 context(problemReporter: ProblemReporter)
 private fun VersionCatalog.findInCatalogWithReport(key: String, keyTrace: Trace?): TraceableString? {

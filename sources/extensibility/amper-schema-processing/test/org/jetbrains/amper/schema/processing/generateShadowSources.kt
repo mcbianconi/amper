@@ -81,6 +81,7 @@ private fun generateShadowSchemaNode(
     addKDocForShadow(data.name)
     addSchemaDoc(data.doc)
     superclass(superVariant?.toShadowClassName() ?: SCHEMA_NODE)
+    if (data.internalAttributes?.isExternalDependencyNotation == true) addAnnotation(EXTERNAL_DEPENDENCY_NOTATION)
     addProperties(data.properties.map { property ->
         PropertySpec.builder(property.name, property.type.toShadowTypeName()).apply {
             val internal = property.internalAttributes
@@ -89,11 +90,6 @@ private fun generateShadowSchemaNode(
                     addAnnotation(SHORTHAND)
                 }
                 if (internal.isDependencyNotation) {
-                    if (property.type is PluginData.Type.StringType && property.name == "coordinates") {
-                        // We know that we need maven coordinates semantics for a string that is dependency notation
-                        addAnnotation(AnnotationSpec.builder(STRING_SEMANTICS)
-                            .addMember("%T.%N", STRING_SEMANTICS_KIND, "MavenCoordinates").build())
-                    }
                     addAnnotation(FROM_KEY_AND_THE_REST_NESTED)
                 }
                 if (internal.isProvided) {
@@ -109,10 +105,11 @@ private fun generateShadowSchemaNode(
 
             val default = property.default
             val type = property.type
+            val nullableDelegateWrap = if (type.isNullable) "nullableValue" else "value"
             when {
-                default != null -> delegate("value(default = %L)", default.toCode(type))
+                default != null -> delegate("$nullableDelegateWrap(default = %L)", default.toCode(type))
                 type is PluginData.Type.ObjectType && !type.isNullable -> delegate("nested()")
-                else -> if (internal?.isProvided != true) delegate("value()")
+                else -> if (internal?.isProvided != true) delegate("$nullableDelegateWrap()")
             }
 
             property.inputOutputMark?.let { mark ->
@@ -223,6 +220,7 @@ private val SHORTHAND = ClassName("org.jetbrains.amper.frontend.api", "Shorthand
 private val FROM_KEY_AND_THE_REST_NESTED = ClassName("org.jetbrains.amper.frontend.api", "FromKeyAndTheRestIsNested")
 private val STRING_SEMANTICS = ClassName("org.jetbrains.amper.frontend.api", "StringSemantics")
 private val STRING_SEMANTICS_KIND = ClassName("org.jetbrains.amper.frontend.types", "SchemaType", "StringType", "Semantics")
+private val EXTERNAL_DEPENDENCY_NOTATION = ClassName("org.jetbrains.amper.frontend.api", "ExternalDependencyNotation")
 private val PATH_MARK = ClassName("org.jetbrains.amper.frontend.api", "PathMark")
 private val PATH_MARK_TYPE = ClassName("org.jetbrains.amper.plugins.schema.model", "InputOutputMark")
 private val SCHEMA_ENUM = ClassName("org.jetbrains.amper.frontend", "SchemaEnum")

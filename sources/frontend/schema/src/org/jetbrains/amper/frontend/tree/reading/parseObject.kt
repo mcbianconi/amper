@@ -4,20 +4,24 @@
 
 package org.jetbrains.amper.frontend.tree.reading
 
+import org.jetbrains.amper.frontend.api.Trace
 import org.jetbrains.amper.frontend.api.asTrace
 import org.jetbrains.amper.frontend.contexts.Contexts
 import org.jetbrains.amper.frontend.contexts.EmptyContexts
 import org.jetbrains.amper.frontend.contexts.PlatformCtx
 import org.jetbrains.amper.frontend.contexts.TestCtx
+import org.jetbrains.amper.frontend.schema.SchemaMavenCoordinates
 import org.jetbrains.amper.frontend.tree.KeyValue
 import org.jetbrains.amper.frontend.tree.MappingNode
 import org.jetbrains.amper.frontend.tree.StringNode
 import org.jetbrains.amper.frontend.tree.TreeDiagnosticId
 import org.jetbrains.amper.frontend.tree.TreeNode
 import org.jetbrains.amper.frontend.tree.copy
+import org.jetbrains.amper.frontend.tree.reading.maven.validateAndReportMavenCoordinates
 import org.jetbrains.amper.frontend.types.SchemaObjectDeclaration
 import org.jetbrains.amper.frontend.types.SchemaType
 import org.jetbrains.amper.frontend.types.render
+import org.jetbrains.amper.problems.reporting.BuildProblemType
 import org.jetbrains.amper.problems.reporting.ProblemReporter
 
 context(_: Contexts, _: ParsingConfig, _: ProblemReporter)
@@ -34,55 +38,114 @@ internal fun parseObject(
         }
     }
 
-    val fromKeyProperty = type.declaration.getFromKeyAndTheRestNestedProperty()
+    val declaration = type.declaration
+    val fromKeyProperty = declaration.getFromKeyAndTheRestNestedProperty()
     return if (fromKeyProperty != null) {
-        parseObjectWithFromKeyProperty(fromKeyProperty, value, type)
+        parseObjectWithCustomKeyParsing(value, type) { key, keyValueTrace ->
+            val argumentType = fromKeyProperty.type as SchemaType.ScalarType // should be scalar by design
+            listOf(
+                KeyValue(
+                    key.asTrace(),
+                    value = parseNode(key, argumentType),
+                    propertyDeclaration = fromKeyProperty,
+                    trace = keyValueTrace,
+                )
+            )
+        }
+    } else if (declaration.isExternalDependencyNotation) {
+        if (value is YamlValue.Mapping && tryInferTypeFromKnownKeys(value) == DependencyTypeInferenceResult.Maven) {
+            // If we can infer Maven type from the available keys, then we should parse this YAML value as plain object...
+            parseObjectWithoutFromKeyProperty(value, type)
+        } else {
+            //... Otherwise, we should treat this YAML value as a single key coordinates notation with some other dependency attributes.
+            parseObjectWithCustomKeyParsing(value, type) { key, keyValueTrace ->
+                if (key !is YamlValue.Scalar) {
+                    reportParsing(
+                        key,
+                        TreeDiagnosticId.UnexpectedValue,
+                        "validation.expected",
+                        SchemaType.StringType().render(),
+                        type = BuildProblemType.TypeMismatch
+                    )
+                    null
+                } else {
+                    parseMavenCoordinates(declaration, key, keyValueTrace)
+                }
+            }
+        }
     } else {
         parseObjectWithoutFromKeyProperty(value, type)
     }
 }
 
+context(_: Contexts, _: ParsingConfig, reporter: ProblemReporter)
+private fun parseMavenCoordinates(
+    declaration: SchemaObjectDeclaration,
+    key: YamlValue.Scalar,
+    keyValueTrace: Trace,
+): List<KeyValue>? {
+    if (!validateAndReportMavenCoordinates(key.psi, key.textValue)) return null
+    val coordinatesParts = key.textValue.split(":")
+    val groupId = coordinatesParts[0]
+    val artifactId = coordinatesParts[1]
+    val version = coordinatesParts.getOrNull(2)
+    val classifier = coordinatesParts.getOrNull(3)
+    return listOf(
+        groupId to SchemaMavenCoordinates::groupId.name,
+        artifactId to SchemaMavenCoordinates::artifactId.name,
+        version to SchemaMavenCoordinates::version.name,
+        classifier to SchemaMavenCoordinates::classifier.name,
+    ).mapNotNull { (keyValue, keyName) ->
+        KeyValue(
+            key = keyName,
+            keyTrace = key.asTrace(),
+            value = keyValue?.let { stringNode(key, null, it) }
+                ?: return@mapNotNull null,
+            parentType = declaration,
+            trace = keyValueTrace,
+        )
+    }
+}
+
+internal typealias CustomKeyParser =
+        context(Contexts, ParsingConfig, ProblemReporter)
+            (key: YamlValue, keyValueTrace: Trace) -> List<KeyValue>?
+
 context(_: Contexts, _: ParsingConfig, _: ProblemReporter)
-private fun parseObjectWithFromKeyProperty(
-    valueAsKeyProperty: SchemaObjectDeclaration.Property,
+private fun parseObjectWithCustomKeyParsing(
     value: YamlValue,
     type: SchemaType.ObjectType,
+    customKeyParser: CustomKeyParser,
 ): TreeNode {
     val otherProperties = type.declaration.properties.filterNot { it.isFromKeyAndTheRestNested }
-    val argumentType = valueAsKeyProperty.type as SchemaType.ScalarType // should be scalar by design
     return when (value) {
         is YamlValue.Mapping if otherProperties.isNotEmpty() -> {
             val argKeyValue = value.keyValues.singleOrNull() ?: run {
-                reportParsing(value, TreeDiagnosticId.MappingShouldHaveSingleKeyValue, "validation.types.invalid.ctor.arg.key", type.render())
+                reportParsing(
+                    value,
+                    TreeDiagnosticId.MappingShouldHaveSingleKeyValue,
+                    "validation.types.invalid.ctor.arg.key",
+                    type.render()
+                )
                 return errorNode(value, type)
             }
-            val argumentValue = parseScalarKey(argKeyValue.key, argumentType)
+            val keyValuesFromKey = customKeyParser(argKeyValue.key, value.asTrace())
+            // If we can't parse the key properly, then we should treat it as an error.    
+                ?: return errorNode(value, type)
             val nestedRemainingObject = argKeyValue.value
-            val remainingProperties = parseObjectWithoutFromKeyProperty(nestedRemainingObject, type) as? MappingNode
+            val remainingProperties = parseObjectWithoutFromKeyProperty(nestedRemainingObject, type)as? MappingNode
                 ?: return errorNode(value, type)
             remainingProperties.copy(
-                children = listOf(
-                    KeyValue(
-                        keyTrace = argKeyValue.key.asTrace(),
-                        trace = argKeyValue.asTrace(),
-                        value = argumentValue,
-                        propertyDeclaration = valueAsKeyProperty,
-                    )
-                ) + remainingProperties.children,
+                children = (keyValuesFromKey) + remainingProperties.children,
                 trace = argKeyValue.asTrace(),
             )
         }
         is YamlValue.Scalar -> {
-            val trace = value.asTrace()
+            val keyValuesFromKey = customKeyParser(value, value.asTrace())
+            // If we can't parse the key properly, then we should treat it as an error.
+                ?: return errorNode(value, type)
             objectNode(
-                children = listOf(
-                    KeyValue(
-                        keyTrace = value.asTrace(),
-                        trace = trace,
-                        value = parseNode(value, argumentType),
-                        propertyDeclaration = valueAsKeyProperty,
-                    )
-                ),
+                children = keyValuesFromKey,
                 origin = value,
                 declaration = type.declaration,
             )
@@ -134,7 +197,12 @@ private fun parseObjectFromMap(value: YamlValue.Mapping, type: SchemaType.Object
             )
         }
         if (!property.isUserSettable) {
-            reportParsing(key, TreeDiagnosticId.PropertyIsNotSettable, "validation.property.not.settable", property.name)
+            reportParsing(
+                key,
+                TreeDiagnosticId.PropertyIsNotSettable,
+                "validation.property.not.settable",
+                property.name
+            )
             return null
         }
         return KeyValue(
@@ -227,7 +295,7 @@ private fun parseObjectFromListShorthand(
 }
 
 context(_: Contexts, config: ParsingConfig, _: ProblemReporter)
-private fun parsePropertyKeyContexts(
+internal fun parsePropertyKeyContexts(
     key: YamlValue,
 ): Pair<String, Contexts>? {
     val keyText = context(EmptyContexts) {
@@ -237,7 +305,11 @@ private fun parsePropertyKeyContexts(
         val context = keyText.indexOf('@').takeUnless { it == -1 }?.let { keyText.substring(it + 1) }
         val keyWithoutContext = if (context != null) keyText.substringBefore('@') else keyText
         if (context != null && '+' in context) {
-            reportParsing(key, TreeDiagnosticId.MultipleQualifiersAreNotSupported, "multiple.qualifiers.are.unsupported")
+            reportParsing(
+                key,
+                TreeDiagnosticId.MultipleQualifiersAreNotSupported,
+                "multiple.qualifiers.are.unsupported"
+            )
             return null
         }
         val (mappedName, requiresTestContext) = when (keyWithoutContext) {

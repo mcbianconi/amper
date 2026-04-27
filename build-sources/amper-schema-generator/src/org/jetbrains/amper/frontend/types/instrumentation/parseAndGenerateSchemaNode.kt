@@ -4,6 +4,7 @@
 package org.jetbrains.amper.frontend.types.instrumentation
 
 import com.squareup.kotlinpoet.AnnotationSpec
+import com.squareup.kotlinpoet.BOOLEAN
 import com.squareup.kotlinpoet.ClassName
 import com.squareup.kotlinpoet.CodeBlock
 import com.squareup.kotlinpoet.FileSpec
@@ -22,6 +23,7 @@ import org.jetbrains.amper.frontend.Platform
 import org.jetbrains.amper.frontend.api.CanBeReferenced
 import org.jetbrains.amper.frontend.api.ConstInit
 import org.jetbrains.amper.frontend.api.Default
+import org.jetbrains.amper.frontend.api.ExternalDependencyNotation
 import org.jetbrains.amper.frontend.api.FromKeyAndTheRestIsNested
 import org.jetbrains.amper.frontend.api.GradleSpecific
 import org.jetbrains.amper.frontend.api.HiddenFromCompletion
@@ -40,8 +42,8 @@ import org.jetbrains.amper.frontend.api.Shorthand
 import org.jetbrains.amper.frontend.plugins.generated.ShadowMaps
 import org.jetbrains.amper.frontend.schema.ProductType
 import org.jetbrains.amper.frontend.tree.DefaultsReferenceTransform
-import org.jetbrains.amper.frontend.tree.TypeDescriptor
 import org.jetbrains.amper.frontend.tree.ReferenceNode
+import org.jetbrains.amper.frontend.tree.TypeDescriptor
 import org.jetbrains.amper.frontend.tree.ValueSinkPoint
 import org.jetbrains.amper.frontend.types.BuiltinSchemaObjectDeclarationBase
 import org.jetbrains.amper.frontend.types.SchemaObjectDeclaration
@@ -163,8 +165,8 @@ internal fun <T : SchemaNode> parseAndGenerateSchemaNode(clazz: KClass<T>): Pars
         declarationParameters.forEach {
             addProperty(
                 PropertySpec.builder(it.parameterName, it.parameterType)
-                .initializer("%N", it.parameterName)
-                .build())
+                    .initializer("%N", it.parameterName)
+                    .build())
         }
         addKdoc("Declaration for [%T]", clazz)
         addFunction(
@@ -180,6 +182,12 @@ internal fun <T : SchemaNode> parseAndGenerateSchemaNode(clazz: KClass<T>): Pars
                     FunSpec.getterBuilder().addCode("return %S", clazz.qualifiedName!!).build()
                 ).build()
         )
+        addProperty(
+            PropertySpec.builder(SchemaObjectDeclaration::isExternalDependencyNotation.name, BOOLEAN, KModifier.OVERRIDE)
+                .initializer(if (clazz.hasAnnotation<ExternalDependencyNotation>()) "true" else "false")
+                .build()
+        )
+        
         ShadowMaps.ShadowNodeClassToPublicReflectionName[clazz]?.let {
             addProperty(
                 PropertySpec.builder("publicInterfaceReflectionName", STRING, KModifier.OVERRIDE)
@@ -200,25 +208,29 @@ internal fun <T : SchemaNode> parseAndGenerateSchemaNode(clazz: KClass<T>): Pars
                 KModifier.OVERRIDE,
             ).initializer(
                 CodeBlock.builder()
-                .add("listOf(\n")
-                .withIndent {
-                    add(propertiesListCode)
-                }
-                .add(")")
-                .build()
+                    .add("listOf(\n")
+                    .withIndent {
+                        add(propertiesListCode)
+                    }
+                    .add(")")
+                    .build()
             ).build()
         )
     }.build()
 
     generator.writeFile(
         FileSpec.builder(name)
-            .addAnnotation(AnnotationSpec.builder(Suppress::class)
-                .addMember("%S", "UNCHECKED_CAST")
-                .addMember("%S", "REDUNDANT_VISIBILITY_MODIFIER")
-                .build())
-            .addAnnotation(AnnotationSpec.builder(ClassName("kotlin", "OptIn"))
-                .addMember("%T::class", DefaultsReferenceTransform::class)
-                .build())
+            .addAnnotation(
+                AnnotationSpec.builder(Suppress::class)
+                    .addMember("%S", "UNCHECKED_CAST")
+                    .addMember("%S", "REDUNDANT_VISIBILITY_MODIFIER")
+                    .build()
+            )
+            .addAnnotation(
+                AnnotationSpec.builder(ClassName("kotlin", "OptIn"))
+                    .addMember("%T::class", DefaultsReferenceTransform::class)
+                    .build()
+            )
             .addGeneratedComment()
             .addType(spec)
             .apply {
@@ -226,12 +238,15 @@ internal fun <T : SchemaNode> parseAndGenerateSchemaNode(clazz: KClass<T>): Pars
                 schemaProperties.forEach { property ->
                     val nodeType = SchemaValueDelegate::class.asClassName()
                         .parameterizedBy(property.returnType.asTypeName())
-                    addProperty(PropertySpec.builder("${property.name}Delegate", nodeType)
-                        .receiver(clazz)
-                        .getter(FunSpec.getterBuilder()
-                            .addCode("return getDelegate(%S) as %T", property.name, nodeType).build()
-                        )
-                        .build())
+                    addProperty(
+                        PropertySpec.builder("${property.name}Delegate", nodeType)
+                            .receiver(clazz)
+                            .getter(
+                                FunSpec.getterBuilder()
+                                    .addCode("return getDelegate(%S) as %T", property.name, nodeType).build()
+                            )
+                            .build()
+                    )
                 }
 
                 // Generate builder helpers (named `ValueSinkPoint` accessors)
@@ -316,6 +331,7 @@ private fun ParsedTypeDescriptor.canBeReferenced(): Boolean = when (this) {
     ParsedTypeDescriptor.Int,
     ParsedTypeDescriptor.String,
         -> true
+
     // Builtin enum types can't be denoted directly, but they can be assigned to a string.
     is ParsedTypeDescriptor.Enum -> true
 
@@ -326,7 +342,8 @@ private fun ParsedTypeDescriptor.canBeReferenced(): Boolean = when (this) {
     // Object types are not referenceable.
     is ParsedTypeDescriptor.Object,
     is ParsedTypeDescriptor.Variant,
-    ParsedTypeDescriptor.CustomObject -> false
+    is ParsedTypeDescriptor.CustomObject,
+        -> false
 }
 
 // Can't use class reference because it's a typealias.

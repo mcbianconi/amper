@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+ * Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
  */
 
 package org.jetbrains.amper.schema.processing
@@ -87,17 +87,21 @@ internal fun parseSchemaDeclaration(
                         )
                     }
                 } else {
-                    parseProperty(property)?.let(::add)
+                    parseProperty(schemaDeclaration, property)?.let(::add)
                 }
                 return super.visitProperty(property, data)
             }
         }
         schemaDeclaration.acceptChildren(visitor)
     }
+    
     return PluginData.ClassData(
         name = name,
         properties = properties,
         doc = schemaDeclaration.getDefaultDocString(),
         origin = nameIdentifier.getSourceLocation(),
+        internalAttributes = PluginData.InternalAttributes(
+            isExternalDependencyNotation = schemaDeclaration.getClassId() == MAVEN_DEPENDENCY_CLASS,
+        ),
     )
 }

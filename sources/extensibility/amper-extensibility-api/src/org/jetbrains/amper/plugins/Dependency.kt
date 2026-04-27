@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+ * Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
  */
 
 package org.jetbrains.amper.plugins
@@ -12,30 +12,49 @@ import java.nio.file.Path
 @Configurable
 sealed interface Dependency {
     /**
-     * A dependency on a local module in the project.
+     * A dependency on a local module in the project. 
+     * Can be constructed from a path string, like `../module-name` or `"."`.
+     * If not started with `"."` then it's treated like an external maven dependency.
      */
     @Configurable
     interface Local : Dependency {
         /**
          * Path to the module root directory.
-         *
-         * Must start with the `"."` symbol in YAML, e.g. `"../module-name"`, or `"."`.
-         * Just `"module-name"` is treated like an external [Maven] dependency.
          */
         @PathValueOnly
-        @DependencyNotation
         val modulePath: Path
     }
 
     /**
-     * External maven dependency.
+     * External Maven dependency. 
+     * Can be constructed from Maven coordinates string, like `com.example:artifact:1.0.0`, 
+     * or from a full YAML form, like:
+     * ```yaml
+     * groupId: com.example
+     * artifactId: artifact
+     * version: 1.0.0
+     * ```
      */
     @Configurable
     interface Maven : Dependency {
         /**
-         * Maven coordinates, in the `"<group>:<name>:<version>"` format.
+         * External Maven artifact groupId.
          */
-        @DependencyNotation
-        val coordinates: String
+        val groupId: String
+
+        /**
+         * External Maven artifact artifactId.
+         */
+        val artifactId: String
+
+        /**
+         * External Maven artifact version.
+         */
+        val version: String
+
+        /**
+         * Optional Maven artifact classifier. Jar by default.
+         */
+        val classifier: String?
     }
 }

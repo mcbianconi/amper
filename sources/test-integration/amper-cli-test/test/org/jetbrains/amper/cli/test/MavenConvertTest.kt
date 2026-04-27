@@ -537,8 +537,7 @@ class MavenConvertTest : AmperCliTestBase() {
                 version: 1.0.0
 
             repositories:
-              -
-                id: test-custom-repo
+              - id: test-custom-repo
                 url: https://custom.example.com/maven
 
         """.trimIndent(), (buildResult.projectDir / "app" / "module.yaml").readText()

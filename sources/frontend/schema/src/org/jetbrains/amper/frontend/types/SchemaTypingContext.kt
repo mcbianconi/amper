@@ -61,6 +61,7 @@ class SchemaTypingContext(
 
     private inner class PluginsSettingsBlockDeclarationImpl
         : BuiltinSchemaObjectDeclarationBase<PluginSettings>(), PluginsSettingsBlockDeclaration {
+        override val isExternalDependencyNotation = false
         override val qualifiedName get() = "org.jetbrains.amper.frontend.schema.PluginSettings"
         override fun createInstance() = PluginSettings()
         override val properties: List<Property> = pluginDeclarations.map { (id, declarations) ->
@@ -156,6 +157,7 @@ private class PluginDeclarations(
             ?: object : SchemaObjectDeclarationBase(), PluginSettingsStubDeclaration {
                 override val origin = pluginData.source.toOrigin()
                 override val properties = listOf(enabledProperty(pluginData.source.toOrigin()))
+                override val isExternalDependencyNotation = false
                 override fun createInstance() = ExtensionSchemaNode()
                 override val qualifiedName: String get() = "${pluginData.id.value}.Settings"
             }
@@ -173,6 +175,7 @@ private class PluginDeclarations(
         properties: List<PluginData.ClassData.Property>,
         override val origin: SchemaOrigin,
         private val instantiationStrategy: () -> SchemaNode,
+        override val isExternalDependencyNotation: Boolean,
     ) : SchemaObjectDeclarationBase(), PluginBasedTypeDeclaration {
 
         constructor(
@@ -180,7 +183,8 @@ private class PluginDeclarations(
             instantiationStrategy: () -> SchemaNode = ::ExtensionSchemaNode,
         ) : this(
             data.name, data.properties, data.origin.toPluginOrigin(pluginData.source),
-            instantiationStrategy
+            instantiationStrategy,
+            data.internalAttributes?.isExternalDependencyNotation == true,
         )
 
         override val properties: List<Property> by lazy {

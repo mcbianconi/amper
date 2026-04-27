@@ -5,20 +5,29 @@
 package org.jetbrains.amper.frontend.schema
 
 import org.jetbrains.amper.frontend.api.CustomSchemaDeclaration
-import org.jetbrains.amper.frontend.api.FromKeyAndTheRestIsNested
-import org.jetbrains.amper.frontend.api.ModifierAware
+import org.jetbrains.amper.frontend.api.ExternalDependencyNotation
+import org.jetbrains.amper.frontend.api.IgnoreForSchema
+import org.jetbrains.amper.frontend.api.Misnomers
 import org.jetbrains.amper.frontend.api.SchemaDoc
 import org.jetbrains.amper.frontend.api.SchemaNode
 import org.jetbrains.amper.frontend.api.Shorthand
-import org.jetbrains.amper.frontend.api.StringSemantics
-import org.jetbrains.amper.frontend.types.SchemaType.StringType.Semantics
 
-class MavenPlugin : SchemaNode() {
-    
-    @FromKeyAndTheRestIsNested
-    @StringSemantics(Semantics.MavenCoordinates)
-    @SchemaDoc("Coordinates of the maven plugin")
-    val coordinates by value<String>()
+@ExternalDependencyNotation
+class MavenPlugin : SchemaNode(), SchemaMavenCoordinates {
+
+    @Misnomers("group")
+    @SchemaDoc("Maven plugin groupId")
+    override val groupId by value<String>()
+
+    @Misnomers("artifact")
+    @SchemaDoc("Maven plugin artifactId")
+    override val artifactId by value<String>()
+
+    @SchemaDoc("Maven plugin version")
+    override val version by nullableValue<String>()
+
+    @IgnoreForSchema
+    override val classifier = "jar"
 }
 
 @CustomSchemaDeclaration(MavenMojoSettings::class)

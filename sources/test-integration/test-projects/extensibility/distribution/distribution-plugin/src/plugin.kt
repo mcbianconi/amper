@@ -1,3 +1,7 @@
+/*
+ * Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+ */
+
 package com.example.distribution
 
 
@@ -51,7 +55,7 @@ private fun printClasspathInfo(name: String, classpath: Classpath) {
     classpath.dependencies.forEachIndexed { index, it ->
         println("classpath $name.dependencies[$index] = ${it}")
         when(it) {
-            is Dependency.Maven -> println("classpath $name.dependencies[$index].coordinates = ${it.coordinates}")
+            is Dependency.Maven -> println("classpath $name.dependencies[$index].coordinates = ${it.groupId}:${it.artifactId}:${it.version}")
             is Dependency.Local -> println("classpath $name.dependencies[$index].modulePath = ${it.modulePath}")
         }
     }

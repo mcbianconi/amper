@@ -20,14 +20,13 @@ import kotlin.collections.Map
 import kotlin.reflect.KClass
 import org.jetbrains.amper.frontend.SchemaEnum
 import org.jetbrains.amper.frontend.api.CanBeReferenced
+import org.jetbrains.amper.frontend.api.ExternalDependencyNotation
 import org.jetbrains.amper.frontend.api.FromKeyAndTheRestIsNested
 import org.jetbrains.amper.frontend.api.IgnoreForSchema
 import org.jetbrains.amper.frontend.api.PathMark
 import org.jetbrains.amper.frontend.api.SchemaDoc
 import org.jetbrains.amper.frontend.api.SchemaNode
 import org.jetbrains.amper.frontend.api.Shorthand
-import org.jetbrains.amper.frontend.api.StringSemantics
-import org.jetbrains.amper.frontend.types.SchemaType
 import org.jetbrains.amper.plugins.schema.model.InputOutputMark
 
 /**
@@ -79,11 +78,11 @@ public class ShadowCompilationArtifact : SchemaNode() {
  * Generated!
  * Shadow for `org.jetbrains.amper.plugins.Dependency.Local`
  */
-@SchemaDoc(doc = "A dependency on a local module in the project.")
+@SchemaDoc(doc = "A dependency on a local module in the project. \nCan be constructed from a path string, like `../module-name` or `\".\"`.\nIf not started with `\".\"` then it's treated like an external maven dependency.")
 public class ShadowDependencyLocal : ShadowDependency() {
     @FromKeyAndTheRestIsNested
     @PathMark(InputOutputMark.ValueOnly)
-    @SchemaDoc(doc = "Path to the module root directory.\n\nMust start with the `\".\"` symbol in YAML, e.g. `\"../module-name\"`, or `\".\"`.\nJust `\"module-name\"` is treated like an external [Maven] dependency.")
+    @SchemaDoc(doc = "Path to the module root directory.")
     public val modulePath: Path by value()
 }
 
@@ -91,12 +90,24 @@ public class ShadowDependencyLocal : ShadowDependency() {
  * Generated!
  * Shadow for `org.jetbrains.amper.plugins.Dependency.Maven`
  */
-@SchemaDoc(doc = "External maven dependency.")
+@SchemaDoc(doc = "External Maven dependency. \nCan be constructed from Maven coordinates string, like `com.example:artifact:1.0.0`, \nor from a full YAML form, like:\n```yaml\ngroupId: com.example\nartifactId: artifact\nversion: 1.0.0\n```")
+@ExternalDependencyNotation
 public class ShadowDependencyMaven : ShadowDependency() {
-    @StringSemantics(SchemaType.StringType.Semantics.MavenCoordinates)
-    @FromKeyAndTheRestIsNested
-    @SchemaDoc(doc = "Maven coordinates, in the `\"<group>:<name>:<version>\"` format.")
-    public val coordinates: String by value()
+    @CanBeReferenced
+    @SchemaDoc(doc = "External Maven artifact groupId.")
+    public val groupId: String by value()
+
+    @CanBeReferenced
+    @SchemaDoc(doc = "External Maven artifact artifactId.")
+    public val artifactId: String by value()
+
+    @CanBeReferenced
+    @SchemaDoc(doc = "External Maven artifact version.")
+    public val version: String by value()
+
+    @CanBeReferenced
+    @SchemaDoc(doc = "Optional Maven artifact classifier. Jar by default.")
+    public val classifier: String? by nullableValue()
 }
 
 /**

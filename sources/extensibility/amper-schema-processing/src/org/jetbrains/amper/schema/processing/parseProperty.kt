@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+ * Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
  */
 
 package org.jetbrains.amper.schema.processing
@@ -11,11 +11,13 @@ import org.jetbrains.kotlin.analysis.api.KaSession
 import org.jetbrains.kotlin.analysis.api.symbols.KaPropertySymbol
 import org.jetbrains.kotlin.analysis.api.symbols.psi
 import org.jetbrains.kotlin.analysis.api.symbols.psiSafe
+import org.jetbrains.kotlin.psi.KtClassOrObject
 import org.jetbrains.kotlin.psi.KtProperty
 import org.jetbrains.kotlin.psi.KtPropertyAccessor
 
 context(session: KaSession, _: DiagnosticsReporter, _: SymbolsCollector, options: ParsingOptions)
 internal fun parseProperty(
+    schemaDeclaration: KtClassOrObject,
     property: KtProperty,
 ): PluginData.ClassData.Property? {
     val name = property.name ?: return null // invalid Kotlin
@@ -48,10 +50,10 @@ internal fun parseProperty(
     if (type == null) return null
 
     val internal = if (options.isParsingAmperApi) {
-        PluginData.ClassData.InternalAttributes(
+        PluginData.ClassData.InternalPropertyAttributes(
             isProvided = property.isAnnotatedWith(PROVIDED_ANNOTATION_CLASS),
             isShorthand = property.isAnnotatedWith(SHORTHAND_ANNOTATION_CLASS),
-            isDependencyNotation = property.isAnnotatedWith(DEP_NOTATION_ANNOTATION_CLASS),
+            isDependencyNotation = schemaDeclaration.getClassId() == LOCAL_DEPENDENCY_CLASS,
         )
     } else null
 

@@ -14,18 +14,17 @@ import org.jetbrains.amper.engine.Task
 import org.jetbrains.amper.engine.TaskGraphExecutionContext
 import org.jetbrains.amper.frontend.AmperModule
 import org.jetbrains.amper.frontend.Platform
-import org.jetbrains.amper.frontend.api.asTraceableValue
 import org.jetbrains.amper.frontend.dr.resolver.MavenCoordinatesExt
 import org.jetbrains.amper.frontend.dr.resolver.ModuleDependencies.Companion.toRepository
 import org.jetbrains.amper.frontend.dr.resolver.toDrMavenCoordinates
 import org.jetbrains.amper.frontend.jdkSettings
 import org.jetbrains.amper.frontend.mavenRepositories
+import org.jetbrains.amper.frontend.schema.UnscopedBomDependency
 import org.jetbrains.amper.frontend.schema.UnscopedDependency
-import org.jetbrains.amper.frontend.schema.UnscopedExternalMavenBomDependency
 import org.jetbrains.amper.frontend.schema.UnscopedExternalMavenDependency
 import org.jetbrains.amper.frontend.schema.UnscopedModuleDependency
+import org.jetbrains.amper.frontend.schema.coordinates
 import org.jetbrains.amper.frontend.schema.toMavenCoordinates
-import org.jetbrains.amper.frontend.types.generated.*
 import org.jetbrains.amper.incrementalcache.IncrementalCache
 import org.jetbrains.amper.telemetry.setListAttribute
 import org.jetbrains.amper.telemetry.spanBuilder
@@ -59,7 +58,8 @@ internal abstract class AbstractResolveJvmExternalDependenciesTask(
             "repositories" to repositories.joinToString("|"),
             "dependencies-coordinates" to externalUnscopedDependencies.map { when(it) {
                 is UnscopedExternalMavenDependency -> it.coordinates
-                is UnscopedExternalMavenBomDependency -> "bom: ${it.coordinates}"
+                // Here we can safely cast, since catalog references were replaced.
+                is UnscopedBomDependency -> "bom: ${(it.bom as UnscopedExternalMavenDependency).coordinates}"
                 else -> error("Unexpected dependency type: ${it::class.qualifiedName}")
             } }.joinToString("|"),
         )
@@ -73,25 +73,19 @@ internal abstract class AbstractResolveJvmExternalDependenciesTask(
                 .setListAttribute("dependencies-coordinates", externalUnscopedDependencies.map {
                     when(it) {
                         is UnscopedExternalMavenDependency -> it.coordinates
-                        is UnscopedExternalMavenBomDependency -> "bom: ${it.coordinates}"
+                        // Here we can safely cast, since catalog references were replaced.
+                        is UnscopedBomDependency -> "bom: ${(it.bom as UnscopedExternalMavenDependency).coordinates}"
                         else -> error("Unexpected dependency type: ${it::class.qualifiedName}")
                     }
                 })
                 .use {
                     val externalDependenciesCoordinates = externalUnscopedDependencies.map {
-                        when(it) {
-                            is UnscopedExternalMavenDependency -> {
-                                MavenCoordinatesExt(
-                                    it.coordinatesDelegate.asTraceableValue().toMavenCoordinates().toDrMavenCoordinates(),
-                                    false)
-                            }
-                            is UnscopedExternalMavenBomDependency -> {
-                                MavenCoordinatesExt(
-                                    it.coordinatesDelegate.asTraceableValue().toMavenCoordinates().toDrMavenCoordinates(),
-                                    true)
-                            }
+                        val (dependencyCoordinates, isBom) = when(it) {
+                            is UnscopedExternalMavenDependency -> it to false
+                            is UnscopedBomDependency -> it.bom as UnscopedExternalMavenDependency to true
                             else -> error("Unexpected dependency type: ${it::class.qualifiedName}")
                         }
+                        MavenCoordinatesExt(dependencyCoordinates.toMavenCoordinates().toDrMavenCoordinates(), isBom)
                     }
 
                     mavenResolver.resolveBomAware(

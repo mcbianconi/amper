@@ -91,7 +91,8 @@
                     }
                 }
             ],
-            "doc": "Use to get a resolved JVM classpath for the list of [dependencies].\n\nThe resulting classpath can be obtained via [resolvedFiles] property.\n\nTo conveniently get the classpath of the *current module* the plugin is enabled in,\nyou can reference the provided values:\n- `${module.runtimeClasspath}`\n- `${module.compileClasspath}`"
+            "doc": "Use to get a resolved JVM classpath for the list of [dependencies].\n\nThe resulting classpath can be obtained via [resolvedFiles] property.\n\nTo conveniently get the classpath of the *current module* the plugin is enabled in,\nyou can reference the provided values:\n- `${module.runtimeClasspath}`\n- `${module.compileClasspath}`",
+            "internalAttributes": {}
         },
         {
             "name": "org.jetbrains.amper.plugins/CompilationArtifact",
@@ -125,7 +126,8 @@
                     }
                 }
             ],
-            "doc": "Provides the compilation result of the [given][from] module.\n\nWarning: only JVM platform is currently supported."
+            "doc": "Provides the compilation result of the [given][from] module.\n\nWarning: only JVM platform is currently supported.",
+            "internalAttributes": {}
         },
         {
             "name": "org.jetbrains.amper.plugins/Dependency/Local",
@@ -135,30 +137,57 @@
                     "type": {
                         "type": "path"
                     },
-                    "doc": "Path to the module root directory.\n\nMust start with the `\".\"` symbol in YAML, e.g. `\"../module-name\"`, or `\".\"`.\nJust `\"module-name\"` is treated like an external [Maven] dependency.",
+                    "doc": "Path to the module root directory.",
                     "inputOutputMark": "ValueOnly",
                     "internalAttributes": {
                         "isDependencyNotation": true
                     }
                 }
             ],
-            "doc": "A dependency on a local module in the project."
+            "doc": "A dependency on a local module in the project. \nCan be constructed from a path string, like `../module-name` or `\".\"`.\nIf not started with `\".\"` then it's treated like an external maven dependency.",
+            "internalAttributes": {}
         },
         {
             "name": "org.jetbrains.amper.plugins/Dependency/Maven",
             "properties": [
                 {
-                    "name": "coordinates",
+                    "name": "groupId",
                     "type": {
                         "type": "string"
                     },
-                    "doc": "Maven coordinates, in the `\"<group>:<name>:<version>\"` format.",
-                    "internalAttributes": {
-                        "isDependencyNotation": true
-                    }
+                    "doc": "External Maven artifact groupId.",
+                    "internalAttributes": {}
+                },
+                {
+                    "name": "artifactId",
+                    "type": {
+                        "type": "string"
+                    },
+                    "doc": "External Maven artifact artifactId.",
+                    "internalAttributes": {}
+                },
+                {
+                    "name": "version",
+                    "type": {
+                        "type": "string"
+                    },
+                    "doc": "External Maven artifact version.",
+                    "internalAttributes": {}
+                },
+                {
+                    "name": "classifier",
+                    "type": {
+                        "type": "string",
+                        "isNullable": true
+                    },
+                    "doc": "Optional Maven artifact classifier. Jar by default.",
+                    "internalAttributes": {}
                 }
             ],
-            "doc": "External maven dependency."
+            "doc": "External Maven dependency. \nCan be constructed from Maven coordinates string, like `com.example:artifact:1.0.0`, \nor from a full YAML form, like:\n```yaml\ngroupId: com.example\nartifactId: artifact\nversion: 1.0.0\n```",
+            "internalAttributes": {
+                "isExternalDependencyNotation": true
+            }
         },
         {
             "name": "org.jetbrains.amper.plugins/ModuleSources",
@@ -211,7 +240,8 @@
                     }
                 }
             ],
-            "doc": "Use to get module [source directories][sourceDirectories] from the module.\nTakes the source layout option into account.\n\nUse [kind] to get different kinds of module sources.\n\nCurrently, only JVM non-test sources are supported."
+            "doc": "Use to get module [source directories][sourceDirectories] from the module.\nTakes the source layout option into account.\n\nUse [kind] to get different kinds of module sources.\n\nCurrently, only JVM non-test sources are supported.",
+            "internalAttributes": {}
         }
     ],
     "variants": [

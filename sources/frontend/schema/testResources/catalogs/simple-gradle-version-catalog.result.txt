@@ -1,7 +1,7 @@
 Fragments:
   main
     External dependencies:
-      BomDependency(coordinates=org.my-company:my-bom, trace=PsiTrace(psiElement=YAML key value, precedingValue=null))
+      BomDependency(coordinates=org.my-company:my-bom, trace=PsiTrace(psiElement=YAML mapping, precedingValue=null))
       MavenDependency(coordinates=org.jetbrains.kotlin:kotlin-stdlib-jdk7:2.3.20, trace=DefaultTrace, compile=true, runtime=true, exported=false)
       MavenDependency(coordinates=org.jetbrains.kotlin:kotlin-stdlib-jdk8:2.3.20, trace=DefaultTrace, compile=true, runtime=true, exported=false)
       MavenDependency(coordinates=org.jetbrains.kotlin:kotlin-stdlib:2.3.20, trace=DefaultTrace, compile=true, runtime=true, exported=false)
@@ -20,7 +20,7 @@ Fragments:
 
   test
     External dependencies:
-      BomDependency(coordinates=org.my-company:my-bom, trace=PsiTrace(psiElement=YAML key value, precedingValue=null))
+      BomDependency(coordinates=org.my-company:my-bom, trace=PsiTrace(psiElement=YAML mapping, precedingValue=null))
       MavenDependency(coordinates=org.jetbrains.kotlin:kotlin-stdlib-jdk7:2.3.20, trace=DefaultTrace, compile=true, runtime=true, exported=false)
       MavenDependency(coordinates=org.jetbrains.kotlin:kotlin-stdlib-jdk8:2.3.20, trace=DefaultTrace, compile=true, runtime=true, exported=false)
       MavenDependency(coordinates=org.jetbrains.kotlin:kotlin-stdlib:2.3.20, trace=DefaultTrace, compile=true, runtime=true, exported=false)
