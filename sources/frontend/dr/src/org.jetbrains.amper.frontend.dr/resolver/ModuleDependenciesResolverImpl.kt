@@ -76,7 +76,7 @@ private sealed class DirectFragmentDependencyNodeConverter<T: DirectFragmentDepe
 
     override fun toEmptyNodePlain(node: T, graphContext: DependencyGraphContext): SerializableDirectFragmentDependencyNodeHolder =
         SerializableDirectFragmentDependencyNodeHolder(
-            node.fragmentName, node.moduleName, node.traceInfo, node.messages, graphContext = graphContext)
+            node.fragmentName, node.moduleName, node.traceInfo, node.messages, node.isTransitive, graphContext = graphContext)
 
     override fun fillEmptyNodePlain(nodePlain: SerializableDirectFragmentDependencyNodeHolder, node: T, graphContext: DependencyGraphContext, nodeReference: DependencyNodeReference?) {
         super.fillEmptyNodePlain(nodePlain, node, graphContext, nodeReference)

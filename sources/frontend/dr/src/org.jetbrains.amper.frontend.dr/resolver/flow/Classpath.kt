@@ -91,11 +91,12 @@ internal class Classpath(
 
         val resolutionPlatforms = moduleContext.settings.platforms
 
-        // test fragments couldn't reference test fragments of transitive (non-direct) module dependencies
-        val includeTestFragments = directDependencies && flowType.isTest
+        // If a module test graph is resolved, then all module test fragments are taken into account
+        // as well as all main fragments from other modules referenced by the module test fragments.
+        val filterTestFragments = directDependencies && flowType.isTest
 
         val platforms = resolutionPlatforms.map { it.toPlatform() }.toSet()
-        val allMatchingFragments = this.fragmentsTargeting(platforms, includeTestFragments)
+        val allMatchingFragments = this.fragmentsTargeting(platforms, filterTestFragments)
 
         if (initialFragment != null && initialFragment.module.userReadableName != this.userReadableName)
             error ("Given initialFragment doesn't belong to given module")
@@ -140,7 +141,7 @@ internal class Classpath(
                     is MavenDependencyBase -> {
                         val includeDependency = dependency.shouldBeAdded(platforms, directDependencies, flowType)
                         if (includeDependency) {
-                            dependency.toFragmentDirectDependencyNode(this, moduleContext)
+                            dependency.toFragmentDirectDependencyNode(this, directDependencies, moduleContext)
                         } else null
                     }
 

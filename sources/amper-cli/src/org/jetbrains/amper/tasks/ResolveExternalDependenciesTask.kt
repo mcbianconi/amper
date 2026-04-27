@@ -165,8 +165,7 @@ class ResolveExternalDependenciesTask(
                 .map { it.url }
                 .distinct()
 
-            // for test code, we resolve dependencies on union of test and prod dependencies
-            val fragments = module.fragmentsTargeting(resolutionPlatform.toPlatform(), includeTestFragments = isTest)
+            val fragments = module.fragmentsTargeting(resolutionPlatform.toPlatform(), isTest)
 
             val platformOnlyDependencies = moduleDependencies.forPlatform(resolutionPlatform.toPlatform(), isTest)
 

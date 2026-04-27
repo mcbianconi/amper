@@ -171,7 +171,7 @@ val Fragment.allSourceFragmentCompileDependencies: List<Fragment>
     get() {
         val fragmentsFromThisModule = fragmentDependencies.map { it.target }
         val fragmentsFromOtherModules = directModuleCompileDependencies.flatMap { module ->
-            module.fragmentsTargeting(platforms, includeTestFragments = false)
+            module.fragmentsTargeting(platforms, isTest = false)
         }
 
         // FIXME include transitive exported module dependencies

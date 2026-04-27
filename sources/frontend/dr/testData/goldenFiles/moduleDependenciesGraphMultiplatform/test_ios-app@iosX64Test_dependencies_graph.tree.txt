@@ -260,26 +260,22 @@ Module ios-app
 │    │    ╰─── org.jetbrains.compose.foundation:foundation:#composeDefaultVersion (*)
 │    ╰─── shared:native:org.jetbrains.compose.material3:material3:1.10.0-alpha05
 │         ╰─── org.jetbrains.compose.material3:material3:1.10.0-alpha05 (*)
-├─── ios-app:iosX64:org.jetbrains.kotlin:kotlin-stdlib:#kotlinVersion, implicit
+├─── ios-app:iosX64Test:org.jetbrains.kotlin:kotlin-stdlib:#kotlinVersion, implicit
 │    ╰─── org.jetbrains.kotlin:kotlin-stdlib:#kotlinVersion
-├─── ios-app:iosX64:org.jetbrains.compose.runtime:runtime:#composeDefaultVersion, implicit (because Compose is enabled)
-│    ╰─── org.jetbrains.compose.runtime:runtime:#composeDefaultVersion (*)
-├─── ios-app:apple:org.jetbrains.kotlin:kotlin-stdlib:#kotlinVersion, implicit
-│    ╰─── org.jetbrains.kotlin:kotlin-stdlib:#kotlinVersion
-├─── ios-app:apple:org.jetbrains.compose.runtime:runtime:#composeDefaultVersion, implicit (because Compose is enabled)
+├─── ios-app:iosX64Test:org.jetbrains.kotlin:kotlin-test:#kotlinVersion, implicit
+│    ╰─── org.jetbrains.kotlin:kotlin-test:#kotlinVersion
+├─── ios-app:iosX64Test:org.jetbrains.kotlin:kotlin-test-annotations-common:#kotlinVersion, implicit
+│    ╰─── org.jetbrains.kotlin:kotlin-test-annotations-common:#kotlinVersion
+│         ╰─── org.jetbrains.kotlin:kotlin-test:#kotlinVersion
+├─── ios-app:iosX64Test:org.jetbrains.compose.runtime:runtime:#composeDefaultVersion, implicit (because Compose is enabled)
 │    ╰─── org.jetbrains.compose.runtime:runtime:#composeDefaultVersion (*)
 ├─── ios-app:appleTest:org.jetbrains.kotlin:kotlin-stdlib:#kotlinVersion, implicit
 │    ╰─── org.jetbrains.kotlin:kotlin-stdlib:#kotlinVersion
 ├─── ios-app:appleTest:org.jetbrains.kotlin:kotlin-test:#kotlinVersion, implicit
 │    ╰─── org.jetbrains.kotlin:kotlin-test:#kotlinVersion
 ├─── ios-app:appleTest:org.jetbrains.kotlin:kotlin-test-annotations-common:#kotlinVersion, implicit
-│    ╰─── org.jetbrains.kotlin:kotlin-test-annotations-common:#kotlinVersion
-│         ╰─── org.jetbrains.kotlin:kotlin-test:#kotlinVersion
+│    ╰─── org.jetbrains.kotlin:kotlin-test-annotations-common:#kotlinVersion (*)
 ├─── ios-app:appleTest:org.jetbrains.compose.runtime:runtime:#composeDefaultVersion, implicit (because Compose is enabled)
-│    ╰─── org.jetbrains.compose.runtime:runtime:#composeDefaultVersion (*)
-├─── ios-app:common:org.jetbrains.kotlin:kotlin-stdlib:#kotlinVersion, implicit
-│    ╰─── org.jetbrains.kotlin:kotlin-stdlib:#kotlinVersion
-├─── ios-app:common:org.jetbrains.compose.runtime:runtime:#composeDefaultVersion, implicit (because Compose is enabled)
 │    ╰─── org.jetbrains.compose.runtime:runtime:#composeDefaultVersion (*)
 ├─── ios-app:commonTest:org.jetbrains.kotlin:kotlin-stdlib:#kotlinVersion, implicit
 │    ╰─── org.jetbrains.kotlin:kotlin-stdlib:#kotlinVersion
@@ -289,10 +285,6 @@ Module ios-app
 │    ╰─── org.jetbrains.kotlin:kotlin-test-annotations-common:#kotlinVersion (*)
 ├─── ios-app:commonTest:org.jetbrains.compose.runtime:runtime:#composeDefaultVersion, implicit (because Compose is enabled)
 │    ╰─── org.jetbrains.compose.runtime:runtime:#composeDefaultVersion (*)
-├─── ios-app:ios:org.jetbrains.kotlin:kotlin-stdlib:#kotlinVersion, implicit
-│    ╰─── org.jetbrains.kotlin:kotlin-stdlib:#kotlinVersion
-├─── ios-app:ios:org.jetbrains.compose.runtime:runtime:#composeDefaultVersion, implicit (because Compose is enabled)
-│    ╰─── org.jetbrains.compose.runtime:runtime:#composeDefaultVersion (*)
 ├─── ios-app:iosTest:org.jetbrains.kotlin:kotlin-stdlib:#kotlinVersion, implicit
 │    ╰─── org.jetbrains.kotlin:kotlin-stdlib:#kotlinVersion
 ├─── ios-app:iosTest:org.jetbrains.kotlin:kotlin-test:#kotlinVersion, implicit
@@ -300,18 +292,6 @@ Module ios-app
 ├─── ios-app:iosTest:org.jetbrains.kotlin:kotlin-test-annotations-common:#kotlinVersion, implicit
 │    ╰─── org.jetbrains.kotlin:kotlin-test-annotations-common:#kotlinVersion (*)
 ├─── ios-app:iosTest:org.jetbrains.compose.runtime:runtime:#composeDefaultVersion, implicit (because Compose is enabled)
-│    ╰─── org.jetbrains.compose.runtime:runtime:#composeDefaultVersion (*)
-├─── ios-app:iosX64Test:org.jetbrains.kotlin:kotlin-stdlib:#kotlinVersion, implicit
-│    ╰─── org.jetbrains.kotlin:kotlin-stdlib:#kotlinVersion
-├─── ios-app:iosX64Test:org.jetbrains.kotlin:kotlin-test:#kotlinVersion, implicit
-│    ╰─── org.jetbrains.kotlin:kotlin-test:#kotlinVersion
-├─── ios-app:iosX64Test:org.jetbrains.kotlin:kotlin-test-annotations-common:#kotlinVersion, implicit
-│    ╰─── org.jetbrains.kotlin:kotlin-test-annotations-common:#kotlinVersion (*)
-├─── ios-app:iosX64Test:org.jetbrains.compose.runtime:runtime:#composeDefaultVersion, implicit (because Compose is enabled)
-│    ╰─── org.jetbrains.compose.runtime:runtime:#composeDefaultVersion (*)
-├─── ios-app:native:org.jetbrains.kotlin:kotlin-stdlib:#kotlinVersion, implicit
-│    ╰─── org.jetbrains.kotlin:kotlin-stdlib:#kotlinVersion
-├─── ios-app:native:org.jetbrains.compose.runtime:runtime:#composeDefaultVersion, implicit (because Compose is enabled)
 │    ╰─── org.jetbrains.compose.runtime:runtime:#composeDefaultVersion (*)
 ├─── ios-app:nativeTest:org.jetbrains.kotlin:kotlin-stdlib:#kotlinVersion, implicit
 │    ╰─── org.jetbrains.kotlin:kotlin-stdlib:#kotlinVersion

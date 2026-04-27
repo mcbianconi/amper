@@ -34,20 +34,14 @@ Module root
 │ - test
 │ - scope = COMPILE
 │ - platforms = [jvm]
-├─── root:common:org.apache.commons:commons-text:1.11.0
+├─── root:commonTest:org.apache.commons:commons-text:1.11.0
 │    ╰─── org.apache.commons:commons-text:1.11.0
 │         ╰─── org.apache.commons:commons-lang3:3.13.0
-├─── root:commonTest:org.apache.commons:commons-text:1.11.0
-│    ╰─── org.apache.commons:commons-text:1.11.0 (*)
-├─── root:jvm:org.apache.commons:commons-text:1.11.0
-│    ╰─── org.apache.commons:commons-text:1.11.0 (*)
 ├─── root:jvmTest:org.apache.commons:commons-text:1.11.0
 │    ╰─── org.apache.commons:commons-text:1.11.0 (*)
-├─── root:common:org.jetbrains.kotlin:kotlin-stdlib:2.3.20, implicit
+├─── root:commonTest:org.jetbrains.kotlin:kotlin-stdlib:2.3.20, implicit
 │    ╰─── org.jetbrains.kotlin:kotlin-stdlib:2.3.20
 │         ╰─── org.jetbrains:annotations:13.0
-├─── root:commonTest:org.jetbrains.kotlin:kotlin-stdlib:2.3.20, implicit
-│    ╰─── org.jetbrains.kotlin:kotlin-stdlib:2.3.20 (*)
 ├─── root:commonTest:org.jetbrains.kotlin:kotlin-test-junit5:2.3.20, implicit (because the test engine is junit-5)
 │    ╰─── org.jetbrains.kotlin:kotlin-test-junit5:2.3.20
 │         ├─── org.jetbrains.kotlin:kotlin-test:2.3.20
@@ -59,8 +53,6 @@ Module root
 │              │    ├─── org.junit:junit-bom:5.10.1
 │              │    ╰─── org.apiguardian:apiguardian-api:1.1.2
 │              ╰─── org.apiguardian:apiguardian-api:1.1.2
-├─── root:jvm:org.jetbrains.kotlin:kotlin-stdlib:2.3.20, implicit
-│    ╰─── org.jetbrains.kotlin:kotlin-stdlib:2.3.20 (*)
 ├─── root:jvmTest:org.jetbrains.kotlin:kotlin-stdlib:2.3.20, implicit
 │    ╰─── org.jetbrains.kotlin:kotlin-stdlib:2.3.20 (*)
 ╰─── root:jvmTest:org.jetbrains.kotlin:kotlin-test-junit5:2.3.20, implicit (because the test engine is junit-5)
@@ -70,20 +62,14 @@ Module root
 │ - test
 │ - scope = RUNTIME
 │ - platforms = [jvm]
-├─── root:common:org.apache.commons:commons-text:1.11.0
+├─── root:commonTest:org.apache.commons:commons-text:1.11.0
 │    ╰─── org.apache.commons:commons-text:1.11.0
 │         ╰─── org.apache.commons:commons-lang3:3.13.0
-├─── root:commonTest:org.apache.commons:commons-text:1.11.0
-│    ╰─── org.apache.commons:commons-text:1.11.0 (*)
-├─── root:jvm:org.apache.commons:commons-text:1.11.0
-│    ╰─── org.apache.commons:commons-text:1.11.0 (*)
 ├─── root:jvmTest:org.apache.commons:commons-text:1.11.0
 │    ╰─── org.apache.commons:commons-text:1.11.0 (*)
-├─── root:common:org.jetbrains.kotlin:kotlin-stdlib:2.3.20, implicit
+├─── root:commonTest:org.jetbrains.kotlin:kotlin-stdlib:2.3.20, implicit
 │    ╰─── org.jetbrains.kotlin:kotlin-stdlib:2.3.20
 │         ╰─── org.jetbrains:annotations:13.0
-├─── root:commonTest:org.jetbrains.kotlin:kotlin-stdlib:2.3.20, implicit
-│    ╰─── org.jetbrains.kotlin:kotlin-stdlib:2.3.20 (*)
 ├─── root:commonTest:org.jetbrains.kotlin:kotlin-test-junit5:2.3.20, implicit (because the test engine is junit-5)
 │    ╰─── org.jetbrains.kotlin:kotlin-test-junit5:2.3.20
 │         ├─── org.jetbrains.kotlin:kotlin-test:2.3.20
@@ -102,8 +88,6 @@ Module root
 │         ╰─── org.junit.platform:junit-platform-launcher:1.10.1
 │              ├─── org.junit:junit-bom:5.10.1
 │              ╰─── org.junit.platform:junit-platform-engine:1.10.1 (*)
-├─── root:jvm:org.jetbrains.kotlin:kotlin-stdlib:2.3.20, implicit
-│    ╰─── org.jetbrains.kotlin:kotlin-stdlib:2.3.20 (*)
 ├─── root:jvmTest:org.jetbrains.kotlin:kotlin-stdlib:2.3.20, implicit
 │    ╰─── org.jetbrains.kotlin:kotlin-stdlib:2.3.20 (*)
 ╰─── root:jvmTest:org.jetbrains.kotlin:kotlin-test-junit5:2.3.20, implicit (because the test engine is junit-5)

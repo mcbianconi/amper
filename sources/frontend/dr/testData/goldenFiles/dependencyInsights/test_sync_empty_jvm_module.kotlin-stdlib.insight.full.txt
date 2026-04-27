@@ -8,8 +8,6 @@ Module jvm-empty
 │ - test
 │ - scope = COMPILE
 │ - platforms = [jvm]
-├─── jvm-empty:main:org.jetbrains.kotlin:kotlin-stdlib:#kotlinVersion, implicit
-│    ╰─── org.jetbrains.kotlin:kotlin-stdlib:#kotlinVersion
 ├─── jvm-empty:test:org.jetbrains.kotlin:kotlin-stdlib:#kotlinVersion, implicit
 │    ╰─── org.jetbrains.kotlin:kotlin-stdlib:#kotlinVersion
 ╰─── jvm-empty:test:org.jetbrains.kotlin:kotlin-test-junit5:#kotlinVersion, implicit (because the test engine is junit-5)

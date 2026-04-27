@@ -2,7 +2,7 @@ Module shared
 │ - test
 │ - scope = COMPILE
 │ - platforms = [iosX64]
-├─── shared:iosX64:org.jetbrains.compose.foundation:foundation:#composeDefaultVersion
+├─── shared:iosX64Test:org.jetbrains.compose.foundation:foundation:#composeDefaultVersion
 │    ╰─── org.jetbrains.compose.foundation:foundation:#composeDefaultVersion
 │         ╰─── org.jetbrains.compose.foundation:foundation-uikitx64:#composeDefaultVersion
 │              ├─── org.jetbrains.compose.animation:animation:#composeDefaultVersion
@@ -211,7 +211,7 @@ Module shared
 │              ├─── org.jetbrains.kotlin:kotlin-stdlib:2.2.20 -> #kotlinVersion
 │              ├─── org.jetbrains.kotlinx:atomicfu:0.23.2 -> 0.27.0 (*)
 │              ╰─── org.jetbrains.skiko:skiko:0.9.37.4 (*)
-├─── shared:iosX64:org.jetbrains.compose.material3:material3:1.10.0-alpha05
+├─── shared:iosX64Test:org.jetbrains.compose.material3:material3:1.10.0-alpha05
 │    ╰─── org.jetbrains.compose.material3:material3:1.10.0-alpha05
 │         ╰─── org.jetbrains.compose.material3:material3-uikitx64:1.10.0-alpha05
 │              ├─── androidx.annotation:annotation:1.9.1 (*)
@@ -243,74 +243,50 @@ Module shared
 │                   ╰─── org.jetbrains.kotlinx:kotlinx-datetime-iosx64:0.7.1
 │                        ├─── org.jetbrains.kotlin:kotlin-stdlib:2.1.20 -> #kotlinVersion
 │                        ╰─── org.jetbrains.kotlinx:kotlinx-serialization-core:1.6.2 -> 1.7.3 (*)
-├─── shared:apple:org.jetbrains.compose.foundation:foundation:#composeDefaultVersion
-│    ╰─── org.jetbrains.compose.foundation:foundation:#composeDefaultVersion (*)
-├─── shared:apple:org.jetbrains.compose.material3:material3:1.10.0-alpha05
-│    ╰─── org.jetbrains.compose.material3:material3:1.10.0-alpha05 (*)
+├─── shared:iosX64Test:org.tinylog:tinylog-api-kotlin:2.6.2
+│    ╰─── org.tinylog:tinylog-api-kotlin:2.6.2
+│         ├─── org.jetbrains.kotlin:kotlin-stdlib:1.4.32 -> #kotlinVersion
+│         ╰─── org.tinylog:tinylog-api:2.6.2
 ├─── shared:appleTest:org.jetbrains.compose.foundation:foundation:#composeDefaultVersion
 │    ╰─── org.jetbrains.compose.foundation:foundation:#composeDefaultVersion (*)
 ├─── shared:appleTest:org.jetbrains.compose.material3:material3:1.10.0-alpha05
 │    ╰─── org.jetbrains.compose.material3:material3:1.10.0-alpha05 (*)
 ├─── shared:appleTest:org.tinylog:tinylog-api-kotlin:2.6.2
-│    ╰─── org.tinylog:tinylog-api-kotlin:2.6.2
-│         ├─── org.jetbrains.kotlin:kotlin-stdlib:1.4.32 -> #kotlinVersion
-│         ╰─── org.tinylog:tinylog-api:2.6.2
-├─── shared:common:org.jetbrains.compose.foundation:foundation:#composeDefaultVersion
-│    ╰─── org.jetbrains.compose.foundation:foundation:#composeDefaultVersion (*)
-├─── shared:common:org.jetbrains.compose.material3:material3:1.10.0-alpha05
-│    ╰─── org.jetbrains.compose.material3:material3:1.10.0-alpha05 (*)
+│    ╰─── org.tinylog:tinylog-api-kotlin:2.6.2 (*)
 ├─── shared:commonTest:org.jetbrains.compose.foundation:foundation:#composeDefaultVersion
 │    ╰─── org.jetbrains.compose.foundation:foundation:#composeDefaultVersion (*)
 ├─── shared:commonTest:org.jetbrains.compose.material3:material3:1.10.0-alpha05
 │    ╰─── org.jetbrains.compose.material3:material3:1.10.0-alpha05 (*)
 ├─── shared:commonTest:org.tinylog:tinylog-api-kotlin:2.6.2
 │    ╰─── org.tinylog:tinylog-api-kotlin:2.6.2 (*)
-├─── shared:ios:org.jetbrains.compose.foundation:foundation:#composeDefaultVersion
-│    ╰─── org.jetbrains.compose.foundation:foundation:#composeDefaultVersion (*)
-├─── shared:ios:org.jetbrains.compose.material3:material3:1.10.0-alpha05
-│    ╰─── org.jetbrains.compose.material3:material3:1.10.0-alpha05 (*)
 ├─── shared:iosTest:org.jetbrains.compose.foundation:foundation:#composeDefaultVersion
 │    ╰─── org.jetbrains.compose.foundation:foundation:#composeDefaultVersion (*)
 ├─── shared:iosTest:org.jetbrains.compose.material3:material3:1.10.0-alpha05
 │    ╰─── org.jetbrains.compose.material3:material3:1.10.0-alpha05 (*)
 ├─── shared:iosTest:org.tinylog:tinylog-api-kotlin:2.6.2
 │    ╰─── org.tinylog:tinylog-api-kotlin:2.6.2 (*)
-├─── shared:iosX64Test:org.jetbrains.compose.foundation:foundation:#composeDefaultVersion
-│    ╰─── org.jetbrains.compose.foundation:foundation:#composeDefaultVersion (*)
-├─── shared:iosX64Test:org.jetbrains.compose.material3:material3:1.10.0-alpha05
-│    ╰─── org.jetbrains.compose.material3:material3:1.10.0-alpha05 (*)
-├─── shared:iosX64Test:org.tinylog:tinylog-api-kotlin:2.6.2
-│    ╰─── org.tinylog:tinylog-api-kotlin:2.6.2 (*)
-├─── shared:native:org.jetbrains.compose.foundation:foundation:#composeDefaultVersion
-│    ╰─── org.jetbrains.compose.foundation:foundation:#composeDefaultVersion (*)
-├─── shared:native:org.jetbrains.compose.material3:material3:1.10.0-alpha05
-│    ╰─── org.jetbrains.compose.material3:material3:1.10.0-alpha05 (*)
 ├─── shared:nativeTest:org.jetbrains.compose.foundation:foundation:#composeDefaultVersion
 │    ╰─── org.jetbrains.compose.foundation:foundation:#composeDefaultVersion (*)
 ├─── shared:nativeTest:org.jetbrains.compose.material3:material3:1.10.0-alpha05
 │    ╰─── org.jetbrains.compose.material3:material3:1.10.0-alpha05 (*)
 ├─── shared:nativeTest:org.tinylog:tinylog-api-kotlin:2.6.2
 │    ╰─── org.tinylog:tinylog-api-kotlin:2.6.2 (*)
-├─── shared:iosX64:org.jetbrains.kotlin:kotlin-stdlib:#kotlinVersion, implicit
+├─── shared:iosX64Test:org.jetbrains.kotlin:kotlin-stdlib:#kotlinVersion, implicit
 │    ╰─── org.jetbrains.kotlin:kotlin-stdlib:#kotlinVersion
-├─── shared:iosX64:org.jetbrains.compose.runtime:runtime:#composeDefaultVersion, implicit (because Compose is enabled)
-│    ╰─── org.jetbrains.compose.runtime:runtime:#composeDefaultVersion (*)
-├─── shared:apple:org.jetbrains.kotlin:kotlin-stdlib:#kotlinVersion, implicit
-│    ╰─── org.jetbrains.kotlin:kotlin-stdlib:#kotlinVersion
-├─── shared:apple:org.jetbrains.compose.runtime:runtime:#composeDefaultVersion, implicit (because Compose is enabled)
+├─── shared:iosX64Test:org.jetbrains.kotlin:kotlin-test:#kotlinVersion, implicit
+│    ╰─── org.jetbrains.kotlin:kotlin-test:#kotlinVersion
+├─── shared:iosX64Test:org.jetbrains.kotlin:kotlin-test-annotations-common:#kotlinVersion, implicit
+│    ╰─── org.jetbrains.kotlin:kotlin-test-annotations-common:#kotlinVersion
+│         ╰─── org.jetbrains.kotlin:kotlin-test:#kotlinVersion
+├─── shared:iosX64Test:org.jetbrains.compose.runtime:runtime:#composeDefaultVersion, implicit (because Compose is enabled)
 │    ╰─── org.jetbrains.compose.runtime:runtime:#composeDefaultVersion (*)
 ├─── shared:appleTest:org.jetbrains.kotlin:kotlin-stdlib:#kotlinVersion, implicit
 │    ╰─── org.jetbrains.kotlin:kotlin-stdlib:#kotlinVersion
 ├─── shared:appleTest:org.jetbrains.kotlin:kotlin-test:#kotlinVersion, implicit
 │    ╰─── org.jetbrains.kotlin:kotlin-test:#kotlinVersion
 ├─── shared:appleTest:org.jetbrains.kotlin:kotlin-test-annotations-common:#kotlinVersion, implicit
-│    ╰─── org.jetbrains.kotlin:kotlin-test-annotations-common:#kotlinVersion
-│         ╰─── org.jetbrains.kotlin:kotlin-test:#kotlinVersion
+│    ╰─── org.jetbrains.kotlin:kotlin-test-annotations-common:#kotlinVersion (*)
 ├─── shared:appleTest:org.jetbrains.compose.runtime:runtime:#composeDefaultVersion, implicit (because Compose is enabled)
-│    ╰─── org.jetbrains.compose.runtime:runtime:#composeDefaultVersion (*)
-├─── shared:common:org.jetbrains.kotlin:kotlin-stdlib:#kotlinVersion, implicit
-│    ╰─── org.jetbrains.kotlin:kotlin-stdlib:#kotlinVersion
-├─── shared:common:org.jetbrains.compose.runtime:runtime:#composeDefaultVersion, implicit (because Compose is enabled)
 │    ╰─── org.jetbrains.compose.runtime:runtime:#composeDefaultVersion (*)
 ├─── shared:commonTest:org.jetbrains.kotlin:kotlin-stdlib:#kotlinVersion, implicit
 │    ╰─── org.jetbrains.kotlin:kotlin-stdlib:#kotlinVersion
@@ -320,10 +296,6 @@ Module shared
 │    ╰─── org.jetbrains.kotlin:kotlin-test-annotations-common:#kotlinVersion (*)
 ├─── shared:commonTest:org.jetbrains.compose.runtime:runtime:#composeDefaultVersion, implicit (because Compose is enabled)
 │    ╰─── org.jetbrains.compose.runtime:runtime:#composeDefaultVersion (*)
-├─── shared:ios:org.jetbrains.kotlin:kotlin-stdlib:#kotlinVersion, implicit
-│    ╰─── org.jetbrains.kotlin:kotlin-stdlib:#kotlinVersion
-├─── shared:ios:org.jetbrains.compose.runtime:runtime:#composeDefaultVersion, implicit (because Compose is enabled)
-│    ╰─── org.jetbrains.compose.runtime:runtime:#composeDefaultVersion (*)
 ├─── shared:iosTest:org.jetbrains.kotlin:kotlin-stdlib:#kotlinVersion, implicit
 │    ╰─── org.jetbrains.kotlin:kotlin-stdlib:#kotlinVersion
 ├─── shared:iosTest:org.jetbrains.kotlin:kotlin-test:#kotlinVersion, implicit
@@ -331,18 +303,6 @@ Module shared
 ├─── shared:iosTest:org.jetbrains.kotlin:kotlin-test-annotations-common:#kotlinVersion, implicit
 │    ╰─── org.jetbrains.kotlin:kotlin-test-annotations-common:#kotlinVersion (*)
 ├─── shared:iosTest:org.jetbrains.compose.runtime:runtime:#composeDefaultVersion, implicit (because Compose is enabled)
-│    ╰─── org.jetbrains.compose.runtime:runtime:#composeDefaultVersion (*)
-├─── shared:iosX64Test:org.jetbrains.kotlin:kotlin-stdlib:#kotlinVersion, implicit
-│    ╰─── org.jetbrains.kotlin:kotlin-stdlib:#kotlinVersion
-├─── shared:iosX64Test:org.jetbrains.kotlin:kotlin-test:#kotlinVersion, implicit
-│    ╰─── org.jetbrains.kotlin:kotlin-test:#kotlinVersion
-├─── shared:iosX64Test:org.jetbrains.kotlin:kotlin-test-annotations-common:#kotlinVersion, implicit
-│    ╰─── org.jetbrains.kotlin:kotlin-test-annotations-common:#kotlinVersion (*)
-├─── shared:iosX64Test:org.jetbrains.compose.runtime:runtime:#composeDefaultVersion, implicit (because Compose is enabled)
-│    ╰─── org.jetbrains.compose.runtime:runtime:#composeDefaultVersion (*)
-├─── shared:native:org.jetbrains.kotlin:kotlin-stdlib:#kotlinVersion, implicit
-│    ╰─── org.jetbrains.kotlin:kotlin-stdlib:#kotlinVersion
-├─── shared:native:org.jetbrains.compose.runtime:runtime:#composeDefaultVersion, implicit (because Compose is enabled)
 │    ╰─── org.jetbrains.compose.runtime:runtime:#composeDefaultVersion (*)
 ├─── shared:nativeTest:org.jetbrains.kotlin:kotlin-stdlib:#kotlinVersion, implicit
 │    ╰─── org.jetbrains.kotlin:kotlin-stdlib:#kotlinVersion

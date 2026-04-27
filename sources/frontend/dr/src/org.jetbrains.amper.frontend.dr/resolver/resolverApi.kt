@@ -171,6 +171,7 @@ interface DirectFragmentDependencyNode: DependencyNodeHolder {
     val dependencyNode: MavenDependencyNode
     val traceInfo: String
     val notation: MavenDependencyBase
+    val isTransitive: Boolean
 
     override val graphEntryName: String get() =
         "$moduleName:$fragmentName:${dependencyNode.getOriginalMavenCoordinates().toPrettyString()}$traceInfo"
@@ -181,9 +182,10 @@ fun DirectFragmentDependencyNode.getKey() =
         CacheEntryKey.CompositeCacheEntryKey(listOf(
                 moduleName,
                 fragmentName,
+                isTransitive,
                 dependencyNode.getOriginalMavenCoordinates(),
                 traceInfo,
-                dependencyNode.dependency.resolutionConfig.scope, // scope only, platforms are distingwuixhed by fragment name already
+                dependencyNode.dependency.resolutionConfig.scope, // scope only, platforms are distinguished by fragment name already
             )).computeKey()
     )
 
@@ -191,6 +193,7 @@ internal class DirectFragmentDependencyNodeHolderWithContext(
     override val dependencyNode: MavenDependencyNodeWithContext,
     val fragment: Fragment,
     templateContext: Context,
+    override val isTransitive: Boolean = false,
     override val notation: MavenDependencyBase,
     parentNodes: Set<DependencyNodeWithContext> = emptySet(),
     override val messages: List<Message> = emptyList(),
@@ -230,6 +233,7 @@ internal class SerializableDirectFragmentDependencyNodeHolder internal construct
     override val moduleName: String,
     override val traceInfo: String = "",
     override val messages: List<Message> = emptyList(),
+    override val isTransitive: Boolean = false,
     override val childrenRefs: List<DependencyNodeReference> = mutableListOf(),
     @Transient
     private val graphContext: DependencyGraphContext = currentGraphContext()

@@ -42,7 +42,7 @@ internal abstract class AbstractDependenciesFlow<T: DependenciesFlowType>(
     private val contextMap: ConcurrentHashMap<ContextKey, Context> = ConcurrentHashMap<ContextKey, Context>()
     private val alreadyAddedMavenDependencyNodes: MutableSet<MavenDependencyNode> = mutableSetOf()
 
-    internal fun MavenDependencyBase.toFragmentDirectDependencyNode(fragment: Fragment, context: Context): DirectFragmentDependencyNodeHolderWithContext? {
+    internal fun MavenDependencyBase.toFragmentDirectDependencyNode(fragment: Fragment, directDependencies: Boolean, context: Context): DirectFragmentDependencyNodeHolderWithContext? {
         val dependencyNode = context.toMavenDependencyNode(toDrMavenCoordinates(), this is BomDependency)
 
         return DirectFragmentDependencyNodeHolderWithContext(
@@ -55,6 +55,7 @@ internal abstract class AbstractDependenciesFlow<T: DependenciesFlowType>(
                 fragment = fragment,
                 templateContext = context,
                 messages = emptyList(),
+                isTransitive = !directDependencies,
             )
 //        } else {
 //            null

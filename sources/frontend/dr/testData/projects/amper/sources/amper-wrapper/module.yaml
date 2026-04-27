@@ -1,0 +1,9 @@
+product: jvm/lib
+
+description: Amper wrapper scripts generator.
+
+apply:
+  - ../dr.amper.common.module-template.yaml
+
+dependencies:
+  - $libs.slf4j.api

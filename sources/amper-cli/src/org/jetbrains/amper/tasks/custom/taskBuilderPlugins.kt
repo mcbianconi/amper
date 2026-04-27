@@ -20,7 +20,7 @@ fun ProjectTasksBuilder.setupTasksFromPlugins() {
         module.tasksFromPlugins.forEach { taskDescription ->
             val taskDependencies = mutableListOf<TaskName>()
             for (sourcesRequest in taskDescription.requestedModuleSources) {
-                val fragments = sourcesRequest.from.fragmentsTargeting(Platform.JVM, includeTestFragments = false)
+                val fragments = sourcesRequest.from.fragmentsTargeting(Platform.JVM, isTest = false)
                 if (sourcesRequest.node.includeGenerated) {
                     val taskName = TaskName(taskDescription.backendTaskName.name + "*resolve-${sourcesRequest.propertyLocation}")
                     tasks.registerTask(
@@ -33,7 +33,7 @@ fun ProjectTasksBuilder.setupTasksFromPlugins() {
                     taskDependencies.add(taskName)
                 } else {
                     sourcesRequest.node.sourceDirectories =
-                        sourcesRequest.from.fragmentsTargeting(Platform.JVM, includeTestFragments = false).flatMap {
+                        sourcesRequest.from.fragmentsTargeting(Platform.JVM, isTest = false).flatMap {
                             when (sourcesRequest.node.kind) {
                                 ShadowSourcesKind.KotlinJavaSources -> it.sourceRoots
                                 ShadowSourcesKind.Resources -> listOf(it.resourcesPath)

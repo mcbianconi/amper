@@ -123,6 +123,8 @@ private fun Fragment.addImplicitDependencies(
 
     // we don't add an implicit dependency if it is already defined explicitly by the user (in any version)
     val nonOverriddenImplicitDeps = implicitDependencies.filterNot {
+        // todo (AB) : Take classifier into account. If dependency with custom classifier is added directly,
+        //  implicit one (without classifier) should be added as well.
         it.coordinates.groupAndArtifact in explicitMavenDependencies
     }
 

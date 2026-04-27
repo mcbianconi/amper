@@ -39,7 +39,6 @@ import org.jetbrains.amper.dependency.resolution.infoSpanBuilder
 import org.jetbrains.amper.frontend.AmperModule
 import org.jetbrains.amper.frontend.BomDependency
 import org.jetbrains.amper.frontend.Fragment
-import org.jetbrains.amper.frontend.MavenDependencyBase
 import org.jetbrains.amper.frontend.Model
 import org.jetbrains.amper.frontend.Platform
 import org.jetbrains.amper.frontend.RepositoriesModulePart
@@ -229,15 +228,25 @@ class ModuleDependencies private constructor(
     private fun ModuleDependencyNodeWithModuleAndContext.toFlatGraph(fragment: Fragment) : List<DirectFragmentDependencyNodeHolderWithContext> {
         val repositories = fragment.module.getValidRepositories().toSet()
 
-        val allMavenDeps = this
+        val allDirectDeps = this
             .distinctBfsSequence()
             .filterIsInstance<DirectFragmentDependencyNodeHolderWithContext>()
             .sortedByDescending { it.fragment == this }
-            .distinctBy { it.dependencyNode }
-            .map {
-               val context = adjustContext(fragment, it, repositories)
-                it.notation.toFlattenedFragmentDirectDependencyNode(fragment, context)
-            }.toList()
+
+        val alreadyAddedCoordinates = mutableSetOf<Pair<MavenCoordinates, Boolean>>()
+
+        val allMavenDeps = buildList {
+            allDirectDeps.forEach {
+                val coordinatesWithBom = it.dependencyNode.dependency.coordinates to it.dependencyNode.isBom
+                if (!it.isTransitive || coordinatesWithBom !in alreadyAddedCoordinates) {
+                    // ALL direct fragment deps + other deps from transitive local modules not declared as a direct fragment dependency.
+                    val context = adjustContext(fragment, it, repositories)
+                    val nodeToAdd = it.toFlattenedFragmentDirectDependencyNode(fragment, context)
+                    add(nodeToAdd)
+                    alreadyAddedCoordinates.add(coordinatesWithBom)
+                }
+            }
+        }.distinctBy { it.dependencyNode }
 
         return allMavenDeps
     }
@@ -259,14 +268,18 @@ class ModuleDependencies private constructor(
             )
         }
 
-    private fun MavenDependencyBase.toFlattenedFragmentDirectDependencyNode(fragment: Fragment, context: Context): DirectFragmentDependencyNodeHolderWithContext {
-        val dependencyNode = context.toMavenDependencyNode(toDrMavenCoordinates(), this is BomDependency)
+    private fun DirectFragmentDependencyNodeHolderWithContext.toFlattenedFragmentDirectDependencyNode(
+        fragment: Fragment, context: Context
+    ): DirectFragmentDependencyNodeHolderWithContext {
+        // Todo (AB): Why do we recreate node here? It will be taken from cache anyway.
+        val dependencyNode = context.toMavenDependencyNode(notation.toDrMavenCoordinates(), notation is BomDependency)
 
         val node = DirectFragmentDependencyNodeHolderWithContext(
             dependencyNode,
             fragment = fragment,
             templateContext = context,
-            notation = this,
+            notation = this.notation,
+            isTransitive = this.isTransitive
         )
 
         return node

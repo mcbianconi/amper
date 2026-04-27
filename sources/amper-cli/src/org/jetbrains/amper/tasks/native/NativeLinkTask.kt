@@ -152,7 +152,7 @@ internal class NativeLinkTask(
                     else -> "executable"
                 }
                 if (inputFiles.isEmpty()) {
-                    val fragmentsString = module.fragmentsTargeting(platform, includeTestFragments = false)
+                    val fragmentsString = module.fragmentsTargeting(platform, isTest = false)
                         .identificationPhrase()
                     userReadableError("Unable to link: there are no inputs (libraries or compiled source code). " +
                             "Ensure that there are sources and/or dependencies for $fragmentsString")

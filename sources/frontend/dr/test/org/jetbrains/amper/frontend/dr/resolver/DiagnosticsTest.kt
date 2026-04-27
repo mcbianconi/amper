@@ -27,6 +27,7 @@ import org.junit.jupiter.api.Test
 import org.junit.jupiter.api.TestInfo
 import org.junit.jupiter.api.assertInstanceOf
 import java.nio.file.Path
+import kotlin.collections.filterIsInstance
 import kotlin.contracts.ExperimentalContracts
 import kotlin.contracts.contract
 import kotlin.io.path.Path
@@ -154,7 +155,7 @@ class DiagnosticsTest : BaseModuleDrTest() {
              * This magic number doesn't matter on its own.
              * What matters is that all warnings are related to overridden dependencies (next check).
              */
-            assertEquals(25, buildProblems.size)
+            assertEquals(24, buildProblems.size)
 
             val overriddenDependencyProblems = buildProblems.mapNotNull { it as? ModuleDependencyWithOverriddenVersion }
             assertEquals(buildProblems.size, overriddenDependencyProblems.size)
@@ -169,7 +170,71 @@ class DiagnosticsTest : BaseModuleDrTest() {
 
             val uniqueInsights = overriddenDependencyProblems.map { it.overrideInsight }.distinct()
             assertEquals(
-                4, uniqueInsights.size,
+                3, uniqueInsights.size,
+                "Insights were calculated unexpected number of times, " +
+                        "while calculation of the single insight pr module" +
+                        "for the library 'org.jetbrains.compose.runtime:runtime' is expected"
+            )
+        }
+
+    /**
+     * AMPER-4882 revealed that the dependency insights graph is calculated for the same coordinates as many times as
+     * coordinates are mentioned in the AOM
+     * (i.e., the number of times dependency is added to project modules multiplied by the number
+     * of resolution contexts (platform and scope)).
+     *
+     * This test checks that the dependency insights graph is calculated the same number of times as the quantity of
+     * different coordinates with an overridden version
+     * (one coordinates with an overridden version => one dependency insights graph)
+     */
+    @Test
+    @Ignore("This test works quite long, it resolve dependencies for test Amper project. " +
+            "It might be used to check how DR works on Amper project locally.")
+    fun `dependency insights in amper`(testInfo: TestInfo) =
+        runSlowModuleDependenciesTest {
+            val aom = getTestProjectModel("amper", testDataRoot)
+
+            val projectDeps = doTestByFile(
+                testInfo,
+                aom,
+                ideSyncTestResolutionInput,
+                messagesCheck = { node ->
+                    node.messages.all { it.severity <= Severity.WARNING }
+                },
+                filter = ideSyncModuleResolutionFilter
+            )
+
+            assertFiles(testInfo,projectDeps)
+
+            val diagnosticsReporter = CollectingProblemReporter()
+            collectBuildProblems(projectDeps, diagnosticsReporter, Level.Warning)
+            val buildProblems = diagnosticsReporter.problems
+
+            /**
+             * This magic number doesn't matter on its own.
+             * What matters is that all warnings are related to overridden dependencies (next check).
+             */
+            assertEquals(28, buildProblems.size)
+
+            val overriddenDependencyProblems = buildProblems.filterIsInstance<ModuleDependencyWithOverriddenVersion>()
+            assertEquals(buildProblems.size, overriddenDependencyProblems.size)
+
+            val problematicDependencies = overriddenDependencyProblems.map { it.dependencyNode.key }.distinct()
+            assertEquals(
+                setOf(
+                    "org.jetbrains.kotlin:kotlin-stdlib",
+                            "org.jetbrains.kotlinx:kotlinx-coroutines-debug",
+                            "org.jetbrains.kotlinx:kotlinx-coroutines-slf4j",
+                            "org.jetbrains.kotlinx:kotlinx-coroutines-core",
+                            "org.jetbrains.kotlinx:kotlinx-serialization-json",
+                            "org.jetbrains.kotlinx:kotlinx-coroutines-test"
+                ),
+                problematicDependencies.map { it.name }.toSet()
+            )
+
+            val uniqueInsights = overriddenDependencyProblems.map { it.overrideInsight }.distinct()
+            assertEquals(
+                14, uniqueInsights.size,
                 "Insights were calculated unexpected number of times, " +
                         "while calculation of the single insight pr module" +
                         "for the library 'org.jetbrains.compose.runtime:runtime' is expected"

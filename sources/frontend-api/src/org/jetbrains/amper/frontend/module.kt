@@ -151,13 +151,13 @@ interface AmperModule {
 
 /**
  * Returns all fragments in this module that target at least the given set of [platforms].
- * If [includeTestFragments] is false, only production fragments are returned.
+ * If [isTest] is false, only production fragments are returned, otherwise - only test fragments are returned.
  */
-fun AmperModule.fragmentsTargeting(platforms: Set<Platform>, includeTestFragments: Boolean): List<Fragment> =
-    fragments.filter { (includeTestFragments || !it.isTest) && it.platforms.containsAll(platforms) }
+fun AmperModule.fragmentsTargeting(platforms: Set<Platform>, isTest: Boolean = false): List<Fragment> =
+    fragments.filter { isTest == it.isTest && it.platforms.containsAll(platforms) }
 
-fun AmperModule.fragmentsTargeting(platform: Platform, includeTestFragments: Boolean): List<Fragment> =
-    fragmentsTargeting(setOf(platform), includeTestFragments)
+fun AmperModule.fragmentsTargeting(platform: Platform, isTest: Boolean = false): List<Fragment> =
+    fragmentsTargeting(setOf(platform), isTest)
 
 /**
  * Returns whether maven publishing is enabled for this module.

@@ -45,6 +45,7 @@ open class OverriddenDirectModuleDependencies : DrDiagnosticsReporter {
         context: DrReporterContext,
     ) {
         if (node !is DirectFragmentDependencyNode) return
+        if (node.isTransitive) return  // only direct dependencies of the module are reported (not transitive ones from other modules this one depende on)
         val dependencyNode = node.dependencyNode
 
         val originalVersion = dependencyNode.originalVersion() ?: return

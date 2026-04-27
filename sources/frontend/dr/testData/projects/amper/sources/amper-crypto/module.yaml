@@ -1,0 +1,7 @@
+product: jvm/lib
+
+apply:
+  - ../dr.amper.common.module-template.yaml
+
+dependencies:
+  - $libs.bouncycastle.bcpg
